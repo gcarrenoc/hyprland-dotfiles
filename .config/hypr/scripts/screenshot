@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# screenshot full   → whole screen, saved to ~/Pictures/Screenshots and copied
+# screenshot area   → select an area, then annotate/save it in swappy
+set -euo pipefail
+dir="$HOME/Pictures/Screenshots"; mkdir -p "$dir"
+file="$dir/Screenshot_$(date +%Y-%m-%d_%H-%M-%S).png"
+
+case ${1:-full} in
+  full)
+    grim "$file"
+    wl-copy < "$file"
+    notify-send -a Screenshot -i "$file" "Screenshot saved" "Copied to clipboard · ${file/#$HOME/~}" ;;
+  area)
+    geom=$(slurp -b 20212c88 -c a7caffee -w 2) || exit 0   # Esc cancels
+    grim -g "$geom" - | swappy -f - -o "$file" ;;
+esac

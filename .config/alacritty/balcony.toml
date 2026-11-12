@@ -1,0 +1,12 @@
+# Alacritty — Hyprland look
+# (Hyprland starts Alacritty with --config-file pointing here; GNOME uses alacritty.toml directly)
+# Colours: generated from the wallpaper (wallpaper-colors.toml, by ~/.config/hypr/scripts/terminal-colors).
+# GNOME keeps Monokai Pro (alacritty.toml).
+
+[general]
+import = ["~/.config/alacritty/alacritty.toml", "~/.config/alacritty/wallpaper-colors.toml"]  # 2nd = colours from the wallpaper
+
+[window]
+opacity = 0.78           # Hyprland blurs what is behind → frosted glass
+padding = { x = 18, y = 14 }
+decorations = "None"

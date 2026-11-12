@@ -1,0 +1,13 @@
+[general]
+import = ["~/.config/alacritty/themes/monokai_pro.toml"]
+
+[font]
+size = 15
+normal = { family = "SF Mono", style = "Regular" }
+
+[terminal]
+shell = { program = "/home/gcarreno/.local/bin/alacritty-tmux" }
+
+[window]
+# Size of new windows, in characters (≈ 70% of a 1920×1200 screen at font size 15)
+dimensions = { columns = 112, lines = 32 }

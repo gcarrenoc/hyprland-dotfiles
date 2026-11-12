@@ -1,0 +1,10 @@
+#!/bin/sh
+# Started by Alacritty for each new window.
+# Reattach to a tmux session left running in the background, if any;
+# otherwise start a new session.
+detached=$(tmux list-sessions -F '#{session_attached} #{session_name}' 2>/dev/null | awk '$1 == 0 { print $2; exit }')
+if [ -n "$detached" ]; then
+    exec tmux attach-session -t "$detached"
+else
+    exec tmux new-session
+fi

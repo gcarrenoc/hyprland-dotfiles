@@ -1,0 +1,32 @@
+#!/usr/bin/env python3
+"""Print today's sunrise and sunset (local time) and whether it's day or night now.
+Output: "<day|night> <sunrise HH:MM> <sunset HH:MM>"
+Location: Valparaíso, Chile (change LAT/LON below). NOAA solar algorithm, official zenith 90.833°."""
+import math, datetime as dt
+
+LAT, LON = -33.047, -71.612        # Valparaíso / Viña del Mar, Chile
+
+
+def sun_time(date, rising):
+    n = date.timetuple().tm_yday
+    lng_hour = LON / 15
+    t = n + ((6 if rising else 18) - lng_hour) / 24
+    m = 0.9856 * t - 3.289
+    l = (m + 1.916 * math.sin(math.radians(m)) + 0.020 * math.sin(math.radians(2 * m)) + 282.634) % 360
+    ra = math.degrees(math.atan(0.91764 * math.tan(math.radians(l)))) % 360
+    ra = (ra + (math.floor(l / 90) - math.floor(ra / 90)) * 90) / 15
+    sin_dec = 0.39782 * math.sin(math.radians(l))
+    cos_dec = math.cos(math.asin(sin_dec))
+    cos_h = (math.cos(math.radians(90.833)) - sin_dec * math.sin(math.radians(LAT))) / (cos_dec * math.cos(math.radians(LAT)))
+    if not -1 <= cos_h <= 1:
+        return None
+    h = (360 - math.degrees(math.acos(cos_h)) if rising else math.degrees(math.acos(cos_h))) / 15
+    ut = (h + ra - 0.06571 * t - 6.622 - lng_hour) % 24
+    utc = dt.datetime(date.year, date.month, date.day, tzinfo=dt.timezone.utc) + dt.timedelta(hours=ut)
+    return utc.astimezone()                      # local time zone
+
+
+now = dt.datetime.now().astimezone()
+rise, sset = sun_time(now.date(), True), sun_time(now.date(), False)
+period = "day" if rise and sset and rise <= now < sset else "night"
+print(period, rise.strftime("%H:%M") if rise else "--:--", sset.strftime("%H:%M") if sset else "--:--")

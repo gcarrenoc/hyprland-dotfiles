@@ -1,0 +1,170 @@
+#!/usr/bin/env python3
+"""Spotlight-style search (Super+Space).
+
+Step 1 — file names: your files and folders in ~ (hidden folders, anaconda3,
+node_modules… skipped), most recently changed first, fuzzy matching.
+  Enter        open the file / folder
+  Shift+Enter  show it in its folder (Files, file selected)
+  Ctrl+Enter   search INSIDE documents for what you typed
+  (Enter on text that matches no file name also searches inside documents)
+
+Step 2 — inside documents (PDF, Word, LibreOffice, Markdown, text…), using the
+LocalSearch index: results with a highlighted snippet. Enter / Shift+Enter as above.
+"""
+import html, re, subprocess
+from pathlib import Path
+from urllib.parse import unquote, urlparse
+
+import gi
+gi.require_version("Gio", "2.0")
+gi.require_version("Tsparql", "3.0")
+from gi.repository import Gio, Tsparql
+
+HOME = Path.home()
+EXCLUDE = ["anaconda3", "miniconda3", "node_modules", "__pycache__", ".venv", "venv",
+           "build", "dist", "target", "Trash"]
+DRIVES = sorted(HOME.glob("Insync/*/Google Drive"), key=lambda d: -len(str(d)))
+THEME = ("window { width: 820px; } listview { lines: 10; } "
+         "textbox { text-color: #7b8d96; horizontal-align: 0.5; }")
+SEP = "\t"
+
+
+# ---------- helpers ----------
+def pretty_dir(p):
+    d = str(p.parent)
+    for drive in DRIVES:                       # ~/Insync/<account>/Google Drive → Drive
+        if d == str(drive) or d.startswith(str(drive) + "/"):
+            return "Drive" + d[len(str(drive)):]
+    return "~" + d[len(str(HOME)):] if d.startswith(str(HOME)) else d
+
+
+_icons = {}
+
+
+def icon_for(p, is_dir=False):
+    if is_dir:
+        return "folder"
+    ext = p.suffix.lower()
+    if ext not in _icons:
+        ctype, _ = Gio.content_type_guess(p.name, None)
+        names = Gio.content_type_get_icon(ctype).get_names() if ctype else []
+        _icons[ext] = names[0] if names else "text-x-generic"
+    return _icons[ext]
+
+
+def open_path(p, in_folder):
+    cmd = ["nautilus", "--select", str(p)] if in_folder else ["xdg-open", str(p)]
+    subprocess.Popen(["uwsm", "app", "--", *cmd], start_new_session=True,
+                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+def rofi(rows, prompt, mesg, extra=()):
+    """Returns (exit code, typed text, chosen row label)."""
+    r = subprocess.run(
+        ["env", "-u", "WAYLAND_DISPLAY", "rofi", "-dmenu", "-i", "-markup-rows", "-show-icons", "-format", f"f{SEP}s",
+         "-p", prompt, "-mesg", mesg, "-theme-str", THEME,
+         "-kb-accept-custom", "", "-kb-accept-alt", "", "-kb-custom-1", "Shift+Return",
+         *extra],
+        input="\n".join(rows), capture_output=True, text=True)
+    out = r.stdout.rstrip("\n")
+    typed, _, chosen = out.partition(SEP)
+    return r.returncode, typed, chosen
+
+
+# ---------- step 1: file names ----------
+def find_entries():
+    cmd = ["fd", ".", str(HOME), "--color", "never", "--absolute-path"]
+    for e in EXCLUDE:
+        cmd += ["--exclude", e]
+    out = subprocess.run(cmd, capture_output=True, text=True).stdout
+    entries = []
+    for line in out.splitlines():
+        p = Path(line.rstrip("/"))
+        try:
+            st = p.stat()
+        except OSError:
+            continue
+        entries.append((st.st_mtime, p, p.is_dir()))
+    entries.sort(key=lambda e: e[0], reverse=True)
+    return entries
+
+
+# ---------- step 2: inside documents ----------
+def content_search(text, limit=60):
+    words = [w for w in re.findall(r"\w+", text, re.UNICODE) if w]
+    if not words:
+        return []
+    query = " ".join(w + "*" if len(w) >= 3 else w for w in words)
+    try:
+        conn = Tsparql.SparqlConnection.bus_new("org.freedesktop.LocalSearch3", None, None)
+        st = conn.query_statement(
+            "SELECT ?url fts:snippet(?ie, \"\x01\", \"\x02\", \"…\", 12) WHERE { "
+            "?ie fts:match ~q ; nie:isStoredAs ?f . ?f nie:url ?url "
+            "} ORDER BY DESC(fts:rank(?ie)) LIMIT %d" % limit, None)
+        st.bind_string("q", query)
+        cur = st.execute(None)
+    except Exception as e:
+        subprocess.run(["notify-send", "-a", "Search", "Search inside documents failed", str(e)[:200]])
+        return []
+    results, seen = [], set()
+    while cur.next(None):
+        url = cur.get_string(0)[0] or ""
+        if not url.startswith("file://"):
+            continue
+        p = Path(unquote(urlparse(url).path))
+        if p in seen or not p.exists():
+            continue
+        seen.add(p)
+        snip = (cur.get_string(1)[0] or "").replace("\n", " ")
+        results.append((p, snip))
+    return results
+
+
+def snippet_markup(s):
+    s = html.escape(" ".join(s.split())[:90])
+    return s.replace("\x01", "<b><u>").replace("\x02", "</u></b>")
+
+
+def show_content_results(text):
+    results = content_search(text)
+    if not results:
+        subprocess.run(["notify-send", "-a", "Search", "-u", "low",
+                        f"No documents contain “{text}”"])
+        return
+    by_label, rows = {}, []
+    for p, snip in results:
+        short_dir = "/".join(pretty_dir(p).split("/")[-2:])
+        label_line = (f"<b>{html.escape(p.name)}</b>   "
+                      f"<span size='small' alpha='80%'>{snippet_markup(snip)}</span>"
+                      f"   <span size='small' alpha='45%'>{html.escape(short_dir)}</span>")
+        by_label[label_line] = p
+        rows.append(f"{label_line}\0icon\x1f{icon_for(p)}")
+    code, _, chosen = rofi(rows, "\U000f0219", f"Inside documents: “{html.escape(text)}”   ·   ↵ open    ⇧↵ show in folder",
+                           ("-no-custom",))
+    if chosen in by_label and code in (0, 10):
+        open_path(by_label[chosen], in_folder=(code == 10))
+
+
+# ---------- main ----------
+def main():
+    by_label, rows = {}, []
+    for _, p, is_dir in find_entries():
+        label = (f"<b>{html.escape(p.name)}</b>"
+                 f"   <span alpha='50%'>{html.escape(pretty_dir(p))}</span>")
+        by_label[label] = p
+        rows.append(f"{label}\0icon\x1f{icon_for(p, is_dir)}")
+
+    code, typed, chosen = rofi(
+        rows, "\U000f0349", "↵ open    ⇧↵ show in folder    ⌃↵ search inside documents",
+        ("-matching", "fuzzy", "-sort", "-sorting-method", "fzf", "-kb-custom-2", "Control+Return"))
+    typed = typed.strip()
+    if code == 11 or (code == 0 and chosen not in by_label):   # Ctrl+Enter, or Enter on unmatched text
+        if typed:
+            show_content_results(typed)
+        return
+    if chosen in by_label and code in (0, 10):
+        open_path(by_label[chosen], in_folder=(code == 10))
+
+
+if __name__ == "__main__":
+    main()

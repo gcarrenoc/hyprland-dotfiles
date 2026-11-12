@@ -1,0 +1,7 @@
+[Unit]
+Description=Battery warnings and power-saving blur
+After=graphical-session.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/.config/hypr/scripts/power-watch

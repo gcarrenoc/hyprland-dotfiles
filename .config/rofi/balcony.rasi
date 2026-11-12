@@ -1,0 +1,84 @@
+/* Light steel colours (light mode) */
+* {
+    background:     #F2F5F7EE;
+    background-alt: #E1E7EBFF;
+    foreground:     #1C2228;
+    selected:       #4F6672;
+    active:         #C5CED5;
+    urgent:         #B24A4A;
+    glow:           #C5CED5;
+
+    font:             "SF Mono, JetBrainsMono Nerd Font 11";
+    background-color: transparent;
+    text-color:       @foreground;
+}
+
+window {
+    transparency:     "real";
+    location:         center;
+    anchor:           center;
+    width:            440px;
+    border:           0;          /* corners + border drawn by Hyprland (squircle) */
+    border-radius:    0;
+    background-color: @background;
+}
+
+mainbox {
+    spacing:  10px;
+    padding:  26px;
+    children: [ "inputbar", "message", "listview" ];
+}
+
+inputbar {
+    spacing:          10px;
+    padding:          10px 14px;
+    border-radius:    12px;
+    background-color: @background-alt;
+    children:         [ "prompt", "entry" ];
+}
+prompt { text-color: @selected; }
+entry {
+    placeholder:       "Search…";
+    placeholder-color: #7b8d96;
+    cursor:            text;
+}
+
+message { padding: 6px 12px; border: 0; border-radius: 10px; background-color: transparent; }
+textbox { text-color: @foreground; }
+
+listview {
+    border:       0;
+    columns:      1;
+    lines:        8;
+    cycle:        true;
+    dynamic:      true;
+    scrollbar:    false;
+    fixed-height: true;
+    spacing:      5px;
+}
+
+element {
+    spacing:       10px;
+    padding:       7px 10px;
+    border-radius: 10px;
+    cursor:        pointer;
+}
+element normal.normal     { background-color: transparent; text-color: @foreground; }
+element alternate.normal  { background-color: transparent; text-color: @foreground; }
+element normal.urgent     { text-color: @urgent; }
+element normal.active     { text-color: @selected; }
+element selected.normal   { background-color: @selected; text-color: #FFFFFF; }
+element selected.urgent   { background-color: @urgent;   text-color: #FFFFFF; }
+element selected.active   { background-color: @active;   text-color: @foreground; }
+element-icon { size: 24px; cursor: inherit; }
+element-text { vertical-align: 0.5; cursor: inherit; text-color: inherit; }
+
+mode-switcher { spacing: 10px; }
+button {
+    padding:          8px;
+    border-radius:    10px;
+    background-color: @background-alt;
+    text-color:       @foreground;
+    cursor:           pointer;
+}
+button selected { background-color: @selected; text-color: #FFFFFF; }

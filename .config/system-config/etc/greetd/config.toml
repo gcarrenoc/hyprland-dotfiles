@@ -1,0 +1,7 @@
+# greetd — login manager (replaces GDM). Shows ReGreet full-screen via cage.
+[terminal]
+vt = 1
+
+[default_session]
+command = "env XKB_DEFAULT_LAYOUT=latam cage -s -- regreet"
+user = "greeter"

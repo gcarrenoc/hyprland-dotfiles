@@ -1,0 +1,145 @@
+// Waybar — Balcony (layout from github.com/1amSimp1e/dots, icons updated to Nerd Fonts v3)
+{
+  "layer": "top",
+  "position": "top",
+  "height": 34,
+  "spacing": 0,
+
+  "modules-left":  ["custom/launcher", "hyprland/workspaces", "custom/newws"],
+  "modules-right": ["group/indicators", "custom/caffeinate", "custom/nightlight", "network", "pulseaudio", "backlight", "battery", "clock", "custom/power"],
+
+  "custom/launcher": {
+    "format": "",
+    "tooltip": false,
+    "on-click": "~/.config/hypr/scripts/launcher"
+  },
+
+
+
+  // Roman numerals; the current workspace is highlighted in cream
+  "hyprland/workspaces": {
+    "format": "{icon}",
+    "on-click": "activate",
+    "on-scroll-up": "hyprctl dispatch 'function() WS.step(-1) end'",
+    "on-scroll-down": "hyprctl dispatch 'function() WS.step(1) end'",
+    "format-icons": {
+      "1": "I", "2": "II", "3": "III", "4": "IV", "5": "V",
+      "6": "VI", "7": "VII", "8": "VIII", "9": "IX", "10": "X",
+      "default": "·"
+    }
+  },
+
+
+  // App indicators hidden in a drawer: click the arrow to show / hide them
+  "group/indicators": {
+    "orientation": "inherit",
+    "drawer": {
+      "transition-duration": 300,
+      "transition-left-to-right": false,
+      "click-to-reveal": true
+    },
+    "modules": ["custom/tray-toggle", "tray"]
+  },
+
+  "custom/tray-toggle": {
+    "format": "\uf053",
+    "tooltip-format": "App indicators (click to show / hide)"
+  },
+
+  // + = go to the next new (empty) workspace
+  "custom/newws": {
+    "format": "+",
+    "tooltip-format": "New workspace",
+    "on-click": "hyprctl dispatch 'function() WS.new() end'"
+  },
+
+  "tray": {
+    "icon-size": 18,
+    "spacing": 10
+  },
+
+  // Caffeinate: click = keep awake indefinitely / turn off; right-click = choose time and mode
+  "custom/caffeinate": {
+    "exec": "~/.local/bin/caffeinate waybar",
+    "return-type": "json",
+    "interval": 30,
+    "signal": 8,
+    "on-click": "~/.local/bin/caffeinate toggle",
+    "on-click-right": "~/.local/bin/caffeinate pick"
+  },
+
+  // Night light: click = on/off, scroll = warmer / cooler
+  "custom/nightlight": {
+    "exec": "~/.config/hypr/scripts/nightlight waybar",
+    "return-type": "json",
+    "interval": "once",
+    "signal": 9,
+    "on-click": "~/.config/hypr/scripts/nightlight toggle",
+    "on-scroll-up": "~/.config/hypr/scripts/nightlight up",
+    "on-scroll-down": "~/.config/hypr/scripts/nightlight down"
+  },
+
+  "network": {
+    "format-wifi": "{icon}",
+    "format-ethernet": "󰈀",
+    "format-disconnected": "󰤮",
+    "format-icons": ["󰤯", "󰤟", "󰤢", "󰤥", "󰤨"],
+    "tooltip-format-wifi": "{essid}  ·  {signalStrength}%\n{ipaddr}",
+    "tooltip-format-ethernet": "{ifname}  ·  {ipaddr}",
+    "tooltip-format-disconnected": "Disconnected",
+    "on-click": "uwsm app -- alacritty --config-file ~/.config/alacritty/balcony.toml --class fly-term -e nmtui"
+  },
+
+  "pulseaudio": {
+    "format": "{icon}",
+    "format-muted": "󰝟",
+    "format-icons": { "default": ["󰕿", "󰖀", "󰕾"], "headphone": "󰋋" },
+    "tooltip-format": "{desc}  ·  {volume}%",
+    "on-click": "uwsm app -- pavucontrol",
+    "on-click-right": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
+    "scroll-step": 5
+  },
+
+  "backlight": {
+    "device": "intel_backlight",
+    "format": "{icon}",
+    "tooltip-format": "Brightness  {percent}%",
+    "format-icons": ["󱩎", "󱩏", "󱩐", "󱩑", "󱩒", "󱩓", "󱩔", "󱩕", "󱩖", "󰛨"],
+    "on-scroll-up": "brightnessctl -q set 5%+",
+    "on-scroll-down": "brightnessctl -q set 5%-"
+  },
+
+  "battery": {
+    "bat": "BAT0",
+    "interval": 60,
+    "states": { "warning": 30, "critical": 15 },
+    "format": "{icon}",
+    "format-charging": "󰂄",
+    "format-plugged": "󰚥",
+    "format-alt": "{icon} {capacity}%",
+    "format-icons": ["󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"],
+    "tooltip-format": "{capacity}%  ·  {timeTo}"
+  },
+
+
+  "clock": {
+    "format": "{:%H:%M}",
+    "format-alt": "{:%a %d %b}",
+    "tooltip-format": "<big>{:%B %Y}</big>\n<tt><small>{calendar}</small></tt>",
+    "calendar": {
+      "mode": "month",
+      "weeks-pos": "",
+      "format": {
+        "months": "<span color='#ecd3a0'><b>{}</b></span>",
+        "weekdays": "<span color='#7a95c9'><b>{}</b></span>",
+        "today": "<span color='#fb958b'><b><u>{}</u></b></span>"
+      }
+    }
+  },
+
+  "custom/power": {
+    "format": "⏻",
+    "tooltip-format": "Power menu",
+    "on-click": "~/.config/hypr/scripts/powermenu"
+  }
+}

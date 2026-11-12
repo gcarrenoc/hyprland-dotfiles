@@ -1,0 +1,71 @@
+#!/usr/bin/env python3
+"""Window switcher (Super+Tab).
+
+All windows, most recently used first; the previous one is pre-selected
+(Super+Tab → Enter flips back and forth). Enter = go to that window
+(switching workspace).
+"""
+import html, json, subprocess
+from importlib.machinery import SourceFileLoader
+from pathlib import Path
+
+launcher = SourceFileLoader("launcher", str(Path(__file__).with_name("launcher"))).load_module()
+
+ROMAN = ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"]
+
+
+def hypr(*args):
+    return json.loads(subprocess.run(["hyprctl", *args, "-j"], capture_output=True, text=True).stdout)
+
+
+def dispatch(expr):
+    subprocess.run(["hyprctl", "dispatch", expr], stdout=subprocess.DEVNULL)
+
+
+
+clients = [c for c in hypr("clients") if c.get("mapped", True) and c.get("class")
+           and c["workspace"].get("id", 0) > 0]          # skip special/hidden workspaces
+if not clients:
+    subprocess.run(["notify-send", "-a", "Windows", "-u", "low", "No open windows"])
+    raise SystemExit
+clients.sort(key=lambda c: c.get("focusHistoryID", 999))
+
+apps = launcher.load_apps()
+
+
+def app_for(c):
+    keys = {c.get("class", "").lower(), c.get("initialClass", "").lower()}
+    for a in apps:
+        if keys & a["keys"]:
+            return a
+    return None
+
+
+rows, by_label = [], {}
+for c in clients:
+    a = app_for(c)
+    name = a["name"] if a else c["class"]
+    icon = (a["icon"] if a and a["icon"] else c["class"].lower())
+    title = c["title"] if c["title"] and c["title"] != name else ""
+    ws = c["workspace"].get("id", 0)
+    where = ROMAN[ws] if 0 < ws < len(ROMAN) else str(ws)
+    label = (f"<b>{html.escape(name)}</b>"
+             + (f"  <span alpha='70%'>{html.escape(title[:70])}</span>" if title else "")
+             + f"   <span alpha='45%'>{where}</span>")
+    while label in by_label:          # identical rows (e.g. two equal terminals)
+        label += "​"
+    by_label[label] = c
+    rows.append(f"{label}\0icon\x1f{icon}")
+
+r = subprocess.run(
+    ["env", "-u", "WAYLAND_DISPLAY", "rofi", "-dmenu", "-i", "-markup-rows", "-show-icons", "-no-custom", "-format", "s",
+     "-p", "\U000f05b6",
+     "-mesg", "↵ go to window",
+     "-selected-row", "1" if len(rows) > 1 else "0",
+     "-theme-str", "window { width: 640px; } listview { lines: 8; fixed-height: false; } "
+                   "textbox { text-color: #7b8d96; horizontal-align: 0.5; }"],
+    input="\n".join(rows), capture_output=True, text=True)
+choice = r.stdout.rstrip("\n")
+if r.returncode == 0 and choice in by_label:
+    c = by_label[choice]
+    dispatch(f'hl.dsp.focus({{ window = "address:{c["address"]}" }})')

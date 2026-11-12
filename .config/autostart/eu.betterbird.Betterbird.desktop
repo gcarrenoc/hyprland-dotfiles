@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Betterbird
+Comment=Email client
+Exec=/usr/bin/flatpak run --branch=stable --arch=x86_64 --command=betterbird eu.betterbird.Betterbird
+Icon=eu.betterbird.Betterbird
+Terminal=false
+Categories=Network;Email;
+X-GNOME-Autostart-enabled=true
+X-GNOME-Autostart-Delay=5
+X-Flatpak=eu.betterbird.Betterbird

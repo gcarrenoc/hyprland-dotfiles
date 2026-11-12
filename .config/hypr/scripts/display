@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+# Display menu (Super+P; also pops up when a monitor/projector is plugged in).
+#   Extend · Mirror · External only · Laptop only
+# Usage: display            menu
+#        display --auto     menu only if an external display is connected (used on plug-in)
+#        display extend|mirror|external|laptop   apply directly
+set -u
+LAPTOP=eDP-1
+ext=$(hyprctl monitors all -j | python3 -I -c 'import sys,json
+for m in json.load(sys.stdin):
+    if m["name"]!="'"$LAPTOP"'": print(m["name"]); break')
+
+if [[ -z $ext ]]; then
+  [[ ${1:-} == --auto ]] || notify-send -a Display -u low "No external display connected"
+  exit 0
+fi
+
+apply() {
+  local lap_on=true ext_spec
+  case $1 in
+    extend)   ext_spec="{ output = \"$ext\", mode = \"preferred\", position = \"auto-right\", scale = \"auto\", mirror = \"\", disabled = false }" ;;
+    mirror)   ext_spec="{ output = \"$ext\", mode = \"preferred\", position = \"auto\", scale = \"auto\", mirror = \"$LAPTOP\", disabled = false }" ;;
+    external) ext_spec="{ output = \"$ext\", mode = \"preferred\", position = \"auto\", scale = \"auto\", mirror = \"\", disabled = false }"; lap_on=false ;;
+    laptop)   ext_spec="{ output = \"$ext\", disabled = true }" ;;
+    *) return 1 ;;
+  esac
+  local lap_spec="{ output = \"$LAPTOP\", mode = \"1920x1200@60\", position = \"0x0\", scale = 1, mirror = \"\", disabled = false }"
+  [[ $lap_on == false ]] && lap_spec="{ output = \"$LAPTOP\", disabled = true }"
+  # turn the external on first, so there is never a moment with no screen
+  hyprctl dispatch "function() hl.monitor($ext_spec) end" >/dev/null
+  hyprctl dispatch "function() hl.monitor($lap_spec) end" >/dev/null
+  notify-send -a Display -u low "Display: $2" "$ext"
+}
+
+case ${1:-} in
+  extend)   apply extend "Extend";;
+  mirror)   apply mirror "Mirror";;
+  external) apply external "External only";;
+  laptop)   apply laptop "Laptop only";;
+  ""|--auto)
+    choice=$(printf '%s\n' "󰍺  Extend" "󰍹  Mirror" "󰶐  External only" "󰌢  Laptop only" |
+      env -u WAYLAND_DISPLAY rofi -dmenu -i -no-custom -p "󰍹" -mesg "External display: $ext" \
+        -theme-str 'window { width: 340px; } listview { lines: 4; fixed-height: false; } textbox { horizontal-align: 0.5; }') || exit 0
+    case $choice in
+      *Extend*) apply extend "Extend";; *Mirror*) apply mirror "Mirror";;
+      *External*) apply external "External only";; *Laptop*) apply laptop "Laptop only";;
+    esac ;;
+esac

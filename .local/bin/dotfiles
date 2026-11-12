@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# dotfiles — Git for your config files.
+# Bare repo in ~/.dotfiles, files stay where they are (work tree = your home).
+#
+#   dotfiles save ["message"]   copy system files, commit every tracked change, push
+#   dotfiles status | diff | log | add <file> | restore <file> | …   (any git command)
+#
+# System files (greetd login screen, PAM, reflector) are copied into
+# ~/.config/system-config/ on every save so they are versioned too.
+set -euo pipefail
+GIT=(git --git-dir="$HOME/.dotfiles" --work-tree="$HOME")
+SYS="$HOME/.config/system-config"
+SYSTEM_FILES=(/etc/greetd/config.toml /etc/greetd/regreet.toml /etc/greetd/regreet.css
+              /etc/pam.d/greetd /etc/xdg/reflector/reflector.conf)
+
+snapshot_system() {
+  for f in "${SYSTEM_FILES[@]}"; do
+    [[ -r $f ]] || continue
+    mkdir -p "$SYS$(dirname "$f")"; cp -p "$f" "$SYS$f"
+  done
+}
+
+case ${1:-status} in
+  save)
+    snapshot_system
+    "${GIT[@]}" add -u
+    "${GIT[@]}" add "$SYS"
+    if "${GIT[@]}" diff --cached --quiet; then echo "Nothing changed."; exit 0; fi
+    "${GIT[@]}" commit -q -m "${2:-Update $(date '+%Y-%m-%d %H:%M')}"
+    "${GIT[@]}" log --oneline -1
+    if "${GIT[@]}" remote | grep -q .; then "${GIT[@]}" push -q && echo "Pushed to GitHub."; fi ;;
+  *) exec "${GIT[@]}" "$@" ;;
+esac

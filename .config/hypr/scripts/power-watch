@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# Power watcher (runs every minute via ~/.config/systemd/user/power-watch.timer)
+#   • battery 15%  → low-battery notification
+#   • battery 5%   → urgent notification
+#   • battery 3%   → suspend (so work isn't lost)
+#   • on battery   → lighter blur (1 pass) to save power; plugged in → 3 passes
+# Warnings fire once per discharge and reset when you plug in.
+set -u
+BAT=/sys/class/power_supply/BAT0 AC=/sys/class/power_supply/AC/online
+STATE="$HOME/.cache/power-watch"
+LOW=15 CRIT=5 SUSPEND=3 BLUR_AC=3 BLUR_BAT=1
+
+cap=$(<"$BAT/capacity") status=$(<"$BAT/status") ac=$(<"$AC")
+warned=0
+[[ -f $STATE ]] && read -r warned < "$STATE"
+
+notify() { notify-send -a Battery "$@"; }
+
+if [[ $status == Discharging ]]; then
+  if (( cap <= SUSPEND )); then
+    notify -u critical -i battery-empty "Battery at ${cap}%" "Suspending now — plug in the charger."
+    sleep 5; systemctl suspend
+  elif (( cap <= CRIT && warned < 2 )); then
+    notify -u critical -i battery-caution "Battery at ${cap}% — plug in now" "The laptop will suspend at ${SUSPEND}%."
+    warned=2
+  elif (( cap <= LOW && warned < 1 )); then
+    notify -u normal -i battery-low "Battery low: ${cap}%" "About time to plug in the charger."
+    warned=1
+  fi
+else
+  warned=0                                   # charging / full → reset
+fi
+mkdir -p "${STATE%/*}"; echo "$warned" > "$STATE"
+
+# blur: lighter on battery (only touch Hyprland when the value has to change)
+want=$BLUR_AC; [[ $ac == 0 ]] && want=$BLUR_BAT
+have=$(hyprctl getoption decoration:blur:passes 2>/dev/null | awk '/int:/{print $2}')
+if [[ -n $have && $have != "$want" ]]; then
+  hyprctl dispatch "function() hl.config({ decoration = { blur = { passes = $want } } }) end" >/dev/null
+fi

@@ -1,0 +1,18 @@
+/* Rofi — Balcony (based on adi1090x's style used in github.com/1amSimp1e/dots) */
+
+configuration {
+    modi:                 "drun,run,window";
+    show-icons:           true;
+    icon-theme:           "Papirus-Dark";
+    display-drun:         "󰍉";
+    display-run:          "󰆍";
+    display-window:       "󰖶";
+    drun-display-format:  "{name}";
+    window-format:        "{w} · {c} · {t}";
+    terminal:             "alacritty";
+    matching:             "fuzzy";
+    sort:                 true;
+    normal-window:        true;   /* a real window → Hyprland draws squircle corners, blur, border */
+}
+
+@import "balcony.rasi"

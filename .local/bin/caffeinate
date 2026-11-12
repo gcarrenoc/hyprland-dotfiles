@@ -1,0 +1,184 @@
+#!/usr/bin/env bash
+# caffeinate — keep the screen and/or computer awake (macOS-style) on GNOME.
+#
+#   caffeinate                 pick duration and mode with fzf
+#   caffeinate 2h              screen + system awake for 2 hours (also: 45m, 1h30m, inf)
+#   caffeinate -s 5h           system awake only (screen may still turn off and lock)
+#   caffeinate status          show what's active and time left
+#   caffeinate stop            stop it now
+#   (GNOME: gnome-session-inhibit · Hyprland: systemd-inhibit, honoured by hypridle)
+#
+# Runs in the background as the systemd user unit "caffeinate", so it keeps
+# working after you close the terminal. Uses GNOME's own inhibitor
+# (gnome-session-inhibit), the same mechanism GNOME apps use.
+set -euo pipefail
+
+UNIT=caffeinate
+FZF_OPTS=(--height=~40% --layout=reverse --border=rounded --no-info --cycle
+  --color='bg+:#403e41,fg+:#fcfcfa,hl:#ffd866,hl+:#ffd866,pointer:#ffd866,prompt:#78dce8,header:#939293,border:#727072')
+
+is_active() { systemctl --user is-active --quiet "$UNIT"; }
+
+unit_env() { # print value of an environment variable stored on the unit
+  systemctl --user show "$UNIT" -p Environment --value 2>/dev/null | tr ' ' '\n' | sed -n "s/^$1=//p"
+}
+
+human() { # seconds -> "1h 05m"
+  local s=$1 h m
+  h=$((s / 3600)); m=$(((s % 3600) / 60))
+  if ((h > 0)); then printf '%dh %02dm' "$h" "$m"; else printf '%dm' "$m"; fi
+}
+
+status_line() {
+  if ! is_active; then echo "Caffeinate is off."; return 1; fi
+  local end mode label
+  end=$(unit_env CAFFEINATE_END); mode=$(unit_env CAFFEINATE_MODE)
+  [[ $mode == system ]] && label="system awake" || label="screen + system awake"
+  if [[ $end == inf ]]; then
+    echo "Caffeinate is on: $label, indefinitely."
+  else
+    echo "Caffeinate is on: $label until $(date -d "@$end" +%H:%M) ($(human $((end - $(date +%s)))) left)."
+  fi
+}
+
+parse_duration() { # 2h, 45m, 1h30m, 90 (minutes), inf -> seconds or "inf"
+  local d=${1,,}
+  case $d in
+    inf | infinite | infinity | forever | ∞) echo inf; return ;;
+  esac
+  if [[ $d =~ ^[0-9]+$ ]]; then echo $((d * 60)); return; fi
+  if [[ $d =~ ^(([0-9]+)h)?(([0-9]+)m)?$ ]] && [[ -n ${BASH_REMATCH[2]}${BASH_REMATCH[4]} ]]; then
+    echo $(( ${BASH_REMATCH[2]:-0} * 3600 + ${BASH_REMATCH[4]:-0} * 60 )); return
+  fi
+  echo "caffeinate: invalid duration '$1' (examples: 30m, 2h, 1h30m, inf)" >&2
+  exit 2
+}
+
+start() { # $1 = seconds|inf, $2 = full|system
+  local secs=$1 mode=$2 end until_txt what reason
+  is_active && systemctl --user stop "$UNIT"
+  if [[ $mode == system ]]; then
+    what=(--inhibit=suspend); reason="Keeping the system awake"
+  else
+    what=(--inhibit=idle --inhibit=suspend); reason="Keeping the screen and system awake"
+  fi
+  if [[ $secs == inf ]]; then
+    end=inf; until_txt="indefinitely"
+  else
+    end=$(($(date +%s) + secs)); until_txt="until $(date -d "@$end" +%H:%M)"
+  fi
+  if [[ ${XDG_CURRENT_DESKTOP:-} == *GNOME* ]]; then
+    # GNOME: its own session inhibitor
+    if [[ $secs == inf ]]; then
+      cmd=(gnome-session-inhibit --app-id=caffeinate --reason="$reason" "${what[@]}" --inhibit-only)
+    else
+      cmd=(gnome-session-inhibit --app-id=caffeinate --reason="$reason" "${what[@]}" sleep "$secs")
+    fi
+  else
+    # Hyprland & others: systemd inhibitor (hypridle honours "idle")
+    [[ $mode == system ]] && sd_what=sleep || sd_what=idle:sleep
+    [[ $secs == inf ]] && hold=(sleep infinity) || hold=(sleep "$secs")
+    cmd=(systemd-inhibit --what="$sd_what" --who=caffeinate --why="$reason" --mode=block "${hold[@]}")
+  fi
+  systemd-run --user --quiet --collect --unit="$UNIT" \
+    --description="Caffeinate ($until_txt)" \
+    --setenv=CAFFEINATE_END="$end" --setenv=CAFFEINATE_MODE="$mode" \
+    --property=ExecStopPost="-notify-send -a Caffeinate -i weather-clear 'Caffeinate ended' 'Normal screen and sleep settings are back.'" \
+    --property=ExecStopPost="-pkill -RTMIN+8 -x waybar" \
+    "${cmd[@]}"
+  refresh_bar
+  command -v notify-send >/dev/null && notify-send -a Caffeinate -i weather-clear "Caffeinate on" "$reason $until_txt." || true
+  status_line
+}
+
+stop() {
+  if is_active; then systemctl --user stop "$UNIT"; echo "Caffeinate stopped."; else echo "Caffeinate is off."; fi
+  refresh_bar
+}
+
+refresh_bar() { pkill -RTMIN+8 -x waybar 2>/dev/null || true; }
+
+toggle() { # Waybar left-click: off → awake indefinitely, on → off
+  if is_active; then stop >/dev/null; else start inf full >/dev/null; fi
+}
+
+pick() { # Waybar right-click: choose duration and mode with rofi
+  local r=(env -u WAYLAND_DISPLAY rofi -dmenu -i -no-custom -theme-str "window { width: 380px; } listview { lines: 7; fixed-height: false; } textbox { horizontal-align: 0.5; }")
+  local options=("30 minutes" "1 hour" "2 hours" "5 hours" "∞ Indefinitely" "Custom…")
+  is_active && options+=("■ Stop caffeinate")
+  local choice dur mode
+  choice=$(printf '%s\n' "${options[@]}" | "${r[@]}" -p "☕" -mesg "$(status_line || true)") || return 0
+  case $choice in
+    "30 minutes") dur=1800 ;; "1 hour") dur=3600 ;; "2 hours") dur=7200 ;; "5 hours") dur=18000 ;;
+    "∞ Indefinitely") dur=inf ;;
+    "Custom…")
+      dur=$(env -u WAYLAND_DISPLAY rofi -dmenu -p "☕" -mesg "Duration, e.g. 45m, 3h, 1h30m" -theme-str "window { width: 380px; } listview { lines: 0; }" </dev/null) || return 0
+      dur=$(parse_duration "$dur" 2>/dev/null) || { notify-send -a Caffeinate "Invalid duration" "Use e.g. 45m, 3h, 1h30m"; return 0; } ;;
+    "■ Stop caffeinate") stop >/dev/null; return 0 ;;
+    *) return 0 ;;
+  esac
+  choice=$(printf '%s\n' "Screen + system awake" "System only (screen may turn off and lock)" |
+    "${r[@]}" -p "☕" -mesg "What should stay awake?") || return 0
+  [[ $choice == System* ]] && mode=system || mode=full
+  start "$dur" "$mode" >/dev/null
+}
+
+menu() {
+  command -v fzf >/dev/null || { echo "caffeinate: fzf is not installed" >&2; exit 1; }
+  local header choice dur mode
+  header=$(status_line || true)
+  local options=("30 minutes" "1 hour" "2 hours" "5 hours" "∞ Indefinitely" "Custom…")
+  is_active && options+=("■ Stop caffeinate")
+  choice=$(printf '%s\n' "${options[@]}" | fzf "${FZF_OPTS[@]}" --prompt='☕ Keep awake for › ' --header="$header") || exit 0
+  case $choice in
+    "30 minutes") dur=1800 ;;
+    "1 hour") dur=3600 ;;
+    "2 hours") dur=7200 ;;
+    "5 hours") dur=18000 ;;
+    "∞ Indefinitely") dur=inf ;;
+    "Custom…")
+      read -r -p "Duration (e.g. 45m, 3h, 1h30m): " dur
+      dur=$(parse_duration "$dur") || exit 2 ;;
+    "■ Stop caffeinate") stop; exit 0 ;;
+  esac
+  choice=$(printf '%s\n' "Screen + system awake" "System only (screen may turn off and lock)" |
+    fzf "${FZF_OPTS[@]}" --prompt='☕ Keep awake › ' --header="What should stay awake?") || exit 0
+  [[ $choice == System* ]] && mode=system || mode=full
+  start "$dur" "$mode"
+}
+
+dur_or_die() { local d; d=$(parse_duration "$1") || exit 2; echo "$d"; }
+
+tmux_segment() { # status-bar segment for tmux; prints nothing when off
+  is_active || return 0
+  local end mode color left
+  end=$(unit_env CAFFEINATE_END); mode=$(unit_env CAFFEINATE_MODE)
+  [[ $mode == system ]] && color="#78dce8" || color="#fc9867"
+  if [[ $end == inf ]]; then left="∞"; else left=$(human $((end - $(date +%s)))); fi
+  printf '#[fg=%s]\U000f0176 #[fg=#fcfcfa]%s  #[fg=#727072]│  ' "$color" "$left"
+}
+
+waybar_segment() { # JSON for Waybar (always shown: dim cup when off)
+  if ! is_active; then
+    printf '{"text":"\U000f06ca","class":"off","tooltip":"Caffeinate is off\\nClick: keep awake indefinitely\\nRight-click: choose time and mode"}\n'
+    return 0
+  fi
+  local end mode left
+  end=$(unit_env CAFFEINATE_END); mode=$(unit_env CAFFEINATE_MODE)
+  if [[ $end == inf ]]; then left="∞"; else left=$(human $((end - $(date +%s)))); fi
+  printf '{"text":"\U000f0176 %s","tooltip":"%s\\nClick: turn off\\nRight-click: change","class":"%s"}\n' "$left" "$(status_line)" "$mode"
+}
+
+case ${1:-} in
+  "") menu ;;
+  waybar) waybar_segment ;;
+  toggle) toggle ;;
+  pick) pick ;;
+  -h | --help) sed -n '2,14p' "$0" | sed 's/^# \{0,1\}//' ;;
+  status) status_line || true ;;
+  tmux) tmux_segment ;;
+  stop | off) stop ;;
+  -s) d=$(dur_or_die "${2:-inf}") || exit 2; start "$d" system ;;
+  -d) d=$(dur_or_die "${2:-inf}") || exit 2; start "$d" full ;;
+  *) d=$(dur_or_die "$1") || exit 2; start "$d" full ;;
+esac

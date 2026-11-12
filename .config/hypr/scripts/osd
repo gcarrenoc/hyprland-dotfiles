@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# On-screen display for volume / mic / brightness keys (dunst progress bar).
+#   osd volume up|down|mute    osd mic mute    osd brightness up|down
+set -u
+
+notify() { # $1 tag  $2 icon  $3 title  $4 value(0-100, optional)
+  local hint=()
+  [[ -n ${4:-} ]] && hint=(-h "int:value:$4")
+  notify-send -a osd -u low -t 1500 -i "$2" \
+    -h "string:x-dunst-stack-tag:$1" -h "string:x-canonical-private-synchronous:$1" \
+    "${hint[@]}" "$3"
+}
+
+vol_pct() { wpctl get-volume @DEFAULT_AUDIO_SINK@ | awk '{printf "%d", $2*100}'; }
+is_muted() { wpctl get-volume "$1" | grep -q MUTED; }
+
+case "${1:-} ${2:-}" in
+  "volume up")   wpctl set-mute @DEFAULT_AUDIO_SINK@ 0; wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+ ;;
+  "volume down") wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%- ;;
+  "volume mute") wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle ;;
+  "mic mute")
+    wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle
+    if is_muted @DEFAULT_AUDIO_SOURCE@; then notify mic microphone-sensitivity-muted "Microphone muted"
+    else notify mic audio-input-microphone "Microphone on"; fi
+    exit 0 ;;
+  "brightness up")   brightnessctl -q -e4 -n2 set 5%+ ;;
+  "brightness down") brightnessctl -q -e4 -n2 set 5%- ;;
+  *) echo "usage: osd volume up|down|mute | mic mute | brightness up|down" >&2; exit 2 ;;
+esac
+
+case $1 in
+  volume)
+    v=$(vol_pct)
+    if is_muted @DEFAULT_AUDIO_SINK@; then notify volume audio-volume-muted "Muted" 0
+    elif (( v < 34 )); then notify volume audio-volume-low "Volume  $v%" "$v"
+    elif (( v < 67 )); then notify volume audio-volume-medium "Volume  $v%" "$v"
+    else notify volume audio-volume-high "Volume  $v%" "$v"; fi ;;
+  brightness)
+    b=$(( $(brightnessctl get) * 100 / $(brightnessctl max) ))
+    notify brightness display-brightness "Brightness  $b%" "$b" ;;
+esac

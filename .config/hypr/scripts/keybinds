@@ -1,0 +1,49 @@
+#!/usr/bin/env python3
+"""Searchable list of all shortcuts (Super+I or Super+?).
+
+Built from the tables in ~/.config/hypr/README.md, so it always matches the
+README/PDF. Type to filter, Esc to close.
+"""
+import html, re, subprocess
+from pathlib import Path
+
+README = Path.home() / ".config/hypr/README.md"
+WANTED = ("Shortcuts", "The bar", "Terminal")   # level-2 sections to include
+
+
+def clean(t):
+    t = t.replace("\\|", "|")
+    t = re.sub(r"\*\*([^*]+)\*\*", r"\1", t)
+    t = re.sub(r"`([^`]+)`", r"\1", t)
+    return t.strip()
+
+
+rows, h2, h3 = [], "", ""
+for line in README.read_text(encoding="utf-8").splitlines():
+    if line.startswith("## "):
+        h2, h3 = line[3:].strip(), ""
+    elif line.startswith("### "):
+        h3 = line[4:].strip()
+    elif line.startswith("|") and not re.match(r"^\|\s*-", line) and h2.startswith(WANTED):
+        cells = [clean(c) for c in re.split(r"(?<!\\)\|", line.strip().strip("|"))]
+        if len(cells) < 2 or cells[0].lower() in ("keys", "item"):
+            continue
+        section = h3 or h2.split(" (")[0]
+        section = re.sub(r"\s*\(.*\)$", "", section)
+        rows.append((cells[0], cells[1], section))
+
+width = max(len(k) for k, _, _ in rows) + 3
+lines = [
+    f"<b>{html.escape(k.ljust(width))}</b>{html.escape(a)}"
+    f"   <span alpha='45%'>{html.escape(s)}</span>"
+    for k, a, s in rows
+]
+
+subprocess.run(
+    ["env", "-u", "WAYLAND_DISPLAY", "rofi", "-dmenu", "-i", "-markup-rows", "-no-custom", "-p", "\U000f030c",
+     "-mesg", "Shortcuts  ·  type to filter  ·  Esc to close",
+     "-theme-str",
+     "window { width: 1080px; } listview { lines: 20; spacing: 2px; } element { padding: 4px 10px; } "
+     "element selected.normal { background-color: #E1E7EB; text-color: #1C2228; } "
+     "textbox { text-color: #7b8d96; horizontal-align: 0.5; }"],
+    input="\n".join(lines), text=True, capture_output=True)

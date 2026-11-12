@@ -1,0 +1,12 @@
+/* Power menu — Balcony */
+@import "balcony.rasi"
+
+configuration { show-icons: false; }
+
+window   { width: 300px; }
+mainbox  { children: [ "message", "listview" ]; padding: 22px; }
+message  { background-color: transparent; padding: 0 4px 6px 4px; }
+textbox  { text-color: #4f6672; horizontal-align: 0.5; }
+listview { lines: 5; }
+element  { padding: 10px 14px; }
+element-text { horizontal-align: 0; }

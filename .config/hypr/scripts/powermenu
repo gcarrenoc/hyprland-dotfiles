@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Power menu (rofi). Used by Super+Shift+E and the ⏻ button in Waybar.
+lock="  Lock"; suspend="󰤄  Suspend"; logout="󰍃  Log out"; reboot="  Restart"; shutdown="⏻  Shut down"
+
+choice=$(printf '%s\n' "$lock" "$suspend" "$logout" "$reboot" "$shutdown" |
+  env -u WAYLAND_DISPLAY rofi -dmenu -i -p "" -theme ~/.config/rofi/powermenu.rasi \
+       -mesg "  $(uptime -p | sed 's/^up //')") || exit 0
+
+confirm() {
+  [[ $(printf 'Yes\nNo\n' | env -u WAYLAND_DISPLAY rofi -dmenu -p "" -theme ~/.config/rofi/powermenu.rasi -mesg "$1?") == Yes ]]
+}
+
+case $choice in
+  "$lock")     loginctl lock-session ;;
+  "$suspend")  systemctl suspend ;;
+  "$logout")   confirm "Log out" && uwsm stop ;;
+  "$reboot")   confirm "Restart" && systemctl reboot ;;
+  "$shutdown") confirm "Shut down" && systemctl poweroff ;;
+esac

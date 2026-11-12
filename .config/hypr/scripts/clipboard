@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Clipboard history (cliphist) in rofi. Enter = copy again, Alt+Delete = wipe history.
+sel=$(cliphist list | env -u WAYLAND_DISPLAY rofi -dmenu -i -p "󰅍" -display-columns 2 \
+  -kb-custom-1 "Alt+Delete" -mesg "Enter: copy   ·   Alt+Delete: clear history")
+case $? in
+  0)  [[ -n $sel ]] && cliphist decode <<<"$sel" | wl-copy ;;
+  10) cliphist wipe && notify-send -a Clipboard "Clipboard history cleared" ;;
+esac
