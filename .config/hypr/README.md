@@ -43,7 +43,7 @@ Hyprland 0.57. This is the only desktop now (GNOME was removed); the login scree
 | `Super + F` | Maximize (keeps the bar) |
 | `Super + Shift + F` | Real fullscreen |
 | `Super + X` | Swap split direction (side-by-side ↔ stacked) |
-| `Super + P` | Pseudo-tile (keep window's own size inside its tile) |
+| `Super + P` | Displays: Extend · Mirror · External only · Laptop only (also pops up when you plug in a monitor / projector) |
 | `Super + left-drag` | Move window with the mouse |
 | `Super + right-drag` | Resize window with the mouse |
 
@@ -107,6 +107,7 @@ App indicators (1Password, Insync, TickTick, Betterbird, ZapZap, Bluetooth, netw
 - **Lid / suspend:** the screen is locked before sleeping.
 - **Workspaces are a row** (like GNOME / macOS Spaces): workspaces I … N (up to X) always exist, **empty ones stay** until you remove them (Super+Ctrl+Q), there are never gaps, and N is remembered across logins. Add one with **+** or by going past the end. Keys, Super+scroll, the 4-finger swipe and the bar all follow the same rule. Logic: `~/.config/hypr/workspaces.lua`.
 - **Night light:** on at sunset, off at sunrise (timer `nightlight-auto.timer`, checks every 5 min). Location for the sun times: `LAT/LON` in `~/.config/hypr/scripts/suntimes`.
+- **Battery:** notification at 15 %, urgent one at 5 %, suspends at 3 % (`power-watch.timer`, every minute). On battery the blur is lighter (1 pass) to save power; on the charger it's back to 3.
 - **App activation:** clicking a notification or link takes you to that app's window, switching workspace if needed.
 - **Apps at login:** everything in `~/.config/autostart` (1Password, Insync, TickTick, Betterbird,
   ZapZap, Bluetooth, network applet).
@@ -125,6 +126,18 @@ tmux prefix is `Ctrl + Space` (or `Ctrl + B`).
 | `prefix $` | Rename session |
 | `prefix r` | Reload tmux config |
 
+## Backup (dotfiles)
+
+Your config is versioned in Git (`~/.dotfiles`, files stay in place) and pushed to the private GitHub repo **gcarrenoc/hyprland-dotfiles**.
+
+| Command | What it does |
+|---|---|
+| `dotfiles save "message"` | Save every change (and copies of the login-screen files) and push to GitHub |
+| `dotfiles status` / `dotfiles diff` | What changed since the last save |
+| `dotfiles log` | History |
+| `dotfiles restore <file>` | Undo changes to a file |
+| `dotfiles add <file>` | Start tracking a new file |
+
 ## Files
 
 | What | Where |
@@ -132,7 +145,7 @@ tmux prefix is `Ctrl + Space` (or `Ctrl + B`).
 | Hyprland (keys, look, rules) | `~/.config/hypr/hyprland.lua` — saved changes apply instantly; no-gap workspace logic in `~/.config/hypr/workspaces.lua` |
 | Wallpaper | `~/.config/hypr/hyprpaper.conf`, image in `~/.config/hypr/wallpapers/` |
 | Lock screen / idle timings | `~/.config/hypr/hyprlock.conf`, `~/.config/hypr/hypridle.conf` |
-| Helper scripts | `~/.config/hypr/scripts/` (launcher, spotlight, windows, keybinds, nightlight + suntimes, osd, screenshot, clipboard, powermenu) |
+| Helper scripts | `~/.config/hypr/scripts/` (launcher, spotlight, windows, keybinds, display, power-watch, nightlight + suntimes, osd, screenshot, clipboard, powermenu) |
 | Bar | `~/.config/waybar/config.jsonc`, `~/.config/waybar/style.css` |
 | Launcher / power menu | `~/.config/rofi/` |
 | Notifications | `~/.config/dunst/dunstrc` |
