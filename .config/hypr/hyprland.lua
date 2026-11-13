@@ -209,6 +209,22 @@ hl.bind(M .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
 -- Workspaces
 -- No gaps: workspace N only exists if 1…N-1 do (see workspaces.lua)
 WS = dofile(HOME .. "/.config/hypr/workspaces.lua")   -- global, so Waybar can call WS.step() via hyprctl
+
+-- Autostart homes: right after login, the first TickTick window goes to X and the
+-- first Betterbird window to IX (you stay where you are). Later windows open normally.
+AUTOSTART_HOME = { ticktick = 10, betterbird = 9, ["eu.betterbird.betterbird"] = 9 }
+AUTOSTART_PLACED, AUTOSTART_SINCE = {}, nil          -- armed only at login (not on config reload)
+hl.on("hyprland.start", function() AUTOSTART_SINCE = os.time() end)
+hl.on("window.open", function(w)
+    if not w or not AUTOSTART_SINCE or os.time() - AUTOSTART_SINCE > 180 then return end
+    local cls = ((w.class ~= nil and w.class ~= "") and w.class or (w.initial_class or "")):lower()
+    local ws = AUTOSTART_HOME[cls]
+    local app = (ws == 9) and "betterbird" or cls
+    if ws and not AUTOSTART_PLACED[app] then
+        AUTOSTART_PLACED[app] = true
+        WS.send_window(w.address, ws)
+    end
+end)
 for i = 1, 10 do
     local key = i % 10
     hl.bind(M .. " + " .. key,         function() WS.go(i) end)

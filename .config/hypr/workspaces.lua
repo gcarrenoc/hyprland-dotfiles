@@ -110,6 +110,12 @@ function W.send(n)                              -- Super+Shift+N: exactly worksp
     end
 end
 
+-- move a given window (by address) to workspace n exactly, without following it
+function W.send_window(address, n)
+    local target = grow_to(n)
+    hl.dispatch(hl.dsp.window.move({ window = "address:" .. address, workspace = target, follow = false }))
+end
+
 function W.carry(d)
     local here = current()
     local target = ensure(here + d)
