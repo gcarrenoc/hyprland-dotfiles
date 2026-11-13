@@ -1,0 +1,85 @@
+#!/usr/bin/env python3
+"""Rebuild ~/.config/hypr/README.pdf from README.md (styled cheat sheet, printed by headless Chrome)."""
+import html, re, subprocess, tempfile
+from pathlib import Path
+
+SRC = Path.home() / ".config/hypr/README.md"
+PDF = SRC.with_suffix(".pdf")
+lines = SRC.read_text(encoding="utf-8").splitlines()
+
+
+def inline(t, keys=False):
+    t = html.escape(t, quote=False).replace("\\|", "|")
+    t = re.sub(r"`([^`]+)`", (r"<kbd>\1</kbd>" if keys else r"<code>\1</code>"), t)
+    t = re.sub(r"\*\*([^*]+)\*\*", r"<b>\1</b>", t)
+    return re.sub(r"\[([^\]]+)\]\(([^)]+)\)", r'<a href="\2">\1</a>', t)
+
+
+def cells(l):
+    return [c.strip() for c in re.split(r"(?<!\\)\|", l.strip().strip("|"))]
+
+
+body, para, items, i = [], [], [], 0
+
+
+def flush():
+    global para, items
+    if para:
+        body.append(f"<p>{inline(' '.join(para))}</p>"); para = []
+    if items:
+        body.append("<ul>" + "".join(f"<li>{inline(x)}</li>" for x in items) + "</ul>"); items = []
+
+
+while i < len(lines):
+    l = lines[i]
+    if l.startswith("|"):
+        flush()
+        head = cells(l); i += 2; rows = []
+        while i < len(lines) and lines[i].startswith("|"):
+            rows.append(cells(lines[i])); i += 1
+        keys = head[0].lower() in ("keys", "item", "command")
+        t = ["<table><thead><tr>" + "".join(f"<th>{inline(h)}</th>" for h in head) + "</tr></thead><tbody>"]
+        for r in rows:
+            t.append("<tr>" + "".join(f'<td class="{"k" if j == 0 else "a"}">{inline(c, keys and j == 0)}</td>'
+                                      for j, c in enumerate(r)) + "</tr>")
+        body.append("".join(t) + "</tbody></table>"); continue
+    m = re.match(r"^(#{1,3}) (.*)", l)
+    if m:
+        flush(); body.append(f"<h{len(m.group(1))}>{inline(m.group(2))}</h{len(m.group(1))}>")
+    elif l.startswith("- "):
+        if para: flush()
+        items.append(l[2:])
+    elif l.startswith("  ") and items:
+        items[-1] += " " + l.strip()
+    elif not l.strip():
+        flush()
+    else:
+        para.append(l.strip())
+    i += 1
+flush()
+
+CSS = """
+@page { size: A4; margin: 12mm 13mm; }
+:root { --ink:#1c2228; --muted:#6b7c86; --steel:#4f6672; --line:#d9e0e5; --soft:#f2f5f7; --key:#e6ecf0; }
+body { font-family: "Fira Sans", sans-serif; font-size: 9.6pt; color: var(--ink); line-height: 1.35; margin: 0; }
+h1 { font-size: 20pt; font-weight: 600; margin: 0 0 2mm; } h1 + p { color: var(--muted); margin-top: 0; }
+h2 { font-size: 13pt; font-weight: 600; color: var(--steel); margin: 5mm 0 2mm; padding-bottom: 1.2mm;
+     border-bottom: 1.5px solid var(--line); break-after: avoid; }
+h3 { font-size: 10.5pt; font-weight: 600; margin: 4mm 0 1.5mm; break-after: avoid; }
+p, ul { margin: 1.5mm 0; } ul { padding-left: 5mm; } li { margin: .8mm 0; } a { color: var(--steel); text-decoration: none; }
+table { width: 100%; border-collapse: collapse; margin: 1mm 0 2mm; } thead { display: table-header-group; } tr { break-inside: avoid; }
+th { text-align: left; font-weight: 600; font-size: 8.4pt; text-transform: uppercase; letter-spacing: .5px; color: var(--muted);
+     padding: 1.2mm 2mm; border-bottom: 1px solid var(--line); }
+td { padding: 1mm 2mm; border-bottom: 1px solid var(--soft); vertical-align: top; } td.k { width: 36%; white-space: nowrap; }
+kbd, code { font-family: "SF Mono", monospace; font-size: 8.4pt; }
+kbd { background: var(--key); border: 1px solid #cfd8de; border-bottom-width: 2px; border-radius: 4px; padding: .2mm 1.5mm; }
+code { background: var(--soft); border-radius: 3px; padding: .1mm 1mm; color: var(--steel); } td.a code { white-space: nowrap; }
+"""
+with tempfile.TemporaryDirectory() as tmp:
+    page = Path(tmp) / "readme.html"
+    page.write_text(f'<!doctype html><html><head><meta charset="utf-8"><title>Hyprland shortcuts</title>'
+                    f"<style>{CSS}</style></head><body>{''.join(body)}</body></html>", encoding="utf-8")
+    subprocess.run(["google-chrome-stable", "--headless=new", "--disable-gpu", "--no-first-run",
+                    f"--user-data-dir={tmp}/chrome", "--no-pdf-header-footer", f"--print-to-pdf={PDF}",
+                    page.as_uri()], capture_output=True, timeout=120)
+print(f"{PDF} ({PDF.stat().st_size // 1024} KB)")
