@@ -44,6 +44,6 @@ subprocess.run(
      "-mesg", "Shortcuts  ·  type to filter  ·  Esc to close",
      "-theme-str",
      "window { width: 1080px; } listview { lines: 20; spacing: 2px; } element { padding: 4px 10px; } "
-     "element selected.normal { background-color: #E1E7EB; text-color: #1C2228; } "
-     "textbox { text-color: #7b8d96; horizontal-align: 0.5; }"],
+     "element selected.normal { background-color: @background-alt; text-color: @foreground; } "
+     "textbox { text-color: @muted; horizontal-align: 0.5; }"],
     input="\n".join(lines), text=True, capture_output=True)

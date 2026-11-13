@@ -63,7 +63,7 @@ r = subprocess.run(
      "-mesg", "↵ go to window",
      "-selected-row", "1" if len(rows) > 1 else "0",
      "-theme-str", "window { width: 640px; } listview { lines: 8; fixed-height: false; } "
-                   "textbox { text-color: #7b8d96; horizontal-align: 0.5; }"],
+                   "textbox { text-color: @muted; horizontal-align: 0.5; }"],
     input="\n".join(rows), capture_output=True, text=True)
 choice = r.stdout.rstrip("\n")
 if r.returncode == 0 and choice in by_label:

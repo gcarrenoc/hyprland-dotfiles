@@ -12,6 +12,12 @@ local app      = "uwsm app -- "                      -- launch as a proper syste
 local terminal = app .. "alacritty --config-file " .. HOME .. "/.config/alacritty/balcony.toml"
 local scripts  = HOME .. "/.config/hypr/scripts/"
 
+-- colours generated from the wallpaper (scripts/theme); fallback if missing
+local okc, C = pcall(dofile, HOME .. "/.config/hypr/colors.lua")
+if not okc or type(C) ~= "table" then
+    C = { active = { "rgba(f8ab59ff)", "rgba(ed7626ff)" }, inactive = "rgba(01185988)" }
+end
+
 --------------------
 ---- MONITORS ----
 --------------------
@@ -25,7 +31,7 @@ hl.monitor({ output = "",      mode = "preferred",    position = "auto", scale =
 -- Blueman, nm-applet) are started by uwsm automatically.
 hl.on("hyprland.start", function()
     hl.exec_cmd(app .. "waybar")
-    hl.exec_cmd(scripts .. "terminal-colors; " .. app .. "hyprpaper")   -- terminal colours follow the wallpaper
+    hl.exec_cmd(scripts .. "theme; " .. app .. "hyprpaper")   -- whole theme follows the wallpaper
     hl.exec_cmd(app .. "hypridle")
     hl.exec_cmd(app .. "dunst")
     hl.exec_cmd("sh -c '" .. app .. "hyprsunset -i & sleep 1; " .. scripts .. "nightlight restore; " .. scripts .. "nightlight auto'")   -- night light: last state, then follow the sun
@@ -45,8 +51,8 @@ hl.config({
         gaps_out    = { top = 3, right = 5, bottom = 5, left = 5 },   -- small gap under the bar
         border_size = 3,
         col = {
-            active_border   = { colors = { "rgba(f8ab59ff)", "rgba(ed7626ff)" }, angle = 45 },  -- orange = complement of the wallpaper blue (hue 211° → 31°)
-            inactive_border = "rgba(01185988)",   -- deep navy
+            active_border   = { colors = C.active, angle = 45 },   -- complement of the wallpaper hue
+            inactive_border = C.inactive,
         },
         resize_on_border = true,
         layout = "dwindle",

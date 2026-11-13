@@ -126,6 +126,22 @@ tmux prefix is `Ctrl + Space` (or `Ctrl + B`).
 | `prefix $` | Rename session |
 | `prefix r` | Reload tmux config |
 
+## Wallpaper & colours
+
+Everything follows the wallpaper's colours: bar, window borders, launcher & menus,
+notifications, lock screen and terminal.
+
+| Command | What it does |
+|---|---|
+| `wallpaper ~/path/image.jpg` | Set the wallpaper and recolour the whole theme from it |
+| `wallpaper ~/path/image.jpg --login` | Same, and also use it on the login screen (asks for your password) |
+| `wallpaper` | Show the current wallpaper |
+
+How the colours are picked: the image's most vivid colour sets the **main hue** (dark tinted
+bar, tinted light menus, terminal background); its **complementary colour** is the accent
+(window border, "on" states of caffeinate / night light). Changing the wallpaper in any other
+way is picked up at the next login. Generator: `~/.config/hypr/scripts/theme`.
+
 ## Backup (dotfiles)
 
 Your config is versioned in Git (`~/.dotfiles`, files stay in place) and pushed to the private GitHub repo **gcarrenoc/hyprland-dotfiles**.
@@ -143,7 +159,7 @@ Your config is versioned in Git (`~/.dotfiles`, files stay in place) and pushed 
 | What | Where |
 |---|---|
 | Hyprland (keys, look, rules) | `~/.config/hypr/hyprland.lua` — saved changes apply instantly; no-gap workspace logic in `~/.config/hypr/workspaces.lua` |
-| Wallpaper | `~/.config/hypr/hyprpaper.conf`, image in `~/.config/hypr/wallpapers/` |
+| Wallpaper & colours | `wallpaper <image>`; generated colour files: `waybar/colors.css`, `hypr/colors.lua`, `rofi/colors.rasi`, `dunst/dunstrc.d/90-colors.conf`, `hypr/hyprlock-colors.conf`, `alacritty/wallpaper-colors.toml`, `tmux/wallpaper.conf` |
 | Lock screen / idle timings | `~/.config/hypr/hyprlock.conf`, `~/.config/hypr/hypridle.conf` |
 | Helper scripts | `~/.config/hypr/scripts/` (launcher, spotlight, windows, keybinds, display, power-watch, nightlight + suntimes, osd, screenshot, clipboard, powermenu) |
 | Bar | `~/.config/waybar/config.jsonc`, `~/.config/waybar/style.css` |

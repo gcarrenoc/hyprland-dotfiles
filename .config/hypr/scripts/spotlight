@@ -25,7 +25,7 @@ EXCLUDE = ["anaconda3", "miniconda3", "node_modules", "__pycache__", ".venv", "v
            "build", "dist", "target", "Trash"]
 DRIVES = sorted(HOME.glob("Insync/*/Google Drive"), key=lambda d: -len(str(d)))
 THEME = ("window { width: 820px; } listview { lines: 10; } "
-         "textbox { text-color: #7b8d96; horizontal-align: 0.5; }")
+         "textbox { text-color: @muted; horizontal-align: 0.5; }")
 SEP = "\t"
 
 

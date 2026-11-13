@@ -1,13 +1,7 @@
-/* Light steel colours (light mode) */
-* {
-    background:     #F2F5F7EE;
-    background-alt: #E1E7EBFF;
-    foreground:     #1C2228;
-    selected:       #4F6672;
-    active:         #C5CED5;
-    urgent:         #B24A4A;
-    glow:           #C5CED5;
+/* Colours: colors.rasi (generated from the wallpaper by ~/.config/hypr/scripts/theme) */
+@import "colors.rasi"
 
+* {
     font:             "SF Mono, JetBrainsMono Nerd Font 11";
     background-color: transparent;
     text-color:       @foreground;
@@ -39,7 +33,7 @@ inputbar {
 prompt { text-color: @selected; }
 entry {
     placeholder:       "Search…";
-    placeholder-color: #7b8d96;
+    placeholder-color: @muted;
     cursor:            text;
 }
 
@@ -67,8 +61,8 @@ element normal.normal     { background-color: transparent; text-color: @foregrou
 element alternate.normal  { background-color: transparent; text-color: @foreground; }
 element normal.urgent     { text-color: @urgent; }
 element normal.active     { text-color: @selected; }
-element selected.normal   { background-color: @selected; text-color: #FFFFFF; }
-element selected.urgent   { background-color: @urgent;   text-color: #FFFFFF; }
+element selected.normal   { background-color: @selected; text-color: @on-selected; }
+element selected.urgent   { background-color: @urgent;   text-color: @on-selected; }
 element selected.active   { background-color: @active;   text-color: @foreground; }
 element-icon { size: 24px; cursor: inherit; }
 element-text { vertical-align: 0.5; cursor: inherit; text-color: inherit; }
@@ -81,4 +75,4 @@ button {
     text-color:       @foreground;
     cursor:           pointer;
 }
-button selected { background-color: @selected; text-color: #FFFFFF; }
+button selected { background-color: @selected; text-color: @on-selected; }

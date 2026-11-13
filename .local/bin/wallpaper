@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# wallpaper — set a wallpaper and make the whole theme follow its colours.
+#   wallpaper <image>          set it (desktop + lock screen), recolour bar, borders,
+#                              menus, notifications, lock screen and terminal
+#   wallpaper <image> --login  also use it on the login screen (asks for your password)
+#   wallpaper                  show the current wallpaper
+set -euo pipefail
+DIR="$HOME/.local/share/backgrounds"
+if [[ $# -eq 0 ]]; then readlink -f "$HOME/.config/hypr/wallpapers/current.jpg"; exit 0; fi
+src=$(readlink -f "$1") || { echo "wallpaper: '$1' not found" >&2; exit 1; }
+[[ -f $src ]] || { echo "wallpaper: '$1' is not a file" >&2; exit 1; }
+file --mime-type -b "$src" | grep -q '^image/' || { echo "wallpaper: '$1' is not an image" >&2; exit 1; }
+
+mkdir -p "$DIR"
+dest="$DIR/$(basename "$src")"
+[[ $src == "$dest" ]] || cp -f "$src" "$dest"          # local copy: survives moving the original
+gsettings set org.gnome.desktop.background picture-uri "file://$dest"
+gsettings set org.gnome.desktop.background picture-uri-dark "file://$dest"
+
+"$HOME/.config/hypr/scripts/theme" --force           # link, restart hyprpaper, recolour everything
+
+if [[ ${2:-} == --login ]]; then
+  pkexec install -m644 "$dest" /usr/share/backgrounds/regreet/wallpaper.jpg && echo "Login screen wallpaper updated."
+fi
+notify-send -a Wallpaper -i "$dest" "Wallpaper set" "Theme updated from $(basename "$dest")" 2>/dev/null || true

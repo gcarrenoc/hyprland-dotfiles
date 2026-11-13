@@ -1,14 +1,6 @@
-/* Waybar — Balcony layout, colours sampled from the jellyfish wallpaper */
+/* Waybar — Balcony layout; colours follow the wallpaper (colors.css) */
 
-@define-color base   rgba(0, 11, 37, 0.78);  /* abyss navy            #000b25 */
-@define-color pill   rgba(1, 24, 89, 0.85);  /* deep navy             #011859 */
-@define-color slate  #013096;                /* cobalt (borders)              */
-@define-color muted  #4f86cf;                /* dim blue (inactive)           */
-@define-color steel  #63bcf6;                /* jellyfish glow (icons)        */
-@define-color light  #9ad3fb;                /* pale glow                     */
-@define-color text   #d8eefe;                /* text                          */
-@define-color star   #ffffff;                /* active                        */
-@define-color alert  #ff7a8a;                /* only muted / critical         */
+@import url("colors.css");   /* generated from the wallpaper by ~/.config/hypr/scripts/theme */
 
 * {
   font-family: "SF Mono", "JetBrainsMono Nerd Font", "Noto Color Emoji";
@@ -25,7 +17,7 @@ window#waybar {
 }
 
 tooltip {
-  background-color: #000b25;
+  background-color: @tooltip;
   border: 1px solid @slate;
   border-radius: 15px;
 }
@@ -78,10 +70,10 @@ tooltip label {
 #tray > .passive { -gtk-icon-effect: dim; }
 #tray > .needs-attention { background-color: @alert; border-radius: 6px; }
 
-#custom-caffeinate        { color: #f8ab59; }          /* on: screen + system awake (amber) */
+#custom-caffeinate        { color: @accent; }          /* on: screen + system awake (amber) */
 #custom-caffeinate.system { color: @steel; }           /* on: system only */
 #custom-caffeinate.off    { color: alpha(@muted, 0.8); } /* off: dim cup */
-#custom-nightlight.on     { color: #f8ab59; }          /* night light on (amber) */
+#custom-nightlight.on     { color: @accent; }          /* night light on (amber) */
 #custom-nightlight.off    { color: alpha(@muted, 0.8); } /* off: dim moon */
 
 /* network · volume · brightness · battery are one joined pill */
