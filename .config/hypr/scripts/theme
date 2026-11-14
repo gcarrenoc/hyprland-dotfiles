@@ -126,7 +126,7 @@ TMUX.write_text(note + f"""
 # Accent: wallpaper blue normally, yellow while the prefix is pressed, magenta in copy mode
 set -g @accent "#{{?client_prefix,{bright['yellow']},#{{?pane_in_mode,{bright['magenta']},{accent}}}}}"
 set -g status-style "bg=default,fg={white}"
-set -g status-left "#[fg=#{{E:@accent}},bg=default]#[fg={bg},bg=#{{E:@accent}},bold] #S#[fg=#{{E:@accent}},bg=default,nobold] "
+set -g status-left "#[fg=#{{E:@accent}},bg=default]#[fg={bg},bg=#{{E:@accent}},bold]{chr(0xF489)} #S#[fg=#{{E:@accent}},bg=default,nobold] "
 setw -g window-status-format " #[fg={muted}]#I #[fg={white}]#W#{{?window_zoomed_flag,#[fg={normal['cyan']}] \U000f0349,}}#{{?window_activity_flag,#[fg={normal['yellow']}] ,}} "
 setw -g window-status-current-format "#[fg={sel},bg=default]#[fg={accent},bg={sel},bold]#I #[fg={bwhite},nobold]#W#{{?window_zoomed_flag,#[fg={normal['cyan']}] \U000f0349,}}#[fg={sel},bg=default]"
 setw -g window-status-bell-style "fg={normal['red']}"
