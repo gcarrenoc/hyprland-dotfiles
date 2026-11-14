@@ -11,7 +11,8 @@
 3. Writes colour files for: terminal (alacritty/wallpaper-colors.toml,
    tmux/wallpaper.conf), bar (waybar/colors.css), window borders
    (hypr/colors.lua), launcher & menus (rofi/colors.rasi), notifications
-   (dunst/dunstrc.d/90-colors.conf), lock screen (hypr/hyprlock-colors.conf).
+   (dunst/dunstrc.d/90-colors.conf), lock screen (hypr/hyprlock-colors.conf),
+   password dialog (hypr/hyprtoolkit.conf).
 4. Reloads whatever is running. Dark bar, light menus (tinted), as designed.
 """
 import colorsys, hashlib, os, re, subprocess, sys
@@ -29,6 +30,7 @@ OUT = {
     "rofi": HOME / ".config/rofi/colors.rasi",
     "dunst": HOME / ".config/dunst/dunstrc.d/90-colors.conf",
     "lock": HOME / ".config/hypr/hyprlock-colors.conf",
+    "toolkit": HOME / ".config/hypr/hyprtoolkit.conf",   # password dialog (hyprpolkitagent) & other hypr* apps
 }
 
 
@@ -217,6 +219,27 @@ OUT["lock"].write_text(note + "".join(f"${k} = rgba({v[1:]}{a})\n" for k, v, a i
     ("lock_ok1", L["sel"], "ee"), ("lock_ok2", D["steel"], "ee"),
     ("lock_fail1", L["alert"], "ee"), ("lock_fail2", hls(355 / 360, 0.38, 0.5), "ee")]))
 
+def argb(c, a="ff"):
+    return f"0x{a}{c[1:]}"
+
+
+OUT["toolkit"].write_text(note + f"""
+# Light, tinted like the launcher / notifications
+background = {argb(L['bg'])}
+base = {argb(L['bg'])}
+alternate_base = {argb(L['alt'])}
+text = {argb(L['fg'])}
+bright_text = {argb('#ffffff')}
+accent = {argb(L['sel'])}
+accent_secondary = {argb(D['slate'])}
+link_text = {argb(L['sel'])}
+font_family = Fira Sans
+font_family_monospace = JetBrainsMono Nerd Font
+rounding_large = 19
+rounding_small = 10
+icon_theme = Papirus
+""")
+
 CACHE.parent.mkdir(parents=True, exist_ok=True)
 CACHE.write_text(key)
 
@@ -225,6 +248,7 @@ if run("pgrep", "-x", "waybar"):
     subprocess.run(["pkill", "-SIGUSR2", "-x", "waybar"])
 if run("pgrep", "-x", "dunst"):
     run("dunstctl", "reload")
+run("systemctl", "--user", "try-restart", "hyprpolkitagent.service")   # password dialog picks up colours
 if os.environ.get("HYPRLAND_INSTANCE_SIGNATURE") or run("pgrep", "-x", "Hyprland"):
     run("hyprctl", "reload")                    # borders (colors.lua is read by hyprland.lua)
 

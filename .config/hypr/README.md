@@ -129,7 +129,7 @@ tmux prefix is `Ctrl + Space` (or `Ctrl + B`).
 ## Wallpaper & colours
 
 Everything follows the wallpaper's colours: bar, window borders, launcher & menus,
-notifications, lock screen and terminal.
+notifications, lock screen, password dialog and terminal.
 
 | Command | What it does |
 |---|---|
@@ -159,7 +159,7 @@ Your config is versioned in Git (`~/.dotfiles`, files stay in place) and pushed 
 | What | Where |
 |---|---|
 | Hyprland (keys, look, rules) | `~/.config/hypr/hyprland.lua` — saved changes apply instantly; no-gap workspace logic in `~/.config/hypr/workspaces.lua` |
-| Wallpaper & colours | `wallpaper <image>`; generated colour files: `waybar/colors.css`, `hypr/colors.lua`, `rofi/colors.rasi`, `dunst/dunstrc.d/90-colors.conf`, `hypr/hyprlock-colors.conf`, `alacritty/wallpaper-colors.toml`, `tmux/wallpaper.conf` |
+| Wallpaper & colours | `wallpaper <image>`; generated colour files: `waybar/colors.css`, `hypr/colors.lua`, `rofi/colors.rasi`, `dunst/dunstrc.d/90-colors.conf`, `hypr/hyprlock-colors.conf`, `hypr/hyprtoolkit.conf` (password dialog), `alacritty/wallpaper-colors.toml`, `tmux/wallpaper.conf` |
 | Lock screen / idle timings | `~/.config/hypr/hyprlock.conf`, `~/.config/hypr/hypridle.conf` |
 | Helper scripts | `~/.config/hypr/scripts/` (launcher, spotlight, windows, keybinds, display, power-watch, nightlight + suntimes, osd, screenshot, clipboard, powermenu) |
 | Bar | `~/.config/waybar/config.jsonc`, `~/.config/waybar/style.css` |
