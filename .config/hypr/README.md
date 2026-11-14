@@ -95,7 +95,8 @@ show a small pop-up. They also work on the lock screen.
 | Speaker | Sound settings · right-click mutes · scroll changes volume |
 | Brightness | Scroll to change |
 | Battery | Click to show % |
-| Clock | Click for the date · hover for a calendar |
+| Date | Today's date · hover for a calendar |
+| Time | The time |
 | ⏻ | Power menu |
 
 App indicators (1Password, Insync, TickTick, ZapZap, Bluetooth, network…) are hidden behind the **‹** arrow on the right of the bar: click it to show or hide them.

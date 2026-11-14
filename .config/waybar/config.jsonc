@@ -6,7 +6,7 @@
   "spacing": 0,
 
   "modules-left":  ["custom/launcher", "hyprland/workspaces", "custom/newws"],
-  "modules-right": ["group/indicators", "custom/caffeinate", "custom/nightlight", "network", "pulseaudio", "backlight", "battery", "clock", "custom/power"],
+  "modules-right": ["group/indicators", "custom/caffeinate", "custom/nightlight", "network", "pulseaudio", "backlight", "battery", "clock#date", "clock", "custom/power"],
 
   "custom/launcher": {
     "format": "",
@@ -122,9 +122,9 @@
   },
 
 
-  "clock": {
-    "format": "{:%H:%M}",
-    "format-alt": "{:%a %d %b}",
+  // Date pill (hover: calendar) and time pill
+  "clock#date": {
+    "format": "{:%a %d %b}",
     "tooltip-format": "<big>{:%B %Y}</big>\n<tt><small>{calendar}</small></tt>",
     "calendar": {
       "mode": "month",
@@ -135,6 +135,11 @@
         "today": "<span color='#fb958b'><b><u>{}</u></b></span>"
       }
     }
+  },
+
+  "clock": {
+    "format": "{:%H:%M}",
+    "tooltip": false
   },
 
   "custom/power": {

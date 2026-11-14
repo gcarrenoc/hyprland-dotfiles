@@ -100,6 +100,8 @@ tooltip label {
   font-weight: bold;
 }
 
+#clock.date { font-weight: normal; color: @light; }
+
 #custom-power {
   color: @steel;
   margin-right: 12px;
