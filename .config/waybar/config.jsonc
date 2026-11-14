@@ -16,9 +16,36 @@
 
 
 
-  // Roman numerals; the current workspace is highlighted in cream
+  // Roman numerals + icons of the apps running on each workspace
   "hyprland/workspaces": {
-    "format": "{icon}",
+    "format": "{icon} {windows}",
+    "format-window-separator": " ",
+    "window-rewrite-default": "",
+    "window-rewrite": {
+      "class<google-chrome|chromium>": "",
+      "class<firefox>": "",
+      "class<Alacritty|fly-term|kitty>": "",
+      "class<ticktick>": "",
+      "class<obsidian|md.obsidian.Obsidian>": "󰠮",
+      "class<jetbrains-pycharm.*>": "󰌠",
+      "class<texstudio>": "󰈙",
+      "class<org.gnome.Nautilus>": "",
+      "class<org.pwmt.zathura|org.gnome.Papers>": "",
+      "class<discord|vesktop>": "󰙯",
+      "class<com.rtosta.zapzap>": "",
+      "class<com.stremio.Stremio|stremio|mpv|showtime|org.gnome.Showtime>": "",
+      "class<zoom>": "󰕧",
+      "class<com.obsproject.Studio>": "󰑊",
+      "class<org.inkscape.Inkscape>": "",
+      "class<gimp.*>": "",
+      "class<libreoffice.*|soffice>": "",
+      "class<sublime_text>": "",
+      "class<org.gnome.Calculator>": "",
+      "class<1Password>": "",
+      "class<it.mijorus.smile>": "",
+      "class<org.pulseaudio.pavucontrol>": "",
+      "class<org.gnome.Loupe>": ""
+    },
     "on-click": "activate",
     "on-scroll-up": "hyprctl dispatch 'function() WS.step(-1) end'",
     "on-scroll-down": "hyprctl dispatch 'function() WS.step(1) end'",
@@ -28,6 +55,7 @@
       "default": "·"
     }
   },
+
 
 
   // App indicators hidden in a drawer: click the arrow to show / hide them

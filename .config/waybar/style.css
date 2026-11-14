@@ -51,7 +51,7 @@ tooltip label {
 #custom-newws:hover { color: @star; }
 #workspaces button {
   color: @muted;
-  font-family: "SF Mono";
+  font-family: "SF Mono", "JetBrainsMono Nerd Font Propo";
   font-weight: bold;
   font-size: 15px;
   padding: 0 7px;

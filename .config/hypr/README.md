@@ -87,7 +87,7 @@ show a small pop-up. They also work on the lock screen.
 | Item | Click |
 |---|---|
 | Arch logo | App launcher (`Super + D`) |
-| I · II · III … | Workspaces in use — the current one is highlighted; click to switch, scroll to move |
+| I · II · III … | Workspaces, each with icons of the apps running on it — the current one is highlighted; click to switch, scroll to move |
 | + | Add a new empty workspace at the end and go there |
 | ☕ Coffee cup | Caffeinate. **Click:** keep awake indefinitely (click again = off) · **Right-click:** choose time (30 min … 5 h, ∞, custom) and mode (screen + system / system only). Dim cup = off, amber cup + time left = on. |
 | 🌙 Moon | Night light. **Turns on at sunset and off at sunrise automatically** (Valparaíso times, recalculated daily). **Click:** on / off by hand (respected until the next sunset/sunrise) · **Scroll:** warmer / cooler while on (2500–6000 K). Hover shows today's times. |
