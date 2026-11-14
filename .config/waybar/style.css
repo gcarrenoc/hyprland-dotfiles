@@ -50,22 +50,22 @@ tooltip label {
 #custom-newws { color: alpha(@muted, 0.7); font-family: "SF Mono"; font-size: 16px; padding: 0 6px; margin-left: 0; background: transparent; }
 #custom-newws:hover { color: @star; }
 #workspaces button {
-  color: @muted;
+  color: alpha(@muted, 0.55);                 /* empty workspace: dim */
   font-family: "SF Mono", "JetBrainsMono Nerd Font Propo";
   font-weight: bold;
   font-size: 15px;
-  padding: 0 7px;
+  padding: 0 9px;
+  margin: 3px 1px;
+  min-width: 18px;
+  border-radius: 6px;
   background: transparent;
   transition: all 0.2s ease-out;
 }
-#workspaces button.empty  { color: alpha(@muted, 0.5); }
-#workspaces button.active { color: @star; background: alpha(@steel, 0.16); border-radius: 6px; }
+#workspaces button:not(.empty) { color: @light; }      /* has apps: brighter */
+#workspaces button.active { color: @star; background: alpha(@steel, 0.18); }
 #workspaces button.urgent { color: @alert; }
 #workspaces button:hover  { background: alpha(@light, 0.10); box-shadow: none; }
 
-/* App-indicator drawer: one pill holding the ‹ arrow and (when open) the tray */
-#indicators { padding: 0 4px; }
-#custom-tray-toggle { color: @muted; font-size: 13px; padding: 0 8px; background: transparent; }
 #tray { padding: 0 6px 0 2px; background: transparent; }
 #tray > .passive { -gtk-icon-effect: dim; }
 #tray > .needs-attention { background-color: @alert; border-radius: 6px; }
