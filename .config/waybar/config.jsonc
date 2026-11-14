@@ -6,7 +6,7 @@
   "spacing": 0,
 
   "modules-left":  ["custom/launcher", "hyprland/workspaces", "custom/newws"],
-  "modules-right": ["group/indicators", "custom/caffeinate", "custom/nightlight", "network", "pulseaudio", "backlight", "battery", "clock#date", "clock", "custom/power"],
+  "modules-right": ["group/indicators", "custom/dnd", "custom/caffeinate", "custom/nightlight", "network", "pulseaudio", "backlight", "battery", "clock#date", "clock", "custom/power"],
 
   "custom/launcher": {
     "format": "",
@@ -84,6 +84,15 @@
   "tray": {
     "icon-size": 18,
     "spacing": 10
+  },
+
+  // Do not disturb: click = on/off (notifications wait while on)
+  "custom/dnd": {
+    "exec": "~/.config/hypr/scripts/dnd waybar",
+    "return-type": "json",
+    "interval": 10,
+    "signal": 10,
+    "on-click": "~/.config/hypr/scripts/dnd toggle"
   },
 
   // Caffeinate: click = keep awake indefinitely / turn off; right-click = choose time and mode

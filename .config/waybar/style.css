@@ -29,7 +29,7 @@ tooltip label {
 
 /* Pills */
 #custom-launcher, #workspaces,
-#indicators, #custom-caffeinate, #custom-nightlight, #clock, #custom-power,
+#indicators, #custom-dnd, #custom-caffeinate, #custom-nightlight, #clock, #custom-power,
 #network, #pulseaudio, #backlight, #battery {
   background-color: @pill;
   color: @text;
@@ -73,6 +73,8 @@ tooltip label {
 #custom-caffeinate        { color: @accent; }          /* on: screen + system awake (amber) */
 #custom-caffeinate.system { color: @steel; }           /* on: system only */
 #custom-caffeinate.off    { color: alpha(@muted, 0.8); } /* off: dim cup */
+#custom-dnd.on            { color: @accent; }          /* do not disturb on */
+#custom-dnd.off           { color: alpha(@muted, 0.8); }
 #custom-nightlight.on     { color: @accent; }          /* night light on (amber) */
 #custom-nightlight.off    { color: alpha(@muted, 0.8); } /* off: dim moon */
 
@@ -110,7 +112,7 @@ tooltip label {
 #custom-power:hover { color: @alert; }
 
 /* Icon pills: proportional Nerd Font so each icon gets its real width (centred) */
-#custom-launcher, #custom-tray-toggle, #custom-caffeinate, #custom-nightlight, #custom-power,
+#custom-launcher, #custom-tray-toggle, #custom-dnd, #custom-caffeinate, #custom-nightlight, #custom-power,
 #network, #pulseaudio, #backlight, #battery {
   font-family: "JetBrainsMono Nerd Font Propo", "SF Mono";
 }

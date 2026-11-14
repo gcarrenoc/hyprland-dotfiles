@@ -89,6 +89,7 @@ show a small pop-up. They also work on the lock screen.
 | Arch logo | App launcher (`Super + D`) |
 | I · II · III … | Workspaces, each with icons of the apps running on it — the current one is highlighted; click to switch, scroll to move |
 | + | Add a new empty workspace at the end and go there |
+| 🔔 Bell | **Do not disturb.** Click: on / off. While on, notifications wait silently (the bell is crossed out and shows how many are waiting); turning it off shows them. |
 | ☕ Coffee cup | Caffeinate. **Click:** keep awake indefinitely (click again = off) · **Right-click:** choose time (30 min … 5 h, ∞, custom) and mode (screen + system / system only). Dim cup = off, amber cup + time left = on. |
 | 🌙 Moon | Night light. **Turns on at sunset and off at sunrise automatically** (Valparaíso times, recalculated daily). **Click:** on / off by hand (respected until the next sunset/sunrise) · **Scroll:** warmer / cooler while on (2500–6000 K). Hover shows today's times. |
 | Wi-Fi | Network settings (`nmtui`) |
@@ -162,7 +163,7 @@ Your config is versioned in Git (`~/.dotfiles`, files stay in place) and pushed 
 | Hyprland (keys, look, rules) | `~/.config/hypr/hyprland.lua` — saved changes apply instantly; no-gap workspace logic in `~/.config/hypr/workspaces.lua` |
 | Wallpaper & colours | `wallpaper <image>`; generated colour files: `waybar/colors.css`, `hypr/colors.lua`, `rofi/colors.rasi`, `dunst/dunstrc.d/90-colors.conf`, `hypr/hyprlock-colors.conf`, `hypr/hyprtoolkit.conf` (password dialog), `alacritty/wallpaper-colors.toml`, `tmux/wallpaper.conf` |
 | Lock screen / idle timings | `~/.config/hypr/hyprlock.conf`, `~/.config/hypr/hypridle.conf` |
-| Helper scripts | `~/.config/hypr/scripts/` (launcher, spotlight, windows, keybinds, display, power-watch, nightlight + suntimes, osd, screenshot, clipboard, powermenu) |
+| Helper scripts | `~/.config/hypr/scripts/` (launcher, spotlight, windows, keybinds, dnd, display, power-watch, nightlight + suntimes, osd, screenshot, clipboard, powermenu) |
 | Bar | `~/.config/waybar/config.jsonc`, `~/.config/waybar/style.css` |
 | Launcher / power menu | `~/.config/rofi/` |
 | Notifications | `~/.config/dunst/dunstrc` |
