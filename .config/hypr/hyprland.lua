@@ -27,7 +27,7 @@ hl.monitor({ output = "",      mode = "preferred",    position = "auto", scale =
 -------------------
 ---- AUTOSTART ----
 -------------------
--- Apps from ~/.config/autostart (1Password, Insync, TickTick, Betterbird, ZapZap,
+-- Apps from ~/.config/autostart (1Password, Insync, TickTick, ZapZap,
 -- Blueman, nm-applet) are started by uwsm automatically.
 hl.on("hyprland.start", function()
     hl.exec_cmd(app .. "waybar")
