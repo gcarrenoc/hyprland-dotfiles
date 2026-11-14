@@ -9,7 +9,7 @@ Rectangle {
     width: 1920; height: 1200
     color: "black"
 
-    readonly property string mono: "JetBrainsMono Nerd Font"
+    readonly property string mono: "PaperMono Nerd Font"
     property string userName: userModel.lastUser
     property int sessionIndex: -1
     property bool failed: false

@@ -2,7 +2,7 @@
 @import "colors.rasi"
 
 * {
-    font:             "SF Mono, JetBrainsMono Nerd Font 11";
+    font:             "PaperMono Nerd Font 11";
     background-color: transparent;
     text-color:       @foreground;
 }

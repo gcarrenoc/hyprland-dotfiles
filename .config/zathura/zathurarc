@@ -1,6 +1,6 @@
 # Zathura — PDF viewer (light steel theme, matches the launcher/notifications)
 set selection-clipboard clipboard   # selecting text copies it (Ctrl+V to paste)
-set font "SF Mono 10"
+set font "PaperMono Nerd Font 10"
 set adjust-open best-fit
 set window-title-basename true
 set statusbar-basename true

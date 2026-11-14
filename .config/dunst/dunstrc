@@ -2,7 +2,7 @@
 # Only runs in Hyprland; GNOME uses its own notifications.
 
 [global]
-    font = "SF Mono, JetBrainsMono Nerd Font 10"
+    font = "PaperMono Nerd Font 10"
     markup = full
     format = "<b>%s</b>\n%b"
     alignment = left

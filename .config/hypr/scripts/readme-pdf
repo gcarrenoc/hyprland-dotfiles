@@ -71,7 +71,7 @@ table { width: 100%; border-collapse: collapse; margin: 1mm 0 2mm; } thead { dis
 th { text-align: left; font-weight: 600; font-size: 8.4pt; text-transform: uppercase; letter-spacing: .5px; color: var(--muted);
      padding: 1.2mm 2mm; border-bottom: 1px solid var(--line); }
 td { padding: 1mm 2mm; border-bottom: 1px solid var(--soft); vertical-align: top; } td.k { width: 36%; white-space: nowrap; }
-kbd, code { font-family: "SF Mono", monospace; font-size: 8.4pt; }
+kbd, code { font-family: "Paper Mono", monospace; font-size: 8.4pt; }
 kbd { background: var(--key); border: 1px solid #cfd8de; border-bottom-width: 2px; border-radius: 4px; padding: .2mm 1.5mm; }
 code { background: var(--soft); border-radius: 3px; padding: .1mm 1mm; color: var(--steel); } td.a code { white-space: nowrap; }
 """

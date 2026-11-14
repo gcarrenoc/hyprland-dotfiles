@@ -3,7 +3,7 @@
 @import url("colors.css");   /* generated from the wallpaper by ~/.config/hypr/scripts/theme */
 
 * {
-  font-family: "SF Mono", "JetBrainsMono Nerd Font", "Noto Color Emoji";
+  font-family: "PaperMono Nerd Font", "Noto Color Emoji";
   font-size: 17px;
   min-height: 0;
   border: none;
@@ -22,7 +22,7 @@ tooltip {
   border-radius: 15px;
 }
 tooltip label {
-  font-family: "SF Mono";
+  font-family: "PaperMono Nerd Font";
   color: @text;
   padding: 6px;
 }
@@ -47,11 +47,11 @@ tooltip label {
 
 
 #workspaces { padding: 0 6px; }
-#custom-newws { color: alpha(@muted, 0.7); font-family: "SF Mono"; font-size: 16px; padding: 0 6px; margin-left: 0; background: transparent; }
+#custom-newws { color: alpha(@muted, 0.7); font-family: "PaperMono Nerd Font"; font-size: 16px; padding: 0 6px; margin-left: 0; background: transparent; }
 #custom-newws:hover { color: @star; }
 #workspaces button {
   color: alpha(@muted, 0.55);                 /* empty workspace: dim */
-  font-family: "SF Mono", "JetBrainsMono Nerd Font Propo";
+  font-family: "PaperMono Nerd Font";
   font-weight: bold;
   font-size: 15px;
   padding: 0 9px;
@@ -98,7 +98,7 @@ tooltip label {
 
 #clock {
   color: @text;
-  font-family: "SF Mono";
+  font-family: "PaperMono Nerd Font";
   font-weight: bold;
 }
 
@@ -114,5 +114,5 @@ tooltip label {
 /* Icon pills: proportional Nerd Font so each icon gets its real width (centred) */
 #custom-launcher, #custom-tray-toggle, #custom-dnd, #custom-caffeinate, #custom-nightlight, #custom-power,
 #network, #pulseaudio, #backlight, #battery {
-  font-family: "JetBrainsMono Nerd Font Propo", "SF Mono";
+  font-family: "PaperMono Nerd Font";
 }
