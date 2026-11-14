@@ -4,7 +4,7 @@
 include colors
 
 # Behaviour
-set selection-clipboard clipboard   # selecting text copies it (Ctrl+V to paste)
+set selection-clipboard primary     # selecting text does NOT touch the clipboard (middle-click pastes it)
 set adjust-open best-fit            # open fitted to the window
 set window-title-basename true      # just the file name in the title…
 set statusbar-basename true         # …and in the status bar
@@ -23,3 +23,6 @@ map [fullscreen] <Left>  navigate previous
 map [fullscreen] <Right> navigate next
 map [fullscreen] <Up>    scroll up
 map [fullscreen] <Down>  scroll down
+
+# Ctrl+C: copy the current selection to the clipboard (then Ctrl+V anywhere)
+map <C-c> feedkeys ":exec sh -c 'wl-paste --primary --no-newline | wl-copy && notify-send -a Zathura -u low Copied'<Return>"
