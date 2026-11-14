@@ -12,7 +12,7 @@
    tmux/wallpaper.conf), bar (waybar/colors.css), window borders
    (hypr/colors.lua), launcher & menus (rofi/colors.rasi), notifications
    (dunst/dunstrc.d/90-colors.conf), lock screen (hypr/hyprlock-colors.conf),
-   password dialog (hypr/hyprtoolkit.conf).
+   password dialog (hypr/hyprtoolkit.conf), PDF viewer (zathura/colors).
 4. Reloads whatever is running. Dark bar, light menus (tinted), as designed.
 """
 import colorsys, hashlib, os, re, subprocess, sys
@@ -30,7 +30,8 @@ OUT = {
     "rofi": HOME / ".config/rofi/colors.rasi",
     "dunst": HOME / ".config/dunst/dunstrc.d/90-colors.conf",
     "lock": HOME / ".config/hypr/hyprlock-colors.conf",
-    "toolkit": HOME / ".config/hypr/hyprtoolkit.conf",   # password dialog (hyprpolkitagent) & other hypr* apps
+    "toolkit": HOME / ".config/hypr/hyprtoolkit.conf",
+    "zathura": HOME / ".config/zathura/colors",            # PDF viewer (included by zathurarc)   # password dialog (hyprpolkitagent) & other hypr* apps
 }
 
 
@@ -238,6 +239,35 @@ font_family_monospace = PaperMono Nerd Font Mono
 rounding_large = 19
 rounding_small = 10
 icon_theme = Papirus
+""")
+
+OUT["zathura"].write_text(note + f"""
+# Light, tinted like the launcher / notifications
+set default-bg              "{L['bg']}"
+set default-fg              "{L['fg']}"
+set statusbar-bg            "{L['alt']}"
+set statusbar-fg            "{L['fg']}"
+set inputbar-bg             "{L['bg']}"
+set inputbar-fg             "{L['fg']}"
+set notification-bg         "{L['bg']}"
+set notification-fg         "{L['fg']}"
+set notification-error-bg   "{L['alert']}"
+set notification-error-fg   "#ffffff"
+set notification-warning-bg "{L['alt']}"
+set notification-warning-fg "{L['alert']}"
+set completion-bg           "{L['alt']}"
+set completion-fg           "{L['fg']}"
+set completion-highlight-bg "{L['sel']}"
+set completion-highlight-fg "#ffffff"
+set index-bg                "{L['bg']}"
+set index-fg                "{L['fg']}"
+set index-active-bg         "{L['sel']}"
+set index-active-fg         "#ffffff"
+set highlight-color         "{rgba(L['sel'], 0.25)}"
+set highlight-active-color  "{rgba(L['sel'], 0.50)}"
+# Ctrl+R dark reading mode: the bar's dark colours
+set recolor-lightcolor      "{D['base']}"
+set recolor-darkcolor       "{D['text']}"
 """)
 
 CACHE.parent.mkdir(parents=True, exist_ok=True)
