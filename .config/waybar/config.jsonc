@@ -25,7 +25,6 @@
       "class<google-chrome|chromium>": "<span size='85%' alpha='80%'> </span>",
       "class<firefox>": "<span size='85%' alpha='80%'> </span>",
       "class<Alacritty|fly-term|kitty>": "<span size='85%' alpha='80%'> </span>",
-      "class<ticktick>": "<span size='85%' alpha='80%'> </span>",
       "class<obsidian|md.obsidian.Obsidian>": "<span size='85%' alpha='80%'> 󰠮</span>",
       "class<jetbrains-pycharm.*>": "<span size='85%' alpha='80%'> 󰌠</span>",
       "class<texstudio>": "<span size='85%' alpha='80%'> 󰈙</span>",

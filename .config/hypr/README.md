@@ -100,7 +100,7 @@ show a small pop-up. They also work on the lock screen.
 | Time | The time |
 | ⏻ | Power menu |
 
-App indicators (1Password, Insync, TickTick, ZapZap, Bluetooth, network…) are hidden behind the **‹** arrow on the right of the bar: click it to show or hide them.
+App indicators (1Password, Insync, ZapZap, Bluetooth, network…) are hidden behind the **‹** arrow on the right of the bar: click it to show or hide them.
 
 ## Automatic behaviour
 
@@ -111,7 +111,7 @@ App indicators (1Password, Insync, TickTick, ZapZap, Bluetooth, network…) are 
 - **Night light:** on at sunset, off at sunrise (timer `nightlight-auto.timer`, checks every 5 min). Location for the sun times: `LAT/LON` in `~/.config/hypr/scripts/suntimes`.
 - **Battery:** notification at 15 %, urgent one at 5 %, suspends at 3 % (`power-watch.timer`, every minute). On battery the blur is lighter (1 pass) to save power; on the charger it's back to 3.
 - **App activation:** clicking a notification or link takes you to that app's window, switching workspace if needed.
-- **Apps at login:** at login **TickTick opens on workspace X** (only its first window; later windows open where you are). Everything in `~/.config/autostart` (1Password, Insync, TickTick,
+- **Apps at login:** Everything in `~/.config/autostart` (1Password, Insync,
   ZapZap, Bluetooth, network applet).
 
 ## Terminal (colours follow the wallpaper)
