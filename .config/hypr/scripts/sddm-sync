@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Copy the wallpaper + lock-screen colours into the SDDM login theme.
+# Runs as root (pkexec):  sddm-sync <wallpaper> <hyprlock-colors.conf> [theme-source-dir]
+set -euo pipefail
+WALL=$1 COLORS=$2 SRC=${3:-}
+DEST=/usr/share/sddm/themes/hyprlock-match
+install -d -m755 "$DEST"
+[[ -n $SRC ]] && install -m644 "$SRC"/Main.qml "$SRC"/metadata.desktop "$DEST"/
+install -m644 "$WALL" "$DEST/background.jpg"
+# hyprlock rgba(RRGGBBAA) → Qt #AARRGGBB
+col() { local v; v=$(sed -n "s/^\$$1 = rgba(\([0-9a-fA-F]\{8\}\)).*/\1/p" "$COLORS"); echo "#${v:6:2}${v:0:6}"; }
+cat > "$DEST/theme.conf" <<CONF
+[General]
+background=background.jpg
+clock=$(col lock_clock)
+date=$(col lock_date)
+user=$(col lock_user)
+box=$(col lock_box)
+boxText=$(col lock_box_text)
+ring1=$(col lock_ring1)
+ring2=$(col lock_ring2)
+fail1=$(col lock_fail1)
+fail2=$(col lock_fail2)
+CONF
+echo "SDDM theme updated: $DEST"

@@ -1,7 +1,7 @@
 # Hyprland — "Balcony" setup
 
 Look based on [1amSimp1e/dots](https://github.com/1amSimp1e/dots) (balcony branch), rebuilt for
-Hyprland 0.57. This is the only desktop now (GNOME was removed); the login screen is greetd + ReGreet.
+Hyprland 0.57. This is the only desktop now (GNOME was removed); the login screen is SDDM with a theme that matches the lock screen.
 
 **Super** = the Windows key. One shortcut per action. Press **Super + I** any time to see this list on screen.
 
@@ -134,7 +134,7 @@ notifications, lock screen and terminal.
 | Command | What it does |
 |---|---|
 | `wallpaper ~/path/image.jpg` | Set the wallpaper and recolour the whole theme from it |
-| `wallpaper ~/path/image.jpg --login` | Same, and also use it on the login screen (asks for your password) |
+| `wallpaper ~/path/image.jpg --login` | Same, and also update the login screen — wallpaper and colours (asks for your password) |
 | `wallpaper` | Show the current wallpaper |
 
 How the colours are picked: the image's most vivid colour sets the **main hue** (dark tinted
@@ -167,5 +167,6 @@ Your config is versioned in Git (`~/.dotfiles`, files stay in place) and pushed 
 | Notifications | `~/.config/dunst/dunstrc` |
 | Terminal (Hyprland only) | `~/.config/alacritty/balcony.toml` (frosted window) + colours generated from the wallpaper by `~/.config/hypr/scripts/terminal-colors` (runs at login; run it by hand after changing the wallpaper) |
 | Session environment | `~/.config/uwsm/env-hyprland` |
+| Login screen (SDDM) | theme source `~/.config/hypr/sddm-theme/` (installed to `/usr/share/sddm/themes/hyprlock-match`), config `/etc/sddm.conf.d/10-hyprlock.conf` |
 
 Check the Hyprland config for errors: `Hyprland --verify-config -c ~/.config/hypr/hyprland.lua`
