@@ -5,14 +5,13 @@
 #   dotfiles save ["message"]   copy system files, commit every tracked change, push
 #   dotfiles status | diff | log | add <file> | restore <file> | …   (any git command)
 #
-# System files (greetd login screen, PAM, reflector) are copied into
+# System files (SDDM login screen, keyboard, reflector) are copied into
 # ~/.config/system-config/ on every save so they are versioned too.
 set -euo pipefail
 GIT=(git --git-dir="$HOME/.dotfiles" --work-tree="$HOME")
 SYS="$HOME/.config/system-config"
 SYSTEM_FILES=(/etc/sddm.conf.d/10-hyprlock.conf /etc/X11/xorg.conf.d/00-keyboard.conf
-              /etc/greetd/config.toml /etc/greetd/regreet.toml /etc/greetd/regreet.css
-              /etc/pam.d/greetd /etc/xdg/reflector/reflector.conf)
+              /etc/xdg/reflector/reflector.conf)
 
 snapshot_system() {
   for f in "${SYSTEM_FILES[@]}"; do
