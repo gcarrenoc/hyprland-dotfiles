@@ -4,7 +4,7 @@
 
 * {
   font-family: "PaperMono Nerd Font", "Noto Color Emoji";
-  font-size: 17px;
+  font-size: 15px;
   min-height: 0;
   border: none;
   border-radius: 0;
@@ -40,14 +40,14 @@ tooltip label {
 
 #custom-launcher {
   color: @light;
-  font-size: 21px;
+  font-size: 23px;
   margin-left: 12px;
   padding: 0 14px;
 }
 
 
 #workspaces { padding: 0 6px; }
-#custom-newws { color: alpha(@muted, 0.7); font-family: "PaperMono Nerd Font"; font-size: 16px; padding: 0 6px; margin-left: 0; background: transparent; }
+#custom-newws { color: alpha(@muted, 0.7); font-family: "PaperMono Nerd Font"; font-size: 15px; padding: 0 6px; margin-left: 0; background: transparent; }
 #custom-newws:hover { color: @star; }
 #workspaces button {
   color: alpha(@muted, 0.55);                 /* empty workspace: dim */
@@ -83,7 +83,7 @@ tooltip label {
 
 /* network · volume · brightness · battery are one joined pill */
 #network, #pulseaudio, #backlight, #battery {
-  font-size: 19px;
+  font-size: 21px;
   margin-left: 0;
   margin-right: 0;
   border-radius: 0;
@@ -128,3 +128,6 @@ tooltip label {
 #battery { padding-right: 20px; }
 #workspaces button:not(.empty) { padding: 0 12px 0 8px; }
 #custom-newws { padding: 0 6px 3px 6px; }
+
+/* Icon size: icon-only pills a little bigger than the 15px text */
+#custom-dnd, #custom-caffeinate, #custom-nightlight, #power-profiles-daemon, #custom-power { font-size: 20px; }
