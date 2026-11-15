@@ -165,7 +165,7 @@
     "format": "{icon}",
     "format-charging": "󰂄",
     "format-plugged": "󰚥",
-    "format-alt": "{icon} <span size='75%'>{capacity}%</span>",
+    "format-alt": "{icon} <span size='75%' rise='1500'>{capacity}%</span>",
     "format-icons": ["", "", "", "", ""],
     "tooltip-format": "{capacity}%  ·  {timeTo}"
   },
