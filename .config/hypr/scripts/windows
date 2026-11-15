@@ -49,8 +49,8 @@ for c in clients:
     ws = c["workspace"].get("id", 0)
     where = str(ws)
     label = (f"<b>{html.escape(name)}</b>"
-             + (f"  <span alpha='70%'>{html.escape(title[:70])}</span>" if title else "")
-             + f"   <span alpha='45%'>{where}</span>")
+             + (f"  <span alpha='85%'>{html.escape(title[:70])}</span>" if title else "")
+             + f"   <span alpha='75%'>{where}</span>")
     while label in by_label:          # identical rows (e.g. two equal terminals)
         label += "​"
     by_label[label] = c

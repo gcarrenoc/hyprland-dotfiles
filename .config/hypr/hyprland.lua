@@ -101,9 +101,8 @@ hl.animation({ leaf = "layers",     enabled = true, speed = 3,   bezier = "smoot
 hl.animation({ leaf = "workspaces", enabled = false })   -- instant workspace switch (no bouncy slide)
 hl.animation({ leaf = "border",     enabled = true, speed = 10,  bezier = "default" })
 
--- Frosted glass behind the bar and launcher
+-- Frosted glass behind the bar (rofi menus are normal windows: window blur frosts them)
 hl.layer_rule({ name = "blur-waybar",        match = { namespace = "^waybar$" },        blur = true, ignore_alpha = 0.2 })
-hl.layer_rule({ name = "blur-rofi",          match = { namespace = "^rofi$" },          blur = true, ignore_alpha = 0.2 })
 -- Notifications (swaync) blur themselves: GTK asks for it via CSS backdrop-filter (layer rules are ignored for GTK 4.24 surfaces)
 
 

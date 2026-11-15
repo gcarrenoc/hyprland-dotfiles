@@ -135,8 +135,8 @@ def show_content_results(text):
     for p, snip in results:
         short_dir = "/".join(pretty_dir(p).split("/")[-2:])
         label_line = (f"<b>{html.escape(p.name)}</b>   "
-                      f"<span size='small' alpha='80%'>{snippet_markup(snip)}</span>"
-                      f"   <span size='small' alpha='45%'>{html.escape(short_dir)}</span>")
+                      f"<span size='small' alpha='85%'>{snippet_markup(snip)}</span>"
+                      f"   <span size='small' alpha='75%'>{html.escape(short_dir)}</span>")
         by_label[label_line] = p
         rows.append(f"{label_line}\0icon\x1f{icon_for(p)}")
     code, _, chosen = rofi(rows, "\U000f0219", f"Inside documents: “{html.escape(text)}”   ·   ↵ open    ⇧↵ show in folder",
@@ -150,7 +150,7 @@ def main():
     by_label, rows = {}, []
     for _, p, is_dir in find_entries():
         label = (f"<b>{html.escape(p.name)}</b>"
-                 f"   <span alpha='50%'>{html.escape(pretty_dir(p))}</span>")
+                 f"   <span alpha='75%'>{html.escape(pretty_dir(p))}</span>")
         by_label[label] = p
         rows.append(f"{label}\0icon\x1f{icon_for(p, is_dir)}")
 

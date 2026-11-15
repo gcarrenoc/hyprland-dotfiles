@@ -41,7 +41,7 @@ width = max(len(k) for rows in groups.values() for k, _ in rows) + 3
 lines = []
 for section, rows in groups.items():
     name = section.split("  ·")[0]
-    lines.append(f"<span alpha='50%'>{html.escape(section)}</span>\0nonselectable\x1ftrue\x1fmeta\x1f{name}")
+    lines.append(f"<span alpha='75%'>{html.escape(section)}</span>\0nonselectable\x1ftrue\x1fmeta\x1f{name}")
     lines += [f"<b>{html.escape(k.ljust(width))}</b>{html.escape(a)}\0meta\x1f{name}" for k, a in rows]
 
 subprocess.run(
