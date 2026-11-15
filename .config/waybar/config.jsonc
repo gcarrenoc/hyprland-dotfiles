@@ -6,7 +6,7 @@
   "spacing": 0,
 
   "modules-left":  ["custom/launcher", "hyprland/workspaces", "custom/newws"],
-  "modules-right": ["group/indicators", "custom/dnd", "custom/caffeinate", "custom/nightlight", "network", "pulseaudio", "backlight", "battery", "clock#date", "clock", "custom/power"],
+  "modules-right": ["group/indicators", "custom/dnd", "custom/caffeinate", "custom/nightlight", "power-profiles-daemon", "network", "pulseaudio", "backlight", "battery", "clock#date", "clock", "custom/power"],
 
   "custom/launcher": {
     "format": "",
@@ -113,6 +113,19 @@
     "on-click": "~/.config/hypr/scripts/nightlight toggle",
     "on-scroll-up": "~/.config/hypr/scripts/nightlight up",
     "on-scroll-down": "~/.config/hypr/scripts/nightlight down"
+  },
+
+  // Power profile: click cycles performance → balanced → power saver
+  "power-profiles-daemon": {
+    "format": "{icon}",
+    "tooltip-format": "Power profile: {profile}\nClick to change",
+    "tooltip": true,
+    "format-icons": {
+      "default": "󰗑",
+      "performance": "\uf0e7",
+      "balanced": "󰗑",
+      "power-saver": "\uf06c"
+    }
   },
 
   "network": {

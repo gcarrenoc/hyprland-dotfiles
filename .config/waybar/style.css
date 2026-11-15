@@ -29,7 +29,7 @@ tooltip label {
 
 /* Pills */
 #custom-launcher, #workspaces,
-#indicators, #custom-dnd, #custom-caffeinate, #custom-nightlight, #clock, #custom-power,
+#indicators, #custom-dnd, #custom-caffeinate, #custom-nightlight, #power-profiles-daemon, #clock, #custom-power,
 #network, #pulseaudio, #backlight, #battery {
   background-color: @pill;
   color: @text;
@@ -75,6 +75,9 @@ tooltip label {
 #custom-caffeinate.off    { color: alpha(@muted, 0.8); } /* off: dim cup */
 #custom-dnd.on            { color: @accent; }          /* do not disturb on */
 #custom-dnd.off           { color: alpha(@muted, 0.8); }
+#power-profiles-daemon             { color: @light; }
+#power-profiles-daemon.performance { color: @accent; }   /* performance: accent */
+#power-profiles-daemon.power-saver { color: #8fd18f; }   /* power saver: green leaf */
 #custom-nightlight.on     { color: @accent; }          /* night light on (amber) */
 #custom-nightlight.off    { color: alpha(@muted, 0.8); } /* off: dim moon */
 
@@ -112,7 +115,7 @@ tooltip label {
 #custom-power:hover { color: @alert; }
 
 /* Icon pills: proportional Nerd Font so each icon gets its real width (centred) */
-#custom-launcher, #custom-tray-toggle, #custom-dnd, #custom-caffeinate, #custom-nightlight, #custom-power,
+#custom-launcher, #custom-tray-toggle, #custom-dnd, #custom-caffeinate, #custom-nightlight, #power-profiles-daemon, #custom-power,
 #network, #pulseaudio, #backlight, #battery {
   font-family: "PaperMono Nerd Font";
 }

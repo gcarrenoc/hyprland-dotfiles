@@ -92,6 +92,7 @@ show a small pop-up. They also work on the lock screen.
 | 🔔 Bell | **Do not disturb.** Click: on / off. While on, notifications wait silently (the bell is crossed out and shows how many are waiting); turning it off shows them. |
 | ☕ Coffee cup | Caffeinate. **Click:** keep awake indefinitely (click again = off) · **Right-click:** choose time (30 min … 5 h, ∞, custom) and mode (screen + system / system only). Dim cup = off, amber cup + time left = on. |
 | 🌙 Moon | Night light. **Turns on at sunset and off at sunrise automatically** (Valparaíso times, recalculated daily). **Click:** on / off by hand (respected until the next sunset/sunrise) · **Scroll:** warmer / cooler while on (2500–6000 K). Hover shows today's times. |
+| ⚡ ⚖ 🍃 Power profile | **Click** to cycle: ⚡ performance (gold) → ⚖ balanced → 🍃 power saver (green). Hover shows the current one. Performance is limited when the laptop detects it's on your lap. |
 | Wi-Fi | Network settings (`nmtui`) |
 | Speaker | Sound settings · right-click mutes · scroll changes volume |
 | Brightness | Scroll to change |
