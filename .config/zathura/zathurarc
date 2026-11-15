@@ -4,8 +4,9 @@
 include colors
 
 # Behaviour
-set selection-clipboard primary     # selecting text does NOT touch the clipboard (middle-click pastes it)
-set adjust-open best-fit            # open fitted to the window
+set selection-clipboard primary     # store selection in primary so Ctrl+C can copy it
+set selection-notification false    # hide "Copied selected text..." message
+set adjust-open width               # open fitted to page width
 set window-title-basename true      # just the file name in the title…
 set statusbar-basename true         # …and in the status bar
 set font "PaperMono Nerd Font 10"
@@ -24,5 +25,6 @@ map [fullscreen] <Right> navigate next
 map [fullscreen] <Up>    scroll up
 map [fullscreen] <Down>  scroll down
 
-# Ctrl+C: copy the current selection to the clipboard (then Ctrl+V anywhere)
-map <C-c> feedkeys ":exec sh -c 'wl-paste --primary --no-newline | wl-copy && notify-send -a Zathura -u low Copied'<Return>"
+# Ctrl+C: silently copy the current selection to the clipboard
+map <C-c> feedkeys ":exec sh -c 'wl-paste --primary --no-newline | wl-copy'<Return>"
+map [fullscreen] <C-c> feedkeys ":exec sh -c 'wl-paste --primary --no-newline | wl-copy'<Return>"

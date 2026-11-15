@@ -44,3 +44,7 @@ alias uni='cd "$HOME/Insync/YOUR-GOOGLE-ACCOUNT/Google Drive/University/2026/spr
 # zoxide: smarter cd. `z <part of path>` jumps to the best match, `zi` picks with fzf.
 # Keep this at the end of .bashrc.
 eval "$(zoxide init bash)"
+
+
+# Added by Antigravity CLI installer
+export PATH="/home/gcarreno/.local/bin:$PATH"

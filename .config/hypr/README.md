@@ -87,7 +87,7 @@ show a small pop-up. They also work on the lock screen.
 | Item | Click |
 |---|---|
 | Arch logo | App launcher (`Super + D`) |
-| I · II · III … | Workspaces, each with icons of the apps running on it — the current one is highlighted; click to switch, scroll to move |
+| 1 · 2 · 3 … | Workspaces, each with icons of the apps running on it — the current one is highlighted; click to switch, scroll to move |
 | + | Add a new empty workspace at the end and go there |
 | 🔔 Bell | **Do not disturb.** Click: on / off. While on, notifications wait silently (the bell is crossed out and shows how many are waiting); turning it off shows them. |
 | ☕ Coffee cup | Caffeinate. **Click:** keep awake indefinitely (click again = off) · **Right-click:** choose time (30 min … 5 h, ∞, custom) and mode (screen + system / system only). Dim cup = off, amber cup + time left = on. |
@@ -107,7 +107,7 @@ App indicators (1Password, Insync, ZapZap, Bluetooth, network…) are hidden beh
 - **Idle:** screen dims at 4.5 min, locks at 5 min, turns off at 5.5 min, suspends at 15 min
  . Videos and `caffeinate` prevent it.
 - **Lid / suspend:** the screen is locked before sleeping.
-- **Workspaces are a row** (like GNOME / macOS Spaces): workspaces I … N (up to X) always exist, **empty ones stay** until you remove them (Super+Ctrl+Q), there are never gaps, and N is remembered across logins. Add one with **+** or by going past the end. Keys, Super+scroll, the 4-finger swipe and the bar all follow the same rule. Logic: `~/.config/hypr/workspaces.lua`.
+- **Workspaces are a row** (like GNOME / macOS Spaces): workspaces 1 … N (up to 10) always exist, **empty ones stay** until you remove them (Super+Ctrl+Q), there are never gaps, and N is remembered across logins. Add one with **+** or by going past the end. Keys, Super+scroll, the 4-finger swipe and the bar all follow the same rule. Logic: `~/.config/hypr/workspaces.lua`.
 - **Night light:** on at sunset, off at sunrise (timer `nightlight-auto.timer`, checks every 5 min). Location for the sun times: `LAT/LON` in `~/.config/hypr/scripts/suntimes`.
 - **Battery:** notification at 15 %, urgent one at 5 %, suspends at 3 % (`power-watch.timer`, every minute). On battery the blur is lighter (1 pass) to save power; on the charger it's back to 3.
 - **App activation:** clicking a notification or link takes you to that app's window, switching workspace if needed.

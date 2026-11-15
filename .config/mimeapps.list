@@ -8,5 +8,6 @@ x-scheme-handler/claude-cli=claude-code-url-handler.desktop
 x-scheme-handler/jetbrains=jetbrainsd.desktop
 x-scheme-handler/webcal=google-chrome.desktop
 application/pdf=org.pwmt.zathura.desktop
+x-scheme-handler/mailto=google-chrome.desktop
 
 [Added Associations]
