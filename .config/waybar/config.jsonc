@@ -9,7 +9,7 @@
   "modules-right": ["group/indicators", "custom/dnd", "custom/caffeinate", "custom/nightlight", "power-profiles-daemon", "network", "pulseaudio", "backlight", "battery", "clock#date", "clock", "custom/power"],
 
   "custom/launcher": {
-    "format": "",
+    "format": "",
     "tooltip": false,
     "on-click": "~/.config/hypr/scripts/launcher"
   },
