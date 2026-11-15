@@ -1,49 +1,52 @@
 #!/usr/bin/env python3
-"""Searchable list of all shortcuts (Super+I or Super+?).
+"""Searchable list of the keyboard shortcuts (Super+I).
 
-Built from the tables in ~/.config/hypr/README.md, so it always matches the
-README/PDF. Type to filter, Esc to close.
+Built from the tables in ~/.config/hypr/README.md (sections "Shortcuts" and
+"Terminal"), so it always matches the README/PDF. Each action is cut to its
+first phrase; the README keeps the details. Type to filter, Esc to close.
 """
 import html, re, subprocess
 from pathlib import Path
 
 README = Path.home() / ".config/hypr/README.md"
-WANTED = ("Shortcuts", "The bar", "Terminal")   # level-2 sections to include
+WANTED = ("Shortcuts", "Terminal")   # level-2 sections to include
 
 
 def clean(t):
     t = t.replace("\\|", "|")
     t = re.sub(r"\*\*([^*]+)\*\*", r"\1", t)
-    t = re.sub(r"`([^`]+)`", r"\1", t)
-    return t.strip()
+    return re.sub(r"`([^`]+)`", r"\1", t).strip()
 
 
-rows, h2, h3 = [], "", ""
+def short(action):   # "App launcher: Enter = go to…" → "App launcher"
+    return re.split(r": | \(| · | → ", action)[0]
+
+
+groups, h2, section = {}, "", ""
 for line in README.read_text(encoding="utf-8").splitlines():
     if line.startswith("## "):
-        h2, h3 = line[3:].strip(), ""
+        h2 = line[3:].strip()
+        section = re.sub(r"\s*\(.*\)$", "", h2)
     elif line.startswith("### "):
-        h3 = line[4:].strip()
-    elif line.startswith("|") and not re.match(r"^\|\s*-", line) and h2.startswith(WANTED):
-        cells = [clean(c) for c in re.split(r"(?<!\\)\|", line.strip().strip("|"))]
-        if len(cells) < 2 or cells[0].lower() in ("keys", "item"):
-            continue
-        section = h3 or h2.split(" (")[0]
-        section = re.sub(r"\s*\(.*\)$", "", section)
-        rows.append((cells[0], cells[1], section))
+        section = line[4:].strip()
+    elif h2.startswith(WANTED):
+        if m := re.search(r"prefix is `([^`]+)`", line):
+            section += f"  ·  prefix = {m[1]}"
+        elif line.startswith("|") and not re.match(r"^\|\s*-", line):
+            keys, action = [clean(c) for c in re.split(r"(?<!\\)\|", line.strip().strip("|"))][:2]
+            if keys.lower() != "keys" and "Super + I" not in keys:
+                groups.setdefault(section, []).append((keys, short(action)))
 
-width = max(len(k) for k, _, _ in rows) + 3
-lines = [
-    f"<b>{html.escape(k.ljust(width))}</b>{html.escape(a)}"
-    f"   <span alpha='45%'>{html.escape(s)}</span>"
-    for k, a, s in rows
-]
+width = max(len(k) for rows in groups.values() for k, _ in rows) + 3
+lines = []
+for section, rows in groups.items():
+    name = section.split("  ·")[0]
+    lines.append(f"<span alpha='50%'>{html.escape(section)}</span>\0nonselectable\x1ftrue\x1fmeta\x1f{name}")
+    lines += [f"<b>{html.escape(k.ljust(width))}</b>{html.escape(a)}\0meta\x1f{name}" for k, a in rows]
 
 subprocess.run(
-    ["env", "-u", "WAYLAND_DISPLAY", "rofi", "-dmenu", "-i", "-markup-rows", "-no-custom", "-p", "\U000f030c",
-     "-mesg", "Shortcuts  ·  type to filter  ·  Esc to close",
+    ["env", "-u", "WAYLAND_DISPLAY", "rofi", "-dmenu", "-i", "-markup-rows", "-no-custom", "-no-sort", "-selected-row", "1", "-p", "\U000f030c",
      "-theme-str",
-     "window { width: 1080px; } listview { lines: 20; spacing: 2px; } element { padding: 4px 10px; } "
-     "element selected.normal { background-color: @background-alt; text-color: @foreground; } "
-     "textbox { text-color: @muted; horizontal-align: 0.5; }"],
+     "window { width: 820px; } listview { lines: 20; spacing: 2px; } element { padding: 4px 10px; } "
+     "element selected.normal { background-color: @background-alt; text-color: @foreground; }"],
     input="\n".join(lines), text=True, capture_output=True)
