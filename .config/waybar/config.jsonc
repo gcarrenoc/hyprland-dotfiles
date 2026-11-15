@@ -121,9 +121,9 @@
     "tooltip-format": "Power profile: {profile}\nClick to change",
     "tooltip": true,
     "format-icons": {
-      "default": "",
-      "performance": "",
-      "balanced": "",
+      "default": "",
+      "performance": "",
+      "balanced": "",
       "power-saver": "\uf06c"
     }
   },
@@ -166,7 +166,7 @@
     "format-charging": "󰂄",
     "format-plugged": "󰚥",
     "format-alt": "{icon} <span size='75%'>{capacity}%</span>",
-    "format-icons": [""],
+    "format-icons": ["", "", "", "", ""],
     "tooltip-format": "{capacity}%  ·  {timeTo}"
   },
 
