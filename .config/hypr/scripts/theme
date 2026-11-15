@@ -191,7 +191,7 @@ def rgb(c):
 
 
 SN = {  # swaync variables: light frosted cards like the menus
-    "cc-bg": L["alt"], "noti-border-color": L["border"],
+    "cc-bg": rgba(L["alt"], 0.62), "noti-border-color": L["border"],
     "noti-bg-darker": L["alt"], "noti-bg-hover": hls(H, 0.92, 0.30), "noti-bg-focus": rgba(L["sel"], 0.10),
     "noti-close-bg": rgba(L["fg"], 0.08), "noti-close-bg-hover": rgba(L["fg"], 0.16),
     "text-color": L["fg"], "text-color-disabled": L["muted"], "bg-selected": L["sel"], "alert": L["alert"],

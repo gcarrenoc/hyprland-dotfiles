@@ -14,10 +14,11 @@
 
 * { font-family: "PaperMono Nerd Font"; }
 
-/* ---------- pop-ups (top right, like the old dunst ones) ---------- */
+/* ---------- pop-ups (top right) ---------- */
 .floating-notifications { margin-top: 6px; }
 .floating-notifications .notification-row .notification-background { padding: 4px 8px; }
 .floating-notifications .notification {
+  background: rgb(var(--noti-bg));   /* pop-ups are solid: GTK can only blur a whole window, gaps included */
   border: 2px solid var(--noti-border-color);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
 }
@@ -35,6 +36,7 @@
 /* ---------- the panel ---------- */
 .control-center {
   background: var(--cc-bg);
+  backdrop-filter: blur(20px);   /* GTK asks Hyprland to blur behind the panel (ext-background-effect) */
   border: 1px solid var(--noti-border-color);
   border-radius: 22px;
   padding: 6px 2px;
@@ -46,7 +48,7 @@
 .widget { margin: 4px 12px; padding: 4px; }
 .widget-title > label { font-size: 18px; font-weight: bold; color: var(--text-color); }
 .widget-title > button {
-  background: rgb(var(--noti-bg));
+  background: rgba(var(--noti-bg), 0.94);
   color: var(--text-color);
   border: none; box-shadow: none;
   border-radius: 12px;
@@ -56,7 +58,7 @@
 .widget-title > button:hover { background: #ffffff; }
 
 .widget-dnd {
-  background: rgb(var(--noti-bg));
+  background: rgba(var(--noti-bg), 0.94);
   border-radius: 14px;
   padding: 8px 12px;
 }
@@ -70,7 +72,7 @@
 /* grouped stacks: header with app name, "show less" and clear buttons */
 .notification-group .notification-group-headers .notification-group-header { font-weight: bold; font-size: 13px; }
 .notification-group .notification-group-buttons button {
-  background: rgb(var(--noti-bg)); color: var(--text-color);
+  background: rgba(var(--noti-bg), 0.94); color: var(--text-color);
   border: none; box-shadow: none; border-radius: 12px; min-height: 22px; font-size: 12px;
 }
 .notification-group .notification-group-buttons button:hover { background: #ffffff; }

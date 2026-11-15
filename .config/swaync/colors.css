@@ -2,7 +2,7 @@
 :root {
   --noti-bg: 242, 243, 248;
   --noti-bg-alpha: 0.94;
-  --cc-bg: #dbdfeb;
+  --cc-bg: rgba(219, 223, 235, 0.62);
   --noti-border-color: #c6cbdd;
   --noti-bg-darker: #dbdfeb;
   --noti-bg-hover: #e4e8f1;
@@ -14,7 +14,7 @@
   --bg-selected: #3e528e;
   --alert: #be3742;
 }
-@define-color cc-bg #dbdfeb;
+@define-color cc-bg rgba(219, 223, 235, 0.62);
 @define-color noti-border-color #c6cbdd;
 @define-color noti-bg-darker #dbdfeb;
 @define-color noti-bg-hover #e4e8f1;
