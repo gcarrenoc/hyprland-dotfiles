@@ -175,10 +175,15 @@
     "interval": 60,
     "states": { "warning": 30, "critical": 15 },
     "format": "{icon}",
-    "format-charging": "󰂄",
-    "format-plugged": "󰚥",
+    "format-charging": "{icon}",
+    "format-plugged": "{icon}",
     "format-alt": "{icon} <span size='75%' rise='1500'>{capacity}%</span>",
-    "format-icons": ["", "", "", "", ""],
+    // one icon family (Material Design, vertical): fills in 10 % steps; with a bolt when on the charger
+    "format-icons": {
+      "default":  ["󰂎", "󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"],
+      "charging": ["󰢟", "󰢜", "󰂆", "󰂇", "󰂈", "󰢝", "󰂉", "󰢞", "󰂊", "󰂋", "󰂅"],
+      "plugged":  ["󰢟", "󰢜", "󰂆", "󰂇", "󰂈", "󰢝", "󰂉", "󰢞", "󰂊", "󰂋", "󰂅"]
+    },
     "tooltip-format": "{capacity}%  ·  {timeTo}"
   },
 
