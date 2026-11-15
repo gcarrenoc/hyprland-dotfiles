@@ -1,14 +1,22 @@
 #!/usr/bin/env bash
-# On-screen display for volume / mic / brightness keys (dunst progress bar).
+# On-screen display for volume / mic / brightness keys (swaync pop-up with a progress bar).
 #   osd volume up|down|mute    osd mic mute    osd brightness up|down
+# swaync shows "osd" pop-ups even in do not disturb and never keeps them in the panel
+# (see ~/.config/swaync/config.json); this script closes each one 1.5 s after the last key press.
 set -u
+ICONS=/usr/share/icons/Papirus-Light/24x24/panel   # dark icons for the light pop-up
 
 notify() { # $1 tag  $2 icon  $3 title  $4 value(0-100, optional)
-  local hint=()
+  local hint=() id stamp file="${XDG_RUNTIME_DIR:-/tmp}/osd-$1"
   [[ -n ${4:-} ]] && hint=(-h "int:value:$4")
-  notify-send -a osd -u low -t 1500 -i "$2" \
-    -h "string:x-dunst-stack-tag:$1" -h "string:x-canonical-private-synchronous:$1" \
-    "${hint[@]}" "$3"
+  id=$(notify-send -p -a osd -u low -i "$ICONS/$2.svg" \
+    -h "string:x-canonical-private-synchronous:$1" "${hint[@]}" "$3")
+  stamp=$EPOCHREALTIME; echo "$stamp" > "$file"
+  ( sleep 1.5
+    [[ $(< "$file") == "$stamp" ]] && gdbus call --session --dest org.freedesktop.Notifications \
+      --object-path /org/freedesktop/Notifications \
+      --method org.freedesktop.Notifications.CloseNotification "$id" >/dev/null 2>&1
+  ) & disown
 }
 
 vol_pct() { wpctl get-volume @DEFAULT_AUDIO_SINK@ | awk '{printf "%d", $2*100}'; }
@@ -21,7 +29,7 @@ case "${1:-} ${2:-}" in
   "mic mute")
     wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle
     if is_muted @DEFAULT_AUDIO_SOURCE@; then notify mic microphone-sensitivity-muted "Microphone muted"
-    else notify mic audio-input-microphone "Microphone on"; fi
+    else notify mic microphone-sensitivity-high "Microphone on"; fi
     exit 0 ;;
   "brightness up")   brightnessctl -q -e4 -n2 set 5%+ ;;
   "brightness down") brightnessctl -q -e4 -n2 set 5%- ;;
@@ -37,5 +45,5 @@ case $1 in
     else notify volume audio-volume-high "Volume  $v%" "$v"; fi ;;
   brightness)
     b=$(( $(brightnessctl get) * 100 / $(brightnessctl max) ))
-    notify brightness display-brightness "Brightness  $b%" "$b" ;;
+    notify brightness gpm-brightness-lcd "Brightness  $b%" "$b" ;;
 esac

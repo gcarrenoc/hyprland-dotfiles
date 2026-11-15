@@ -74,8 +74,8 @@ Hyprland 0.57. This is the only desktop now (GNOME was removed); the login scree
 |---|---|
 | `Super + Escape` | Lock screen |
 | `Super + Shift + E` | Power menu (lock, suspend, log out, restart, shut down) |
-| `Super + N` | Show last notification again |
-| `Super + Shift + N` | Dismiss all notifications |
+| `Super + N` | Notification Center (open / close) |
+| `Super + Shift + N` | Clear all notifications |
 
 ### Laptop keys
 
@@ -89,7 +89,7 @@ show a small pop-up. They also work on the lock screen.
 | Arch logo | App launcher (`Super + D`) |
 | 1 · 2 · 3 … | Workspaces, each with icons of the apps running on it — the current one is highlighted; click to switch, scroll to move |
 | + | Add a new empty workspace at the end and go there |
-| 🔔 Bell | **Do not disturb.** Click: on / off. While on, notifications wait silently (the bell is crossed out and shows how many are waiting); turning it off shows them. |
+| 🔔 Bell | **Notification Center.** Click: open the panel on the right (notifications grouped by app, media player, Clear). A dot on the bell = notifications waiting. Right-click: **do not disturb** on / off (amber crossed-out bell); while on, notifications skip the pop-up and go silently to the panel, and they stay there when you turn it off. Volume / brightness pop-ups and critical alerts (low battery) still show. |
 | ☕ Coffee cup | Caffeinate. **Click:** keep awake indefinitely (click again = off) · **Right-click:** choose time (30 min … 5 h, ∞, custom) and mode (screen + system / system only). Dim cup = off, amber cup + time left = on. |
 | 🌙 Moon | Night light. **Turns on at sunset and off at sunrise automatically** (Valparaíso times, recalculated daily). **Click:** on / off by hand (respected until the next sunset/sunrise) · **Scroll:** warmer / cooler while on (2500–6000 K). Hover shows today's times. |
 | Power profile | **Click** to cycle: ⚡ performance (gold) → gauge = balanced → 🍃 power saver (green). Hover shows the current one. Performance is limited when the laptop detects it's on your lap. |
@@ -97,8 +97,8 @@ show a small pop-up. They also work on the lock screen.
 | Speaker | Sound settings · right-click mutes · scroll changes volume |
 | Brightness | Scroll to change |
 | Battery | Click to show % |
-| Date | Today's date · hover for a calendar |
-| Time | The time |
+| Date | Today's date · hover for a calendar · click: Notification Center |
+| Time | The time · click: Notification Center |
 | ⏻ | Power menu |
 
 App indicators (1Password, Insync, ZapZap, Bluetooth, network…) are hidden behind the **‹** arrow on the right of the bar: click it to show or hide them.
@@ -162,12 +162,12 @@ Your config is versioned in Git (`~/.dotfiles`, files stay in place) and pushed 
 | What | Where |
 |---|---|
 | Hyprland (keys, look, rules) | `~/.config/hypr/hyprland.lua` — saved changes apply instantly; no-gap workspace logic in `~/.config/hypr/workspaces.lua` |
-| Wallpaper & colours | `wallpaper <image>`; generated colour files: `waybar/colors.css`, `hypr/colors.lua`, `rofi/colors.rasi`, `dunst/dunstrc.d/90-colors.conf`, `hypr/hyprlock-colors.conf`, `hypr/hyprtoolkit.conf` (password dialog), `zathura/colors` (PDF viewer), `alacritty/wallpaper-colors.toml`, `tmux/wallpaper.conf` |
+| Wallpaper & colours | `wallpaper <image>`; generated colour files: `waybar/colors.css`, `hypr/colors.lua`, `rofi/colors.rasi`, `swaync/colors.css`, `hypr/hyprlock-colors.conf`, `hypr/hyprtoolkit.conf` (password dialog), `zathura/colors` (PDF viewer), `alacritty/wallpaper-colors.toml`, `tmux/wallpaper.conf` |
 | Lock screen / idle timings | `~/.config/hypr/hyprlock.conf`, `~/.config/hypr/hypridle.conf` |
-| Helper scripts | `~/.config/hypr/scripts/` (launcher, spotlight, windows, keybinds, dnd, display, power-watch, nightlight + suntimes, osd, screenshot, clipboard, powermenu) |
+| Helper scripts | `~/.config/hypr/scripts/` (launcher, spotlight, windows, keybinds, display, power-watch, nightlight + suntimes, osd, screenshot, clipboard, powermenu) |
 | Bar | `~/.config/waybar/config.jsonc`, `~/.config/waybar/style.css` |
 | Launcher / power menu | `~/.config/rofi/` |
-| Notifications | `~/.config/dunst/dunstrc` |
+| Notifications | `~/.config/swaync/config.json` + `style.css` (swaync: pop-ups + Notification Center) |
 | Terminal (Hyprland only) | `~/.config/alacritty/balcony.toml` (frosted window) + colours generated from the wallpaper by `~/.config/hypr/scripts/terminal-colors` (runs at login; run it by hand after changing the wallpaper) |
 | Session environment | `~/.config/uwsm/env-hyprland` |
 | Login screen (SDDM) | theme source `~/.config/hypr/sddm-theme/` (installed to `/usr/share/sddm/themes/hyprlock-match`), config `/etc/sddm.conf.d/10-hyprlock.conf` |

@@ -6,7 +6,7 @@
   "spacing": 0,
 
   "modules-left":  ["custom/launcher", "hyprland/workspaces", "custom/newws"],
-  "modules-right": ["group/indicators", "custom/dnd", "custom/caffeinate", "custom/nightlight", "power-profiles-daemon", "network", "pulseaudio", "backlight", "battery", "clock#date", "clock", "custom/power"],
+  "modules-right": ["group/indicators", "custom/notifications", "custom/caffeinate", "custom/nightlight", "power-profiles-daemon", "network", "pulseaudio", "backlight", "battery", "clock#date", "clock", "custom/power"],
 
   "custom/launcher": {
     "format": "",
@@ -85,13 +85,25 @@
     "spacing": 10
   },
 
-  // Do not disturb: click = on/off (notifications wait while on)
-  "custom/dnd": {
-    "exec": "~/.config/hypr/scripts/dnd waybar",
+  // Notification Center (swaync): click = open / close the panel, right-click = do not disturb.
+  // Bell with a dot = notifications waiting in the panel; crossed-out bell = do not disturb.
+  "custom/notifications": {
+    "exec": "swaync-client -swb",
     "return-type": "json",
-    "interval": 10,
-    "signal": 10,
-    "on-click": "~/.config/hypr/scripts/dnd toggle"
+    "escape": true,
+    "format": "{icon}",
+    "format-icons": {
+      "none": "󰂚",
+      "notification": "󱅫",
+      "dnd-none": "󰂛",
+      "dnd-notification": "󰂛",
+      "inhibited-none": "󰂚",
+      "inhibited-notification": "󱅫",
+      "dnd-inhibited-none": "󰂛",
+      "dnd-inhibited-notification": "󰂛"
+    },
+    "on-click": "sleep 0.1; swaync-client -t -sw",
+    "on-click-right": "swaync-client -d -sw"
   },
 
   // Caffeinate: click = keep awake indefinitely / turn off; right-click = choose time and mode
@@ -174,6 +186,7 @@
   // Date pill (hover: calendar) and time pill
   "clock#date": {
     "format": "{:%a %d %b}",
+    "on-click": "sleep 0.1; swaync-client -t -sw",
     "tooltip-format": "<big>{:%B %Y}</big>\n<tt><small>{calendar}</small></tt>",
     "calendar": {
       "mode": "month",
@@ -188,7 +201,8 @@
 
   "clock": {
     "format": "{:%H:%M}",
-    "tooltip": false
+    "tooltip": false,
+    "on-click": "sleep 0.1; swaync-client -t -sw"
   },
 
   "custom/power": {

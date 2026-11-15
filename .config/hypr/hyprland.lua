@@ -33,7 +33,7 @@ hl.on("hyprland.start", function()
     hl.exec_cmd(app .. "waybar")
     hl.exec_cmd(scripts .. "theme; " .. app .. "hyprpaper")   -- whole theme follows the wallpaper
     hl.exec_cmd(app .. "hypridle")
-    hl.exec_cmd(app .. "dunst")
+    hl.exec_cmd("systemctl --user start swaync")                      -- notifications + Notification Center
     hl.exec_cmd("sh -c '" .. app .. "hyprsunset -i & sleep 1; " .. scripts .. "nightlight restore; " .. scripts .. "nightlight auto'")   -- night light: last state, then follow the sun
     hl.exec_cmd("systemctl --user start hyprpolkitagent")             -- password prompts (pkexec, 1Password…)
     hl.exec_cmd("systemctl --user start localsearch-3.service")       -- file index for Super+Space (search inside documents)
@@ -104,7 +104,7 @@ hl.animation({ leaf = "border",     enabled = true, speed = 10,  bezier = "defau
 -- Frosted glass behind the bar, launcher and notifications
 hl.layer_rule({ name = "blur-waybar",        match = { namespace = "^waybar$" },        blur = true, ignore_alpha = 0.2 })
 hl.layer_rule({ name = "blur-rofi",          match = { namespace = "^rofi$" },          blur = true, ignore_alpha = 0.2 })
-hl.layer_rule({ name = "blur-notifications", match = { namespace = "^notifications$" }, blur = true, ignore_alpha = 0.2 })
+hl.layer_rule({ name = "blur-notifications", match = { namespace = "^swaync-(notification-window|control-center)$" }, blur = true, ignore_alpha = 0.2 })
 
 
 -- Plugging in a monitor / projector opens the display menu
@@ -235,8 +235,8 @@ hl.bind(M .. " + Escape",     run("loginctl lock-session"))
 hl.bind(M .. " + SHIFT + E",  run(scripts .. "powermenu"))
 
 -- Notifications
-hl.bind(M .. " + N",          run("dunstctl history-pop"))
-hl.bind(M .. " + SHIFT + N",  run("dunstctl close-all"))
+hl.bind(M .. " + N",          run("swaync-client -t -sw"))   -- Notification Center (open / close)
+hl.bind(M .. " + SHIFT + N",  run("swaync-client -C -sw"))   -- clear all notifications
 
 -- Media / brightness keys (with on-screen notification)
 hl.bind("XF86AudioRaiseVolume",  run(scripts .. "osd volume up"),     { locked = true, repeating = true })
