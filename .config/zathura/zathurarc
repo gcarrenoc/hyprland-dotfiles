@@ -15,16 +15,6 @@ set statusbar-v-padding 4
 set scroll-step 80
 set recolor-keephue true            # Ctrl+R: dark reading mode keeps image colours
 
-# Arrow keys: ← → previous / next page, ↑ ↓ scroll (normal and fullscreen view)
-map <Left>  navigate previous
-map <Right> navigate next
-map <Up>    scroll up
-map <Down>  scroll down
-map [fullscreen] <Left>  navigate previous
-map [fullscreen] <Right> navigate next
-map [fullscreen] <Up>    scroll up
-map [fullscreen] <Down>  scroll down
-
 # Ctrl+C: silently copy the current selection to the clipboard
 map <C-c> feedkeys ":exec sh -c 'wl-paste --primary --no-newline | wl-copy'<Return>"
 map [fullscreen] <C-c> feedkeys ":exec sh -c 'wl-paste --primary --no-newline | wl-copy'<Return>"
