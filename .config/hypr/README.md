@@ -85,7 +85,7 @@ show a small pop-up. They also work on the lock screen.
 ## The bar (Waybar)
 
 
-Icons: outline style — Octicons (`nf-oct-*`, in the Nerd Font) wherever one exists; coffee cup, battery, Wi-Fi, leaf and power from Lucide (`~/.local/share/fonts/Lucide`, official `lucide-static` font, ISC licence). App icons next to the workspace numbers are the apps' own logos.
+Icons: outline style — Octicons (`nf-oct-*`, in the Nerd Font) wherever one exists; coffee cup, battery, Wi-Fi, leaf and power from Lucide (`~/.local/share/fonts/Lucide`, official `lucide-static` font, ISC licence). App icons next to the workspace numbers are Lucide too (e.g. compass = Chrome, globe = Firefox, book with text = PDF viewer, notebook with pen = Obsidian; rules in `waybar/config.jsonc` → `window-rewrite`).
 
 | Item | Click |
 |---|---|
