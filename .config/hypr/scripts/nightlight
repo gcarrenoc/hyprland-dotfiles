@@ -32,10 +32,10 @@ case ${1:-} in
   waybar)
     if (( on )); then
       read -r _ rise sset < <("$SUN")
-      printf '{"text":"\U000f0594","class":"on","tooltip":"Night light on · %sK\\nAuto: on at sunset %s, off at sunrise %s\\nClick: off · Scroll: warmer / cooler"}\n' "$temp" "$sset" "$rise"
+      printf '{"text":"\uf4ee","class":"on","tooltip":"Night light on · %sK\\nAuto: on at sunset %s, off at sunrise %s\\nClick: off · Scroll: warmer / cooler"}\n' "$temp" "$sset" "$rise"
     else
       read -r _ rise sset < <("$SUN")
-      printf '{"text":"\U000f0594","class":"off","tooltip":"Night light off\\nAuto: on at sunset %s, off at sunrise %s\\nClick: on (%sK)"}\n' "$sset" "$rise" "$temp"
+      printf '{"text":"\uf4ee","class":"off","tooltip":"Night light off\\nAuto: on at sunset %s, off at sunrise %s\\nClick: on (%sK)"}\n' "$sset" "$rise" "$temp"
     fi ;;
   *) sed -n '2,6p' "$0" | sed 's/^# \{0,1\}//' ;;
 esac

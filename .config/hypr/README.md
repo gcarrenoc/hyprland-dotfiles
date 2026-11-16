@@ -84,22 +84,25 @@ show a small pop-up. They also work on the lock screen.
 
 ## The bar (Waybar)
 
+
+Icons: outline style — Octicons (`nf-oct-*`, in the Nerd Font) wherever one exists; coffee cup, battery, Wi-Fi, leaf and power from Lucide (`~/.local/share/fonts/Lucide`, official `lucide-static` font, ISC licence). App icons next to the workspace numbers are the apps' own logos.
+
 | Item | Click |
 |---|---|
-| Arch logo | App launcher (`Super + D`) |
+| Telescope | App launcher (`Super + D`) |
 | 1 · 2 · 3 … | Workspaces, each with icons of the apps running on it — the current one is highlighted; click to switch, scroll to move |
 | + | Add a new empty workspace at the end and go there |
-| 🔔 Bell | **Notification Center.** Click: open the panel on the right (notifications grouped by app, media player, Clear). A dot on the bell = notifications waiting. Right-click: **do not disturb** on / off (amber crossed-out bell); while on, notifications skip the pop-up and go silently to the panel, and they stay there when you turn it off. Volume / brightness pop-ups and critical alerts (low battery) still show. |
-| ☕ Coffee cup | Caffeinate. **Click:** keep awake indefinitely (click again = off) · **Right-click:** choose time (30 min … 5 h, ∞, custom) and mode (screen + system / system only). Dim cup = off, amber cup + time left = on. |
-| 🌙 Moon | Night light. **Turns on at sunset and off at sunrise automatically** (Valparaíso times, recalculated daily). **Click:** on / off by hand (respected until the next sunset/sunrise) · **Scroll:** warmer / cooler while on (2500–6000 K). Hover shows today's times. |
-| Power profile | **Click** to cycle: ⚡ performance (gold) → gauge = balanced → 🍃 power saver (green). Hover shows the current one. Performance is limited when the laptop detects it's on your lap. |
+| Bell | **Notification Center.** Click: open the panel on the right (notifications grouped by app, media player, Clear). Filled bell = notifications waiting (outline = nothing new). Right-click: **do not disturb** on / off (amber crossed-out bell); while on, notifications skip the pop-up and go silently to the panel, and they stay there when you turn it off. Volume / brightness pop-ups and critical alerts (low battery) still show. |
+| Coffee cup | Caffeinate. **Click:** keep awake indefinitely (click again = off) · **Right-click:** choose time (30 min … 5 h, ∞, custom) and mode (screen + system / system only). Dim cup = off, amber cup + time left = on. |
+| Moon | Night light. **Turns on at sunset and off at sunrise automatically** (Valparaíso times, recalculated daily). **Click:** on / off by hand (respected until the next sunset/sunrise) · **Scroll:** warmer / cooler while on (2500–6000 K). Hover shows today's times. |
+| Power profile | **Click** to cycle: rocket = performance (gold) → meter = balanced → leaf = power saver (green). Hover shows the current one. Performance is limited when the laptop detects it's on your lap. |
 | Wi-Fi | Network settings (`nmtui`) |
 | Speaker | Sound settings · right-click mutes · scroll changes volume |
 | Brightness | Scroll to change |
-| Battery | Click to show % |
+| Battery | Fills as it charges (empty · low · medium · full), bolt while charging, plug when plugged in but not charging · click to show % |
 | Date | Today's date · hover for a calendar · click: Notification Center |
 | Time | The time · click: Notification Center |
-| ⏻ | Power menu |
+| Power | Power menu |
 
 App indicators (1Password, Insync, ZapZap, Bluetooth, network…) are hidden behind the **‹** arrow on the right of the bar: click it to show or hide them.
 

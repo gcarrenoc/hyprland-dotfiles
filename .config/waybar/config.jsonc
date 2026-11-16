@@ -9,7 +9,7 @@
   "modules-right": ["group/indicators", "custom/notifications", "custom/caffeinate", "custom/nightlight", "power-profiles-daemon", "network", "pulseaudio", "backlight", "battery", "clock#date", "clock", "custom/power"],
 
   "custom/launcher": {
-    "format": "",
+    "format": "",
     "tooltip": false,
     "on-click": "~/.config/hypr/scripts/launcher"
   },
@@ -69,7 +69,7 @@
   },
 
   "custom/tray-toggle": {
-    "format": "\uf053",
+    "format": "",
     "tooltip-format": "App indicators (click to show / hide)"
   },
 
@@ -86,21 +86,21 @@
   },
 
   // Notification Center (swaync): click = open / close the panel, right-click = do not disturb.
-  // Bell with a dot = notifications waiting in the panel; crossed-out bell = do not disturb.
+  // Outline bell = nothing new; filled bell = notifications waiting; crossed-out bell = do not disturb.
   "custom/notifications": {
     "exec": "swaync-client -swb",
     "return-type": "json",
     "escape": true,
     "format": "{icon}",
     "format-icons": {
-      "none": "󰂚",
-      "notification": "󱅫",
-      "dnd-none": "󰂛",
-      "dnd-notification": "󰂛",
-      "inhibited-none": "󰂚",
-      "inhibited-notification": "󱅫",
-      "dnd-inhibited-none": "󰂛",
-      "dnd-inhibited-notification": "󰂛"
+      "none": "",
+      "notification": "",
+      "dnd-none": "",
+      "dnd-notification": "",
+      "inhibited-none": "",
+      "inhibited-notification": "",
+      "dnd-inhibited-none": "",
+      "dnd-inhibited-notification": ""
     },
     "on-click": "sleep 0.1; swaync-client -t -sw",
     "on-click-right": "swaync-client -d -sw"
@@ -133,18 +133,18 @@
     "tooltip-format": "Power profile: {profile}\nClick to change",
     "tooltip": true,
     "format-icons": {
-      "default": "",
-      "performance": "",
-      "balanced": "",
-      "power-saver": "\uf06c"
+      "default": "",
+      "performance": "",
+      "balanced": "",
+      "power-saver": "<span font_family='lucide'></span>"
     }
   },
 
   "network": {
     "format-wifi": "{icon}",
-    "format-ethernet": "󰈀",
-    "format-disconnected": "󰤮",
-    "format-icons": ["󰤯", "󰤟", "󰤢", "󰤥", "󰤨"],
+    "format-ethernet": "<span font_family='lucide'></span>",
+    "format-disconnected": "<span font_family='lucide'></span>",
+    "format-icons": ["<span font_family='lucide'></span>", "<span font_family='lucide'></span>", "<span font_family='lucide'></span>", "<span font_family='lucide'></span>"],
     "tooltip-format-wifi": "{essid}  ·  {signalStrength}%\n{ipaddr}",
     "tooltip-format-ethernet": "{ifname}  ·  {ipaddr}",
     "tooltip-format-disconnected": "Disconnected",
@@ -153,8 +153,8 @@
 
   "pulseaudio": {
     "format": "{icon}",
-    "format-muted": "󰝟",
-    "format-icons": { "default": ["󰕿", "󰖀", "󰕾"], "headphone": "󰋋" },
+    "format-muted": "",
+    "format-icons": { "default": "" },
     "tooltip-format": "{desc}  ·  {volume}%",
     "on-click": "uwsm app -- pavucontrol",
     "on-click-right": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
@@ -165,7 +165,7 @@
     "device": "intel_backlight",
     "format": "{icon}",
     "tooltip-format": "Brightness  {percent}%",
-    "format-icons": ["󱩎", "󱩏", "󱩐", "󱩑", "󱩒", "󱩓", "󱩔", "󱩕", "󱩖", "󰛨"],
+    "format-icons": [""],
     "on-scroll-up": "brightnessctl -q set 5%+",
     "on-scroll-down": "brightnessctl -q set 5%-"
   },
@@ -178,11 +178,11 @@
     "format-charging": "{icon}",
     "format-plugged": "{icon}",
     "format-alt": "{icon} {capacity}%",
-    // one icon family (Material Design, vertical): fills in 10 % steps; with a bolt when on the charger
+    // Lucide outline battery: empty → low → medium → full; charging; plugged (not charging)
     "format-icons": {
-      "default":  ["󰂎", "󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"],
-      "charging": ["󰢟", "󰢜", "󰂆", "󰂇", "󰂈", "󰢝", "󰂉", "󰢞", "󰂊", "󰂋", "󰂅"],
-      "plugged":  ["󰢟", "󰢜", "󰂆", "󰂇", "󰂈", "󰢝", "󰂉", "󰢞", "󰂊", "󰂋", "󰂅"]
+      "default":  ["<span font_family='lucide'></span>", "<span font_family='lucide'></span>", "<span font_family='lucide'></span>", "<span font_family='lucide'></span>"],
+      "charging": ["<span font_family='lucide'></span>"],
+      "plugged":  ["<span font_family='lucide'></span>"]
     },
     "tooltip-format": "{capacity}%  ·  {timeTo}"
   },
@@ -211,7 +211,7 @@
   },
 
   "custom/power": {
-    "format": "⏻",
+    "format": "<span font_family='lucide'></span>",
     "tooltip-format": "Power menu",
     "on-click": "~/.config/hypr/scripts/powermenu"
   }
