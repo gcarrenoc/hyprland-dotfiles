@@ -110,7 +110,7 @@ App indicators (1Password, Insync, ZapZap, Bluetooth, network…) are hidden beh
 - **Lid / suspend:** the screen is locked before sleeping.
 - **Workspaces are a row** (like GNOME / macOS Spaces): workspaces 1 … N (up to 10) always exist, **empty ones stay** until you remove them (Super+Ctrl+Q), there are never gaps, and N is remembered across logins. Add one with **+** or by going past the end. Keys, Super+scroll, the 4-finger swipe and the bar all follow the same rule. Logic: `~/.config/hypr/workspaces.lua`.
 - **Night light:** on at sunset, off at sunrise (timer `nightlight-auto.timer`, checks every 5 min). Location for the sun times: `LAT/LON` in `~/.config/hypr/scripts/suntimes`.
-- **Battery:** notification at 15 %, urgent one at 5 %, suspends at 3 % (`power-watch.timer`, every minute). On battery the blur is lighter (1 pass) to save power; on the charger it's back to 3.
+- **Battery:** power saver plan at 20 % (your previous plan comes back when you plug in, unless you changed it yourself), notification at 15 %, urgent one at 5 %, suspends at 3 % (`power-watch.timer`, every minute). On battery the blur is lighter (1 pass) to save power; on the charger it's back to 3.
 - **App activation:** clicking a notification or link takes you to that app's window, switching workspace if needed.
 - **Apps at login:** Everything in `~/.config/autostart` (1Password, Insync,
   ZapZap, Bluetooth, network applet).

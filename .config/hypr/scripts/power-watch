@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Power watcher (runs every minute via ~/.config/systemd/user/power-watch.timer)
+#   • battery 20%  → power saver plan (the previous plan comes back when you plug in)
 #   • battery 15%  → low-battery notification
 #   • battery 5%   → urgent notification
 #   • battery 3%   → suspend (so work isn't lost)
@@ -8,7 +9,8 @@
 set -u
 BAT=/sys/class/power_supply/BAT0 AC=/sys/class/power_supply/AC/online
 STATE="$HOME/.cache/power-watch"
-LOW=15 CRIT=5 SUSPEND=3 BLUR_AC=3 BLUR_BAT=1
+SAVER_STATE="$HOME/.cache/power-watch-saver"   # exists while we switched to power saver; holds the previous plan
+SAVER=20 LOW=15 CRIT=5 SUSPEND=3 BLUR_AC=3 BLUR_BAT=1
 
 cap=$(<"$BAT/capacity") status=$(<"$BAT/status") ac=$(<"$AC")
 warned=0
@@ -31,6 +33,24 @@ else
   warned=0                                   # charging / full → reset
 fi
 mkdir -p "${STATE%/*}"; echo "$warned" > "$STATE"
+
+# power saver at 20 %: switch once per discharge (if you change the plan afterwards, it stays yours);
+# on the charger, put the previous plan back — unless you already changed it yourself
+if command -v powerprofilesctl >/dev/null; then
+  plan=$(powerprofilesctl get 2>/dev/null)
+  if [[ $status == Discharging ]]; then
+    if (( cap <= SAVER )) && [[ ! -f $SAVER_STATE && -n $plan ]]; then
+      echo "$plan" > "$SAVER_STATE"
+      if [[ $plan != power-saver ]] && powerprofilesctl set power-saver; then
+        notify -u low -i battery-low "Power saver on" "Battery at ${cap}% — your ${plan} plan comes back when you plug in."
+      fi
+    fi
+  elif [[ -f $SAVER_STATE ]]; then
+    read -r before < "$SAVER_STATE"
+    [[ $plan == power-saver && -n $before && $before != power-saver ]] && powerprofilesctl set "$before"
+    rm -f "$SAVER_STATE"
+  fi
+fi
 
 # blur: lighter on battery (only touch Hyprland when the value has to change)
 want=$BLUR_AC; [[ $ac == 0 ]] && want=$BLUR_BAT

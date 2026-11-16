@@ -4,7 +4,7 @@
 
 * {
   font-family: "PaperMono Nerd Font", "Noto Color Emoji";
-  font-size: 15px;
+  font-size: 18px;   /* one size for all text and icons */
   min-height: 0;
   border: none;
   border-radius: 0;
@@ -40,20 +40,18 @@ tooltip label {
 
 #custom-launcher {
   color: @light;
-  font-size: 20px;
   margin-left: 12px;
   padding: 0 14px;
 }
 
 
 #workspaces { padding: 0 6px; }
-#custom-newws { color: alpha(@muted, 0.7); font-family: "PaperMono Nerd Font"; font-size: 18px; padding: 0 6px; margin-left: 0; background: transparent; }
+#custom-newws { color: alpha(@muted, 0.7); font-family: "PaperMono Nerd Font"; padding: 0 6px; margin-left: 0; background: transparent; }
 #custom-newws:hover { color: @star; }
 #workspaces button {
   color: alpha(@muted, 0.55);                 /* empty workspace: dim */
   font-family: "PaperMono Nerd Font";
   font-weight: bold;
-  font-size: 15px;
   padding: 0 9px;
   margin: 3px 1px;
   min-width: 18px;
@@ -62,7 +60,6 @@ tooltip label {
   transition: all 0.2s ease-out;
 }
 /* the * rule sets 15px on the label itself, so size the numbers here; app icons = 111% of 18 = 20px */
-#workspaces button label { font-size: 18px; }
 #workspaces button:not(.empty) { color: @light; }      /* has apps: brighter */
 #workspaces button.active { color: @star; background: alpha(@steel, 0.18); }
 #workspaces button.urgent { color: @alert; }
@@ -87,7 +84,6 @@ tooltip label {
 
 /* network · volume · brightness · battery are one joined pill */
 #network, #pulseaudio, #backlight, #battery {
-  font-size: 20px;
   margin-left: 0;
   margin-right: 0;
   border-radius: 0;
@@ -132,7 +128,3 @@ tooltip label {
 #battery { padding-right: 20px; }
 #workspaces button:not(.empty) { padding: 0 12px 0 8px; }
 #custom-newws { padding: 0 6px 3px 6px; }
-
-/* Icon size: every bar icon at 1.33x the 15px text = 20px */
-#custom-launcher, #custom-tray-toggle, #custom-notifications, #custom-caffeinate, #custom-nightlight, #power-profiles-daemon, #custom-power,
-#network, #pulseaudio, #backlight, #battery { font-size: 20px; }
