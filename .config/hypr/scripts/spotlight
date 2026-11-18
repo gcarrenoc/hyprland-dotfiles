@@ -1,77 +1,112 @@
 #!/usr/bin/env python3
-"""Spotlight-style search (Super+Space).
+"""Spotlight (Super+Space, and the telescope button on the bar) — a small GTK4 window, macOS-style.
 
-Step 1 — file names: your files and folders in ~ (hidden folders, anaconda3,
-node_modules… skipped), most recently changed first, fuzzy matching.
-  Enter        open the file / folder
-  Shift+Enter  show it in its folder (Files, file selected)
-  Ctrl+Enter   search INSIDE documents for what you typed
-  (Enter on text that matches no file name also searches inside documents)
+Results update as you type, in sections:
+  Top Hit         a calculation (100-36, 5 km to mi, 100 usd to clp), else what you picked before
+                  for a similar search (it learns, files and actions too), else the best name match
+  Applications    most used first; also found by what they do ("browser" → Chrome)
+  System          lock, sleep, restart, shut down, log out · Wi-Fi, Bluetooth, Night Light,
+                  Do Not Disturb, Keep Awake (on/off) · power mode · screenshot · empty trash ·
+                  displays · notifications · clipboard · keyboard shortcuts
+  Documents · Folders · Images · Files    in ~ (newest first; hidden folders, node_modules… skipped)
+  Search          the web (Google) · inside documents
+Matching: the start of any word ("week 14" finds week_14.pdf).
+Quick Look (right): PDF first page, images, text/code, folder contents, Nautilus thumbnails, details.
 
-Step 2 — inside documents (PDF, Word, LibreOffice, Markdown, text…), using the
-LocalSearch index: results with a highlighted snippet. Enter / Shift+Enter as above.
+  Enter        open · go to an app that's already open · copy a result · run an action
+               (restart / shut down / log out / empty trash ask for a second Enter)
+  Shift+Enter  app: new window · file: show it in its folder
+  Ctrl+Enter   search inside documents (LocalSearch index; snippets)
+  ↑ ↓ choose · Esc / click outside / Super+Space again: close
+
+Colours come from ~/.config/rofi/colors.rasi (generated from the wallpaper by
+scripts/theme). Hyprland rule: class local.Spotlight. Picks: ~/.cache/spotlight-picks.json
 """
-import html, re, subprocess
+import hashlib, html, json, re, subprocess, sys, threading, time, unicodedata
+from importlib.machinery import SourceFileLoader
 from pathlib import Path
-from urllib.parse import unquote, urlparse
+from urllib.parse import quote_plus, unquote, urlparse
 
 import gi
-gi.require_version("Gio", "2.0")
+gi.require_version("Gtk", "4.0")
+gi.require_version("Gdk", "4.0")
 gi.require_version("Tsparql", "3.0")
-from gi.repository import Gio, Tsparql
+gi.require_version("GdkPixbuf", "2.0")
+from gi.repository import Gdk, GdkPixbuf, Gio, GLib, Gtk, Pango, Tsparql
 
+APP_ID = "local.Spotlight"
 HOME = Path.home()
+SCRIPTS = Path(__file__).resolve().parent
 EXCLUDE = ["anaconda3", "miniconda3", "node_modules", "__pycache__", ".venv", "venv",
            "build", "dist", "target", "Trash"]
 DRIVES = sorted(HOME.glob("Insync/*/Google Drive"), key=lambda d: -len(str(d)))
-THEME = ("window { width: 820px; } listview { lines: 10; } "
-         "textbox { text-color: @muted; horizontal-align: 0.5; }")
-SEP = "\t"
+WEB = "https://www.google.com/search?q={}"                 # web search engine
+COLORS = HOME / ".config/rofi/colors.rasi"
+PICKS = HOME / ".cache/spotlight-picks.json"
+THUMBS = HOME / ".cache/spotlight-previews"
+SECTIONS = [("app", "Applications", 5), ("action", "System", 4), ("doc", "Documents", 8),
+            ("folder", "Folders", 5), ("image", "Images", 5), ("other", "Files", 6)]
+EMPTY_APPS, EMPTY_RECENT = 8, 10
+HINT = "↵ open    ⇧↵ new window · show in folder    ⌃↵ search inside documents"
+DOC_TYPES = ("application/pdf", "text/", "application/vnd.oasis", "application/msword",
+             "application/vnd.openxmlformats", "application/vnd.ms-", "application/rtf",
+             "application/epub", "application/x-tex", "application/x-ipynb", "application/json")
+
+launcher = SourceFileLoader("launcher", str(SCRIPTS / "launcher")).load_module()
 
 
 # ---------- helpers ----------
+def fold(s):           # lower-case, accents removed: "Proyección" → "proyeccion"
+    return "".join(c for c in unicodedata.normalize("NFKD", s.lower()) if not unicodedata.combining(c))
+
+
+def name_words(name):
+    """Search words: week_14.pdf → "week 14 pdf", reportFinal2 → "report Final 2"."""
+    words = []
+    for run in re.findall(r"[^\W\d_]+|\d+", name):         # letter runs and number runs (any language)
+        start = 0
+        for k in range(1, len(run)):                         # camelCase: split before an upper after a lower
+            if run[k].isupper() and run[k - 1].islower():
+                words.append(run[start:k]); start = k
+        words.append(run[start:])
+    return " ".join(words)
+
+
+def words_of(*texts):
+    """Search words of each text, plus joined forms: "Wi-Fi" → wi, fi, wifi · "week_14" → week, 14, week14."""
+    out = []
+    for t in texts:
+        for chunk in (t or "").split():
+            parts = fold(name_words(chunk)).split()
+            out += parts
+            if len(parts) > 1:
+                out.append("".join(parts))
+    return out
+
+
 def pretty_dir(p):
     d = str(p.parent)
-    for drive in DRIVES:                       # ~/Insync/<account>/Google Drive → Drive
+    for drive in DRIVES:                                    # ~/Insync/<account>/Google Drive → Drive
         if d == str(drive) or d.startswith(str(drive) + "/"):
             return "Drive" + d[len(str(drive)):]
     return "~" + d[len(str(HOME)):] if d.startswith(str(HOME)) else d
 
 
-_icons = {}
-
-
-def icon_for(p, is_dir=False):
+_types = {}
+def file_type(p, is_dir=False):
+    """(icon name, content type, section) — cached per extension."""
     if is_dir:
-        return "folder"
+        return "folder", "inode/directory", "folder"
     ext = p.suffix.lower()
-    if ext not in _icons:
+    if ext not in _types:
         ctype, _ = Gio.content_type_guess(p.name, None)
         names = Gio.content_type_get_icon(ctype).get_names() if ctype else []
-        _icons[ext] = names[0] if names else "text-x-generic"
-    return _icons[ext]
+        section = ("image" if ctype and ctype.startswith("image/") else
+                   "doc" if ctype and ctype.startswith(DOC_TYPES) else "other")
+        _types[ext] = (names[0] if names else "text-x-generic", ctype or "", section)
+    return _types[ext]
 
 
-def open_path(p, in_folder):
-    cmd = ["nautilus", "--select", str(p)] if in_folder else ["xdg-open", str(p)]
-    subprocess.Popen(["uwsm", "app", "--", *cmd], start_new_session=True,
-                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
-
-def rofi(rows, prompt, mesg, extra=()):
-    """Returns (exit code, typed text, chosen row label)."""
-    r = subprocess.run(
-        ["env", "-u", "WAYLAND_DISPLAY", "rofi", "-dmenu", "-i", "-markup-rows", "-show-icons", "-format", f"f{SEP}s",
-         "-p", prompt, "-mesg", mesg, "-theme-str", THEME,
-         "-kb-accept-custom", "", "-kb-accept-alt", "", "-kb-custom-1", "Shift+Return",
-         *extra],
-        input="\n".join(rows), capture_output=True, text=True)
-    out = r.stdout.rstrip("\n")
-    typed, _, chosen = out.partition(SEP)
-    return r.returncode, typed, chosen
-
-
-# ---------- step 1: file names ----------
 def find_entries():
     cmd = ["fd", ".", str(HOME), "--color", "never", "--absolute-path"]
     for e in EXCLUDE:
@@ -89,23 +124,38 @@ def find_entries():
     return entries
 
 
-# ---------- step 2: inside documents ----------
+def looks_like_maths(text):
+    return bool(re.search(r"\d", text) and re.search(r"[-+*/^×÷%()]|\bto\b", text))
+
+
+def calculate(text):
+    """qalc result for a real calculation / conversion, else None ("hello" is not maths)."""
+    if not looks_like_maths(text):
+        return None
+    expr = re.sub(r"\bto\s+(?=[A-Za-z])", "to -", text)     # "5 km to mi" → decimal miles, not mi + yd + in
+    try:
+        out = subprocess.run(["qalc", "-t", expr], capture_output=True, text=True, timeout=3).stdout
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    lines = [l for l in out.splitlines() if l.strip()]
+    result = lines[-1].strip() if lines else ""
+    if not result or result.replace(" ", "") == text.replace(" ", "") or "error" in result.lower():
+        return None
+    return result
+
+
 def content_search(text, limit=60):
     words = [w for w in re.findall(r"\w+", text, re.UNICODE) if w]
     if not words:
         return []
     query = " ".join(w + "*" if len(w) >= 3 else w for w in words)
-    try:
-        conn = Tsparql.SparqlConnection.bus_new("org.freedesktop.LocalSearch3", None, None)
-        st = conn.query_statement(
-            "SELECT ?url fts:snippet(?ie, \"\x01\", \"\x02\", \"…\", 12) WHERE { "
-            "?ie fts:match ~q ; nie:isStoredAs ?f . ?f nie:url ?url "
-            "} ORDER BY DESC(fts:rank(?ie)) LIMIT %d" % limit, None)
-        st.bind_string("q", query)
-        cur = st.execute(None)
-    except Exception as e:
-        subprocess.run(["notify-send", "-a", "Search", "Search inside documents failed", str(e)[:200]])
-        return []
+    conn = Tsparql.SparqlConnection.bus_new("org.freedesktop.LocalSearch3", None, None)
+    st = conn.query_statement(
+        "SELECT ?url fts:snippet(?ie, \"\x01\", \"\x02\", \"…\", 12) WHERE { "
+        "?ie fts:match ~q ; nie:isStoredAs ?f . ?f nie:url ?url "
+        "} ORDER BY DESC(fts:rank(?ie)) LIMIT %d" % limit, None)
+    st.bind_string("q", query)
+    cur = st.execute(None)
     results, seen = [], set()
     while cur.next(None):
         url = cur.get_string(0)[0] or ""
@@ -115,56 +165,670 @@ def content_search(text, limit=60):
         if p in seen or not p.exists():
             continue
         seen.add(p)
-        snip = (cur.get_string(1)[0] or "").replace("\n", " ")
-        results.append((p, snip))
+        results.append((p, (cur.get_string(1)[0] or "").replace("\n", " ")))
     return results
 
 
 def snippet_markup(s):
-    s = html.escape(" ".join(s.split())[:90])
-    return s.replace("\x01", "<b><u>").replace("\x02", "</u></b>")
+    s = " ".join(s.split())[:90]
+    if s.count("\x01") > s.count("\x02"):                  # cut inside a highlighted word: close it
+        s += "\x02"
+    return html.escape(s).replace("\x01", "<b><u>").replace("\x02", "</u></b>")
 
 
-def show_content_results(text):
-    results = content_search(text)
-    if not results:
-        subprocess.run(["notify-send", "-a", "Search", "-u", "low",
-                        f"No documents contain “{text}”"])
+def run(cmd):
+    return subprocess.run(cmd, capture_output=True, text=True, timeout=3).stdout.strip()
+
+
+def spawn(*cmd):
+    subprocess.Popen(["uwsm", "app", "--", *cmd], start_new_session=True,
+                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+def detach(*cmd):     # helper scripts that open their own menus
+    subprocess.Popen(list(cmd), start_new_session=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+def open_path(p, in_folder):
+    spawn(*(["nautilus", "--select", str(p)] if in_folder else ["xdg-open", str(p)]))
+
+
+def open_app(app, new_window):
+    launcher.remember(app["id"])
+    if not new_window:
+        w = launcher.find_window(app)
+        if w:
+            subprocess.run(["hyprctl", "dispatch", f'hl.dsp.focus({{ window = "address:{w["address"]}" }})'],
+                           capture_output=True)
+            return
+    launcher.launch(app)
+
+
+# ---------- system actions ----------
+def system_actions():
+    """[(id, title, detail, icon, extra search words, command, needs confirmation)] with live on/off state."""
+    def state(fn):
+        try:
+            return fn()
+        except Exception:
+            return None
+    wifi = state(lambda: run(["nmcli", "radio", "wifi"]) == "enabled")
+    bt = state(lambda: "Powered: yes" in run(["bluetoothctl", "show"]))
+    dnd = state(lambda: run(["swaync-client", "-D", "-sw"]) == "true")
+    night = state(lambda: json.loads(run([str(SCRIPTS / "nightlight"), "waybar"]))["class"] == "on")
+    awake = state(lambda: json.loads(run([str(HOME / ".local/bin/caffeinate"), "waybar"]))["class"] != "off")
+    profile = state(lambda: run(["powerprofilesctl", "get"]))
+    onoff = lambda on: "Turn off" if on else "Turn on"
+    acts = [
+        ("lock", "Lock Screen", "Lock now", "system-lock-screen", "lock", ["loginctl", "lock-session"], False),
+        ("sleep", "Sleep", "Suspend the laptop", "system-suspend", "suspend", ["systemctl", "suspend"], False),
+        ("restart", "Restart", "Restart the computer", "system-reboot", "reboot reset", ["systemctl", "reboot"], True),
+        ("shutdown", "Shut Down", "Turn the computer off", "system-shutdown", "power off poweroff turn off",
+         ["systemctl", "poweroff"], True),
+        ("logout", "Log Out", "End the session", "system-log-out", "logout sign out exit session", ["uwsm", "stop"], True),
+        ("wifi", f"{onoff(wifi)} Wi-Fi", "Wi-Fi is on" if wifi else "Wi-Fi is off", "network-wireless",
+         "wifi wireless network internet", ["nmcli", "radio", "wifi", "off" if wifi else "on"], False),
+        ("bluetooth", f"{onoff(bt)} Bluetooth", "Bluetooth is on" if bt else "Bluetooth is off", "bluetooth", "bt",
+         ["bluetoothctl", "power", "off" if bt else "on"], False),
+        ("night", f"{onoff(night)} Night Light", "Warmer screen colours", "redshift", "night shift warm blue light",
+         [str(SCRIPTS / "nightlight"), "toggle"], False),
+        ("dnd", f"{onoff(dnd)} Do Not Disturb", "Notifications go silently to the panel", "preferences-system-notifications",
+         "dnd focus notifications silence quiet", ["swaync-client", "-d", "-sw"], False),
+        ("awake", f"{onoff(awake)} Keep Awake", "Caffeinate: screen and system stay awake", "caffeine",
+         "caffeinate coffee awake sleep", [str(HOME / ".local/bin/caffeinate"), "toggle"], False),
+        ("screenshot", "Screenshot", "Whole screen, saved and copied", "org.gnome.Screenshot", "capture screen print grab",
+         [str(SCRIPTS / "screenshot"), "full"], False),
+        ("screenshot-area", "Screenshot of an Area", "Select an area, annotate in Swappy", "applets-screenshooter",
+         "capture screen print grab region select", [str(SCRIPTS / "screenshot"), "area"], False),
+        ("trash", "Empty Trash", "Delete the files in the trash for good", "user-trash-full", "trash bin delete garbage",
+         ["gio", "trash", "--empty"], True),
+        ("display", "Displays", "Extend · mirror · external · laptop only", "preferences-desktop-display",
+         "monitor projector screen display hdmi", [str(SCRIPTS / "display")], False),
+        ("notifications", "Notification Center", "Open the notification panel", "preferences-system-notifications",
+         "notifications panel", ["swaync-client", "-op", "-sw"], False),
+        ("clipboard", "Clipboard History", "Recently copied text and images", "diodon", "clipboard paste copied",
+         [str(SCRIPTS / "clipboard")], False),
+        ("shortcuts", "Keyboard Shortcuts", "All the shortcuts, searchable", "preferences-desktop-keyboard-shortcuts",
+         "shortcuts keys keybindings help", [str(SCRIPTS / "keybinds")], False),
+    ]
+    for pid, name, extra in (("performance", "Performance", "fast speed"), ("balanced", "Balanced", "normal"),
+                             ("power-saver", "Power Saver", "battery eco save")):
+        if profile and profile != pid:
+            acts.append((f"power-{pid}", f"Power Mode: {name}", f"Now: {profile.replace('-', ' ')}", "gnome-power-manager",
+                         f"power profile mode {extra}", ["powerprofilesctl", "set", pid], False))
+    return acts
+
+
+# ---------- learning (Top Hit) ----------
+def load_picks():
+    try:
+        return json.loads(PICKS.read_text())
+    except Exception:
+        return {}
+
+
+def save_pick(query, key):
+    q = fold(query.strip())
+    if not q or not key:
         return
-    by_label, rows = {}, []
-    for p, snip in results:
-        short_dir = "/".join(pretty_dir(p).split("/")[-2:])
-        label_line = (f"<b>{html.escape(p.name)}</b>   "
-                      f"<span size='small' alpha='85%'>{snippet_markup(snip)}</span>"
-                      f"   <span size='small' alpha='75%'>{html.escape(short_dir)}</span>")
-        by_label[label_line] = p
-        rows.append(f"{label_line}\0icon\x1f{icon_for(p)}")
-    code, _, chosen = rofi(rows, "\U000f0219", f"Inside documents: “{html.escape(text)}”   ·   ↵ open    ⇧↵ show in folder",
-                           ("-no-custom",))
-    if chosen in by_label and code in (0, 10):
-        open_path(by_label[chosen], in_folder=(code == 10))
+    picks = load_picks()
+    entry = picks.pop(q, {})
+    entry[key] = entry.get(key, 0) + 1
+    picks[q] = entry                                        # most recent last
+    picks = dict(list(picks.items())[-500:])
+    PICKS.parent.mkdir(parents=True, exist_ok=True)
+    PICKS.write_text(json.dumps(picks))
 
 
-# ---------- main ----------
-def main():
-    by_label, rows = {}, []
-    for _, p, is_dir in find_entries():
-        label = (f"<b>{html.escape(p.name)}</b>"
-                 f"   <span alpha='75%'>{html.escape(pretty_dir(p))}</span>")
-        by_label[label] = p
-        rows.append(f"{label}\0icon\x1f{icon_for(p, is_dir)}")
+def pick_scores(picks, query):
+    """Counts of items picked for searches that start with (or are started by) this one."""
+    q = fold(query.strip())
+    scores = {}
+    for past, entry in picks.items():
+        if past.startswith(q) or q.startswith(past):
+            weight = 2 if past == q else 1
+            for key, n in entry.items():
+                scores[key] = scores.get(key, 0) + n * weight
+    return scores
 
-    code, typed, chosen = rofi(
-        rows, "\U000f0349", "↵ open    ⇧↵ show in folder    ⌃↵ search inside documents",
-        ("-matching", "fuzzy", "-sort", "-sorting-method", "fzf", "-kb-custom-2", "Control+Return"))
-    typed = typed.strip()
-    if code == 11 or (code == 0 and chosen not in by_label):   # Ctrl+Enter, or Enter on unmatched text
-        if typed:
-            show_content_results(typed)
-        return
-    if chosen in by_label and code in (0, 10):
-        open_path(by_label[chosen], in_folder=(code == 10))
+
+# ---------- Quick Look ----------
+def human_time(t):
+    days = (time.time() - t) / 86400
+    if days < 1:
+        return "today, " + time.strftime("%H:%M", time.localtime(t))
+    if days < 2:
+        return "yesterday, " + time.strftime("%H:%M", time.localtime(t))
+    return time.strftime("%-d %b %Y", time.localtime(t))
+
+
+def pdf_page(p):
+    """PNG of the first PDF page, cached by path + mtime."""
+    st = p.stat()
+    out = THUMBS / (hashlib.sha1(f"{p}:{st.st_mtime}".encode()).hexdigest() + ".png")
+    if not out.exists():
+        THUMBS.mkdir(parents=True, exist_ok=True)
+        subprocess.run(["pdftoppm", "-png", "-f", "1", "-l", "1", "-singlefile", "-scale-to", "600",
+                        str(p), str(out.with_suffix(""))], capture_output=True, timeout=8)
+    return out if out.exists() else None
+
+
+def gnome_thumbnail(p):
+    try:
+        info = Gio.File.new_for_path(str(p)).query_info("thumbnail::path", Gio.FileQueryInfoFlags.NONE, None)
+        t = info.get_attribute_byte_string("thumbnail::path")
+        return Path(t) if t and Path(t).exists() else None
+    except Exception:
+        return None
+
+
+TEXT_EXT = (".py", ".md", ".tex", ".json", ".ipynb", ".sh", ".lua", ".css", ".js", ".c", ".h", ".java", ".txt", ".csv")
+
+
+def text_head(p, lines=28):
+    try:
+        with open(p, "rb") as f:
+            data = f.read(6000)
+        if b"\0" in data:
+            return None
+        return "\n".join(l[:70] for l in data.decode("utf-8", "replace").splitlines()[:lines])
+    except OSError:
+        return None
+
+
+def theme_css():
+    """GTK CSS in the rofi palette (colors.rasi: #rrggbb or #rrggbbaa)."""
+    c = dict(re.findall(r"^\s*([\w-]+):\s*(#[0-9a-fA-F]{6,8});", COLORS.read_text(), re.M)) if COLORS.exists() else {}
+    def rgba(key, default, alpha=None):
+        h = c.get(key, default).lstrip("#")
+        a = alpha if alpha is not None else (int(h[6:8], 16) / 255 if len(h) == 8 else 1)
+        return f"rgba({int(h[0:2], 16)}, {int(h[2:4], 16)}, {int(h[4:6], 16)}, {a:.3f})"
+    bg, alt, fg = rgba("background", "#dbdfebb3"), rgba("background-alt", "#f2f3f8f0"), rgba("foreground", "#161b2d")
+    sel, on_sel, muted = rgba("selected", "#3e528e"), rgba("on-selected", "#ffffff"), rgba("muted", "#343b51")
+    card = rgba("background-alt", "#f2f3f8", 0.55)
+    return f"""
+    * {{ font-family: "PaperMono Nerd Font"; font-size: 11pt; }}
+    window.spotlight {{ background-color: {bg}; backdrop-filter: blur(20px); color: {fg}; }}
+    .inputbar {{ background-color: {alt}; border-radius: 12px; padding: 10px 14px; }}
+    .inputbar .prompt {{ color: {sel}; }}
+    .inputbar text, .inputbar entry {{ background: none; border: none; box-shadow: none; outline: none;
+                                      color: {fg}; padding: 0; min-height: 0; }}
+    .inputbar entry text placeholder {{ color: {muted}; }}
+    .hint {{ color: {muted}; }}
+    list {{ background: none; }}
+    list row {{ padding: 7px 10px; border-radius: 10px; color: {fg}; outline: none; }}
+    list row:selected {{ background-color: {sel}; color: {on_sel}; }}
+    list row:hover:not(:selected) {{ background-color: alpha({sel}, 0.12); }}
+    list row.section {{ padding: 10px 10px 2px 10px; background: none; }}
+    list row.section label {{ color: {muted}; font-size: 9pt; font-weight: bold; }}
+    scrolledwindow, viewport {{ background: none; }}
+    .preview {{ background-color: {card}; border-radius: 14px; padding: 18px; }}
+    .preview .title {{ font-size: 13pt; font-weight: bold; }}
+    .preview .big {{ font-size: 20pt; font-weight: bold; }}
+    .preview .meta {{ color: {muted}; font-size: 9.5pt; }}
+    .preview .code {{ font-family: "PaperMono Nerd Font Mono"; font-size: 8.5pt; color: {fg}; }}
+    """
+
+
+def picture(path, width=324, height=330):
+    """Image scaled to fit the preview (a Gtk.Picture of the full file would widen the window)."""
+    try:
+        pb = GdkPixbuf.Pixbuf.new_from_file_at_scale(str(path), width, height, True)
+    except GLib.Error:
+        return Gtk.Image.new_from_icon_name("image-missing")
+    pic = Gtk.Picture.new_for_paintable(Gdk.Texture.new_for_pixbuf(pb))
+    pic.set_can_shrink(False); pic.set_halign(Gtk.Align.CENTER); pic.set_valign(Gtk.Align.CENTER)
+    return pic
+
+
+# ---------- the window ----------
+class Spotlight(Gtk.ApplicationWindow):
+    def __init__(self, app):
+        super().__init__(application=app, title="Spotlight", decorated=False, resizable=False)
+        self.add_css_class("spotlight")
+        self.set_default_size(1080, 600)
+        self.apps, self.files, self.actions = [], [], []
+        self.docs = None                                  # None = normal mode, else (query, results)
+        self.gen, self.calc = 0, None                     # calc: (text, result) for the current text
+        self.picks = load_picks()
+        self.pending = None                               # action waiting for a second Enter
+        self.was_active = False
+        self.preview_gen = 0
+
+        outer = Gtk.Box(spacing=16, margin_top=26, margin_bottom=26, margin_start=26, margin_end=26)
+        left = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10, hexpand=True)
+        bar = Gtk.Box(spacing=10, css_classes=["inputbar"])
+        bar.append(Gtk.Label(label="\U000f0349", css_classes=["prompt"]))
+        self.entry = Gtk.Entry(placeholder_text="Search…", hexpand=True, has_frame=False)
+        bar.append(self.entry)
+        self.hint = Gtk.Label(label=HINT, css_classes=["hint"], ellipsize=Pango.EllipsizeMode.END)
+        self.list = Gtk.ListBox(selection_mode=Gtk.SelectionMode.BROWSE)
+        self.list.set_activate_on_single_click(True)
+        self.scroll = Gtk.ScrolledWindow(vexpand=True, hscrollbar_policy=Gtk.PolicyType.NEVER, child=self.list)
+        for w in (bar, self.hint, self.scroll):
+            left.append(w)
+        self.preview = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8, css_classes=["preview"])
+        self.preview.set_size_request(360, -1)
+        self.preview.set_hexpand(False)
+        outer.append(left); outer.append(self.preview)
+        self.set_child(outer)
+
+        self.entry.connect("changed", lambda *_: self.on_changed())
+        self.list.connect("row-activated", lambda _l, row: self.activate(row, shift=False))
+        self.list.connect("row-selected", lambda _l, row: self.schedule_preview(row))
+        keys = Gtk.EventControllerKey(propagation_phase=Gtk.PropagationPhase.CAPTURE)
+        keys.connect("key-pressed", self.on_key)
+        self.add_controller(keys)
+        self.connect("notify::is-active", self.on_active)
+
+        self.load_apps()
+        self.refresh()
+        threading.Thread(target=self.load_files, daemon=True).start()
+        threading.Thread(target=self.load_actions, daemon=True).start()
+
+    # --- data
+    def load_apps(self):
+        apps = launcher.load_apps()
+        hist = launcher.history()
+        apps.sort(key=lambda a: (-hist.get(a["id"], 0), a["name"].lower()))
+        try:
+            clients = json.loads(run(["hyprctl", "clients", "-j"]))
+            running = {c.get(k, "").lower() for c in clients for k in ("class", "initialClass")}
+        except Exception:
+            running = set()
+        for a in apps:
+            is_open = bool(a["keys"] & running)
+            kind = "Application · open" if is_open else "Application"
+            self.apps.append({"kind": "app", "section": "app", "key": "app:" + a["id"], "target": a, "icon": a["icon"],
+                              "open": is_open, "title": a["name"],
+                              "markup": f"<b>{html.escape(a['name'])}</b>   <span alpha='75%'>{kind}</span>",
+                              "words": words_of(a["name"]), "extra": words_of(a["generic"], a["keywords"])})
+
+    def load_files(self):
+        files = []
+        for mtime, p, is_dir in find_entries():
+            d = pretty_dir(p)
+            icon, ctype, section = file_type(p, is_dir)
+            files.append({"kind": "file", "section": section, "key": f"file:{p}", "target": p, "icon": icon,
+                          "ctype": ctype, "is_dir": is_dir, "title": p.name,
+                          "markup": f"<b>{html.escape(p.name)}</b>   <span alpha='75%'>{html.escape(d)}</span>",
+                          "words": words_of(p.name), "extra": words_of(d)})
+        GLib.idle_add(self.loaded, "files", files)
+
+    def load_actions(self):
+        acts = []
+        for aid, title, detail, icon, extra, cmd, confirm in system_actions():
+            acts.append({"kind": "action", "section": "action", "key": "action:" + aid, "target": cmd, "icon": icon,
+                         "confirm": confirm, "title": title, "detail": detail,
+                         "markup": f"<b>{html.escape(title)}</b>   <span alpha='75%'>{html.escape(detail)}</span>",
+                         "words": words_of(title), "extra": words_of(extra)})
+        GLib.idle_add(self.loaded, "actions", acts)
+
+    def loaded(self, what, items):
+        setattr(self, what, items)
+        if self.docs is None:
+            self.refresh(keep_selection=True)
+        return False
+
+    # --- matching and sections
+    @staticmethod
+    def rank(item, tokens):     # 0: all words in the name, 1: needs description / folder words, None: no match
+        if all(any(w.startswith(t) for w in item["words"]) for t in tokens):
+            return 0
+        words = item["words"] + item["extra"]
+        return 1 if all(any(w.startswith(t) for w in words) for t in tokens) else None
+
+    def build(self, text):
+        """[(section title, [items])] for the current text."""
+        if not text:
+            recent = [f for f in self.files if not f["is_dir"]][:EMPTY_RECENT]
+            return [("Applications", self.apps[:EMPTY_APPS]), ("Recent Files", recent)]
+        tokens = fold(name_words(text)).split()
+        scores = pick_scores(self.picks, text)
+        found = {}
+        for group in (self.apps, self.actions, self.files):
+            for order, item in enumerate(group):
+                r = self.rank(item, tokens)
+                if r is not None:
+                    found.setdefault(item["section"], []).append((r, -scores.get(item["key"], 0), order, item))
+        for sec in found.values():
+            sec.sort(key=lambda x: x[:3])
+        # Top Hit: a result, else the most-picked match, else the best name match (apps, actions, files)
+        top = None
+        if self.calc and self.calc[0] == text:
+            top = {"kind": "calc", "key": None, "target": self.calc[1], "icon": "accessories-calculator",
+                   "title": f"= {self.calc[1]}", "expr": text,
+                   "markup": f"<b>= {html.escape(self.calc[1])}</b>   <span alpha='75%'>Calculator · ↵ copy</span>"}
+        else:
+            picked = [x for sec in found.values() for x in sec if x[1] < 0]
+            if picked:
+                top = min(picked, key=lambda x: (x[1], x[0]))[3]
+            else:
+                for s, _, _ in SECTIONS:
+                    if found.get(s) and found[s][0][0] == 0:
+                        top = found[s][0][3]; break
+        out = [("Top Hit", [top])] if top else []
+        for s, title, cap in SECTIONS:
+            items = [x[3] for x in found.get(s, []) if x[3] is not top][:cap]
+            if items:
+                out.append((title, items))
+        q = html.escape(text)
+        out.append(("Search", [
+            {"kind": "web", "key": None, "target": text, "icon": "internet-web-browser", "title": "Search the web",
+             "markup": f"Search the web for <b>“{q}”</b>"},
+            {"kind": "docs", "key": None, "target": text, "icon": "preferences-system-search",
+             "title": "Search inside documents", "markup": f"Search inside documents for <b>“{q}”</b>"}]))
+        return out
+
+    def text(self):
+        return self.entry.get_text().strip()
+
+    def on_changed(self):
+        self.docs, self.pending = None, None
+        self.hint.set_label(HINT)
+        self.gen += 1
+        text, gen = self.text(), self.gen
+        if self.calc and self.calc[0] != text:
+            self.calc = None
+        if looks_like_maths(text):
+            def work():
+                GLib.idle_add(self.calc_done, gen, text, calculate(text))
+            threading.Thread(target=work, daemon=True).start()
+        self.refresh()
+
+    def calc_done(self, gen, text, result):
+        if gen == self.gen:
+            self.calc = (text, result) if result else None
+            self.refresh()
+        return False
+
+    # --- rows
+    def refresh(self, keep_selection=False):
+        if self.docs is not None:
+            query, results = self.docs
+            items = []
+            if results is None:
+                items.append({"kind": "info", "icon": "preferences-system-search",
+                              "markup": f"Searching inside documents for <b>“{html.escape(query)}”</b>…"})
+            elif not results:
+                items.append({"kind": "info", "icon": "dialog-information",
+                              "markup": f"No documents contain <b>“{html.escape(query)}”</b>"})
+            for p, snip in results or []:
+                short = "/".join(pretty_dir(p).split("/")[-2:])
+                icon, ctype, _ = file_type(p)
+                items.append({"kind": "file", "key": f"file:{p}", "target": p, "icon": icon, "ctype": ctype,
+                              "is_dir": False, "title": p.name, "snippet": snip,
+                              "markup": f"<b>{html.escape(p.name)}</b>   <span size='small' alpha='85%'>{snippet_markup(snip)}</span>"
+                                        f"   <span size='small' alpha='75%'>{html.escape(short)}</span>"})
+            sections = [(None, items)]
+        else:
+            sections = self.build(self.text())
+
+        old = self.list.get_selected_row()
+        old_key = getattr(old, "item", {}).get("key") if (keep_selection and old) else None
+        self.list.remove_all()
+        target = None
+        for title, items in sections:
+            if title:
+                head = Gtk.ListBoxRow(activatable=False, selectable=False, css_classes=["section"])
+                head.set_child(Gtk.Label(label=title, xalign=0))
+                self.list.append(head)
+            for item in items:
+                row = Gtk.ListBoxRow(activatable=item["kind"] != "info", selectable=item["kind"] != "info")
+                row.item = item
+                line = Gtk.Box(spacing=10)
+                icon = item.get("icon") or "application-x-executable"
+                img = Gtk.Image.new_from_file(icon) if icon.startswith("/") else Gtk.Image.new_from_icon_name(icon)
+                img.set_pixel_size(24)
+                label = Gtk.Label(xalign=0, hexpand=True, ellipsize=Pango.EllipsizeMode.END)
+                label.set_markup(item["markup"])
+                line.append(img); line.append(label)
+                row.set_child(line)
+                self.list.append(row)
+                if old_key and item.get("key") == old_key:
+                    target = row
+        if target is None:
+            i, target = 0, self.list.get_row_at_index(0)
+            while target is not None and not target.get_selectable():
+                i += 1; target = self.list.get_row_at_index(i)
+        if target:
+            self.list.select_row(target)
+            if target.get_index() <= 1:
+                self.scroll.get_vadjustment().set_value(0)
+        else:
+            self.show_preview(None)
+
+    # --- Quick Look
+    def schedule_preview(self, row):
+        self.preview_gen += 1
+        gen = self.preview_gen
+        GLib.timeout_add(40, lambda: (self.show_preview(row) if gen == self.preview_gen else None) and False)
+
+    def clear_preview(self):
+        child = self.preview.get_first_child()
+        while child:
+            nxt = child.get_next_sibling(); self.preview.remove(child); child = nxt
+
+    @staticmethod
+    def big_icon(icon, size=96):
+        icon = icon or "application-x-executable"
+        img = Gtk.Image.new_from_file(icon) if icon.startswith("/") else Gtk.Image.new_from_icon_name(icon)
+        img.set_pixel_size(size)
+        return img
+
+    @staticmethod
+    def label(text, cls, markup=False, wrap=True):
+        l = Gtk.Label(xalign=0, wrap=wrap, css_classes=[cls], max_width_chars=34, width_chars=1)
+        l.set_wrap_mode(Pango.WrapMode.WORD_CHAR)
+        if not wrap:
+            l.set_ellipsize(Pango.EllipsizeMode.END)
+        l.set_markup(text) if markup else l.set_text(text)
+        return l
+
+    def show_preview(self, row):
+        self.clear_preview()
+        item = getattr(row, "item", None) if row else None
+        if not item or item["kind"] == "info":
+            return
+        kind, add = item["kind"], self.preview.append
+        if kind == "file":
+            self.preview_file(item); return
+        add(self.big_icon(item.get("icon")))
+        if kind == "calc":
+            add(self.label(item["title"], "big"))
+            add(self.label(item["expr"], "meta"))
+            add(self.label("Enter copies the result", "meta"))
+        elif kind == "app":
+            a = item["target"]
+            add(self.label(a["name"], "title"))
+            if a["generic"]:
+                add(self.label(a["generic"], "meta"))
+            add(self.label("Running" if item["open"] else "Not running", "meta"))
+            add(self.label(("Enter: go to it" if item["open"] else "Enter: open") + " · Shift+Enter: new window", "meta"))
+        elif kind == "action":
+            add(self.label(item["title"], "title"))
+            add(self.label(item["detail"], "meta"))
+            if item.get("confirm"):
+                add(self.label("Asks for a second Enter", "meta"))
+        elif kind in ("web", "docs"):
+            add(self.label(item["title"], "title"))
+            add(self.label(f"“{item['target']}”", "meta"))
+
+    def preview_file(self, item):
+        p, add = item["target"], self.preview.append
+        try:
+            st = p.stat()
+        except OSError:
+            add(self.label(p.name, "title")); add(self.label("No longer exists", "meta")); return
+        ctype = item.get("ctype", "")
+        is_dir = item.get("is_dir")
+        desc = "Folder" if is_dir else (Gio.content_type_get_description(ctype) if ctype else "File")
+        visual = Gtk.Box(vexpand=True)
+        add(visual)
+        add(self.label(p.name, "title"))
+        add(self.label(desc if is_dir else f"{desc} · {GLib.format_size(st.st_size)}", "meta"))
+        add(self.label(f"Modified {human_time(st.st_mtime)}", "meta"))
+        add(self.label(pretty_dir(p) + "/", "meta"))
+        if item.get("snippet"):
+            add(self.label(snippet_markup(item["snippet"]), "meta", markup=True))
+
+        if is_dir:
+            try:
+                kids = sorted((c for c in p.iterdir() if not c.name.startswith(".")),
+                              key=lambda c: (not c.is_dir(), c.name.lower()))
+            except OSError:
+                kids = []
+            lines = "\n".join(("▸ " if c.is_dir() else "   ") + c.name for c in kids[:14])
+            more = f"\n   … and {len(kids) - 14} more" if len(kids) > 14 else ""
+            listing = self.label((lines + more) or "Empty folder", "code", wrap=False)
+            listing.set_valign(Gtk.Align.START)
+            visual.append(listing)
+        elif ctype.startswith("image/") and st.st_size < 40_000_000:
+            visual.append(picture(p))
+        elif (ctype.startswith("text/") or p.suffix.lower() in TEXT_EXT) and st.st_size < 2_000_000 \
+                and (head := text_head(p)) is not None:
+            code = self.label(head, "code", wrap=False)
+            code.set_valign(Gtk.Align.START)
+            visual.append(code)
+        elif ctype == "application/pdf":
+            visual.append(self.big_icon(item.get("icon"), 64))
+            gen = self.preview_gen
+            threading.Thread(target=lambda: GLib.idle_add(self.pdf_ready, gen, visual, pdf_page(p)), daemon=True).start()
+        elif (thumb := gnome_thumbnail(p)):
+            visual.append(picture(thumb))
+        else:
+            visual.append(self.big_icon(item.get("icon")))
+
+    def pdf_ready(self, gen, box, png):
+        if gen == self.preview_gen and png and box.get_parent() is not None:
+            child = box.get_first_child()
+            if child:
+                box.remove(child)
+            box.append(picture(png))
+        return False
+
+    # --- keys and actions
+    def move(self, step):
+        row = self.list.get_selected_row()
+        i = row.get_index() if row else -1
+        while True:
+            i += step
+            nxt = self.list.get_row_at_index(i)
+            if nxt is None:
+                return
+            if nxt.get_selectable():
+                self.list.select_row(nxt)
+                adj = self.scroll.get_vadjustment()
+                ok, rect = nxt.compute_bounds(self.list)
+                if ok:
+                    y, h = rect.get_y(), rect.get_height()
+                    if step < 0 and i <= 1:
+                        adj.set_value(0)                  # back at the top: show the first section title
+                    elif y < adj.get_value():
+                        adj.set_value(y)
+                    elif y + h > adj.get_value() + adj.get_page_size():
+                        adj.set_value(y + h - adj.get_page_size())
+                return
+
+    def on_key(self, _ctrl, keyval, _code, state):
+        shift = bool(state & Gdk.ModifierType.SHIFT_MASK)
+        ctrl = bool(state & Gdk.ModifierType.CONTROL_MASK)
+        if keyval == Gdk.KEY_Escape:
+            self.close(); return True
+        if keyval in (Gdk.KEY_Down, Gdk.KEY_Tab):
+            self.move(1); return True
+        if keyval in (Gdk.KEY_Up, Gdk.KEY_ISO_Left_Tab):
+            self.move(-1); return True
+        if keyval in (Gdk.KEY_Return, Gdk.KEY_KP_Enter):
+            if ctrl:
+                if self.text():
+                    self.search_docs(self.text())
+                return True
+            row = self.list.get_selected_row()
+            if row:
+                self.activate(row, shift)
+            return True
+        return False
+
+    def search_docs(self, query):
+        self.docs = (query, None)
+        self.hint.set_label(f"Inside documents: “{query}”   ·   ↵ open    ⇧↵ show in folder")
+        self.refresh()
+        def work():
+            try:
+                res = content_search(query)
+            except Exception as e:
+                subprocess.run(["notify-send", "-a", "Search", "Search inside documents failed", str(e)[:200]])
+                res = []
+            GLib.idle_add(self.docs_done, query, res)
+        threading.Thread(target=work, daemon=True).start()
+
+    def docs_done(self, query, res):
+        if self.docs and self.docs[0] == query:
+            self.docs = (query, res)
+            self.refresh()
+        return False
+
+    def activate(self, row, shift):
+        item = getattr(row, "item", None)
+        if not item or item["kind"] == "info":
+            return
+        kind, target = item["kind"], item.get("target")
+        if kind == "docs":
+            self.search_docs(target); return
+        if kind == "action" and item.get("confirm") and self.pending != item["key"]:
+            self.pending = item["key"]                    # first Enter: ask
+            row.get_child().get_last_child().set_markup(
+                f"<b>{html.escape(item['title'])}?</b>   <span alpha='75%'>Press Enter again to confirm</span>")
+            return
+        if item.get("key") and self.docs is None:
+            save_pick(self.text(), item["key"])
+        self.set_visible(False)
+        if kind == "app":
+            open_app(target, new_window=shift)
+        elif kind == "file":
+            open_path(target, in_folder=shift)
+        elif kind == "calc":
+            subprocess.run(["wl-copy", target])
+            subprocess.run(["notify-send", "-a", "Calculator", "-u", "low", "-i", "accessories-calculator",
+                            f"= {target}", "Copied to the clipboard"])
+        elif kind == "web":
+            spawn("xdg-open", WEB.format(quote_plus(target)))
+        elif kind == "action":
+            detach(*target)
+            if item["key"] in ("action:awake", "action:night"):    # their bar pills refresh on a signal
+                time.sleep(0.3)
+                subprocess.run(["pkill", "-SIGRTMIN+8", "-x", "waybar"], capture_output=True)
+                subprocess.run(["pkill", "-SIGRTMIN+9", "-x", "waybar"], capture_output=True)
+        self.close()
+
+    def on_active(self, *_):
+        if self.is_active():
+            self.was_active = True
+        elif self.was_active and self.get_visible():
+            self.close()                      # clicked outside
+
+
+class App(Gtk.Application):
+    def __init__(self):
+        super().__init__(application_id=APP_ID, flags=Gio.ApplicationFlags.DEFAULT_FLAGS)
+        self.win = None
+
+    def do_startup(self):
+        Gtk.Application.do_startup(self)
+        css = Gtk.CssProvider()
+        css.load_from_string(theme_css())
+        Gtk.StyleContext.add_provider_for_display(Gdk.Display.get_default(), css,
+                                                  Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+
+    def do_activate(self):
+        if self.win is not None:              # Super+Space again: close
+            self.win.close(); return
+        self.win = Spotlight(self)
+        self.win.connect("close-request", lambda *_: self.quit() or False)
+        self.win.present()
+        self.win.entry.grab_focus()
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(App().run(None))

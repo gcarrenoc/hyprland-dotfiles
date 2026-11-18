@@ -148,6 +148,7 @@ hl.window_rule({ name = "pip",               match = { title = "^(Picture.in.[Pp
 -- rofi menus run as normal windows (normal-window in rofi config) so they get
 -- the same squircle corners, blur and border as apps: float, centered, focused
 hl.window_rule({ name = "rofi-menus", match = { class = "^(rofi|Rofi)$" }, float = true, center = true, stay_focused = true, pin = true })
+hl.window_rule({ name = "spotlight", match = { class = "^(local\\.Spotlight)$" }, float = true, center = true, pin = true })   -- scripts/spotlight (GTK4)
 
 -- Floating "fly" terminal (Alt+Return)
 hl.window_rule({ name = "fly-term", match = { class = "^(fly-term)$" }, float = true, size = "900 550", center = true })
@@ -170,9 +171,8 @@ local function run(cmd) return hl.dsp.exec_cmd(cmd) end
 -- Apps
 hl.bind(M .. " + Return",             run(terminal))
 hl.bind("ALT + Return",               run(terminal .. " --class fly-term"))          -- floating terminal
-hl.bind(M .. " + D",                  run(scripts .. "launcher"))                   -- go to app if open (Shift+Enter: new window)
 hl.bind(M .. " + Tab",                run(scripts .. "windows"))                    -- window switcher (recent first)
-hl.bind(M .. " + Space",              run(scripts .. "spotlight"))                  -- search files (↵ open, ⇧↵ show in folder)
+hl.bind(M .. " + Space",              run(scripts .. "spotlight"))                  -- Spotlight: apps + files (↵ open / go to app, ⇧↵ new window / show in folder, ⌃↵ inside documents)
 hl.bind(M .. " + E",                  run(app .. "nautilus --new-window"))
 hl.bind("CTRL + ALT + P",             run(app .. "google-chrome-stable --profile-directory='Profile 1'"))  -- Chrome: personal
 hl.bind("CTRL + ALT + W",             run(app .. "google-chrome-stable --profile-directory=Default"))    -- University

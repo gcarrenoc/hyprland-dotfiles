@@ -5,7 +5,8 @@
                  otherwise open it.
   Shift+Enter  → always open a new window here.
 
-Apps are listed most-used first. Used by Super+D and the Arch button in Waybar.
+Apps are listed most-used first. Also a library: Spotlight (Super+Space, the
+telescope button) and the window switcher import load_apps / find_window / launch.
 """
 import configparser, json, os, subprocess, sys
 from pathlib import Path
@@ -59,6 +60,8 @@ def load_apps():
                 "name": name,
                 "icon": e.get("Icon", ""),
                 "keys": {k.lower() for k in keys if k},
+                "generic": e.get("GenericName", ""),                    # e.g. "Web Browser"
+                "keywords": e.get("Keywords", "").replace(";", " "),     # extra search words
             })
     return apps
 

@@ -13,9 +13,8 @@ Hyprland 0.57. This is the only desktop now (GNOME was removed); the login scree
 |---|---|
 | `Super + Return` | Terminal (Alacritty + tmux) |
 | `Alt + Return` | Floating terminal |
-| `Super + D` | App launcher: **Enter** = go to the app if it's open (switches workspace), otherwise open it · **Shift + Enter** = new window here. Most-used apps first. |
 | `Super + Tab` | Window switcher: most recent first, previous window pre-selected (`Super + Tab` → `Enter` flips back) |
-| `Super + Space` | Search files (Spotlight-style): `Enter` open · `Shift + Enter` show in folder · `Ctrl + Enter` search inside documents |
+| `Super + Space` | **Spotlight** (results update as you type, in sections): **Top Hit** (a calculation like `100-36` or `5 km to mi`, else what you picked before for a similar search — it learns — else the best match) · **Applications** (also found by what they do, e.g. "browser") · **System** (lock, sleep, restart, shut down, log out, Wi-Fi, Bluetooth, Night Light, Do Not Disturb, Keep Awake, power mode, screenshot, empty trash, displays, notifications, clipboard, shortcuts) · **Documents · Folders · Images · Files** · **Search** the web / inside documents. **Quick Look** on the right: PDF first page, images, text, folder contents, details. **Enter** = open / go to the app / copy the result / run the action (restart, shut down, log out and empty trash ask for a second Enter) · **Shift + Enter** = app: new window · file: show in folder · **Ctrl + Enter** = search inside documents · **Esc** or Super + Space again closes |
 | `Super + E` | Files (Nautilus) |
 | `Ctrl + Alt + P` | Chrome — personal profile |
 | `Ctrl + Alt + W` | Chrome — University profile |
@@ -89,7 +88,7 @@ Icons: outline style — Octicons (`nf-oct-*`, in the Nerd Font) wherever one ex
 
 | Item | Click |
 |---|---|
-| Telescope | App launcher (`Super + D`) |
+| Telescope | Spotlight (`Super + Space`) |
 | 1 · 2 · 3 … | Workspaces, each with icons of the apps running on it — the current one is highlighted; click to switch, scroll to move |
 | + | Add a new empty workspace at the end and go there |
 | Bell | **Notification Center.** Click: open the panel on the right (notifications grouped by app, media player, Clear). Filled bell = notifications waiting (outline = nothing new). Right-click: **do not disturb** on / off (amber crossed-out bell); while on, notifications skip the pop-up and go silently to the panel, and they stay there when you turn it off. Volume / brightness pop-ups and critical alerts (low battery) still show. |
@@ -167,7 +166,7 @@ Your config is versioned in Git (`~/.dotfiles`, files stay in place) and pushed 
 | Hyprland (keys, look, rules) | `~/.config/hypr/hyprland.lua` — saved changes apply instantly; no-gap workspace logic in `~/.config/hypr/workspaces.lua` |
 | Wallpaper & colours | `wallpaper <image>`; generated colour files: `waybar/colors.css`, `hypr/colors.lua`, `rofi/colors.rasi`, `swaync/colors.css`, `hypr/hyprlock-colors.conf`, `hypr/hyprtoolkit.conf` (password dialog), `zathura/colors` (PDF viewer), `alacritty/wallpaper-colors.toml`, `tmux/wallpaper.conf` |
 | Lock screen / idle timings | `~/.config/hypr/hyprlock.conf`, `~/.config/hypr/hypridle.conf` |
-| Helper scripts | `~/.config/hypr/scripts/` (launcher, spotlight, windows, keybinds, display, power-watch, nightlight + suntimes, osd, screenshot, clipboard, powermenu) |
+| Helper scripts | `~/.config/hypr/scripts/` (spotlight, launcher (app library), windows, keybinds, display, power-watch, nightlight + suntimes, osd, screenshot, clipboard, powermenu) |
 | Bar | `~/.config/waybar/config.jsonc`, `~/.config/waybar/style.css` |
 | Launcher / power menu | `~/.config/rofi/` |
 | Notifications | `~/.config/swaync/config.json` + `style.css` (swaync: pop-ups + Notification Center) |
