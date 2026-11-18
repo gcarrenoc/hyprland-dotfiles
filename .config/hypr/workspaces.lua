@@ -1,24 +1,28 @@
 -- NOTE: Hyprland only auto-reloads hyprland.lua. After editing this file run: hyprctl reload
--- Workspaces as a row (like GNOME / macOS Spaces) — empty workspaces stay.
+-- Workspaces as a row (like GNOME / macOS Spaces) — empty ones disappear (like GNOME).
 --
 -- The model:
---   • The row is workspaces 1 … N (N ≤ 10). All of them exist, empty or not
---     (kept alive with persistent workspace rules), and show on the bar.
+--   • The row is workspaces 1 … N (N ≤ 10), kept alive with persistent workspace
+--     rules, and shown on the bar.
+--   • An empty workspace is removed as soon as you're not on it (the ones after it
+--     shift down). The one you're on stays even when empty, so you can open
+--     something there; leave it empty and it goes. There's always at least one.
 --   • Adding: the + on the bar, or stepping / jumping / sending past the end,
 --     adds ONE new workspace at the end.
---   • Removing: Super+Ctrl+Q removes the current workspace; its windows move to
---     the previous one and the workspaces after it shift down (no gaps).
+--   • Removing by hand: Super+Ctrl+Q removes the current workspace; its windows move
+--     to the previous one and the workspaces after it shift down (no gaps).
 --   • N is remembered across logins (~/.cache/hypr-workspaces).
 --
 -- Functions (global WS, so Waybar can call them via
 -- `hyprctl dispatch 'function() WS.step(1) end'`):
 --   WS.step(±1)   previous / next (next at the end = new)   Super+Ctrl+H/L, scroll, swipe
---   WS.go(n)      go to workspace n exactly (creates up to n) Super+1…0
+--   WS.go(n)      go to workspace n (past the end: a new one)  Super+1…0
 --   WS.new()      add a workspace at the end and go there   + on the bar
 --   WS.send(n)    send window to workspace n exactly         Super+Shift+1…0
 --   WS.carry(±1)  take window to prev / next                Super+Ctrl+Shift+H/L
 --   WS.swap(±1)   move this workspace left / right          Super+Alt+H/L
 --   WS.remove()   remove the current workspace              Super+Ctrl+Q
+--   WS.prune()    remove empty workspaces you're not on     automatic (window closed / moved, workspace changed)
 
 local W = {}
 local MAX = 10
@@ -94,14 +98,23 @@ local function grow_to(n)
 end
 
 function W.go(n)    focus(grow_to(n)) end          -- Super+N: exactly workspace N
+local function last_and_empty()
+    local here = current()
+    return here == count and #windows_on(here) == 0
+end
+
 function W.new()
+    if last_and_empty() then return end           -- already on an empty workspace at the end
     if count >= MAX then
         hl.exec_cmd("notify-send -a Workspaces -u low 'Maximum of 10 workspaces'")
         return
     end
     count = count + 1; sync(); focus(count)
 end
-function W.step(d)  local here = current(); focus(ensure(here + d)) end
+function W.step(d)
+    if d > 0 and last_and_empty() then return end  -- no second empty workspace
+    local here = current(); focus(ensure(here + d))
+end
 
 function W.send(n)                              -- Super+Shift+N: exactly workspace N
     local target = grow_to(n)
@@ -151,9 +164,42 @@ function W.remove()
     focus(math.max(1, math.min(here > 1 and here - 1 or 1, count)))
 end
 
+-- remove empty workspaces except the one you're on (the ones after them shift down)
+function W.prune()
+    if busy then return end
+    local here = current()
+    local removed = false
+    busy = true
+    for id = count, 1, -1 do
+        if count <= 1 then break end
+        if id ~= here and #windows_on(id) == 0 then
+            for k = id + 1, count do move_all(k, k - 1) end
+            count = count - 1
+            if here > id then here = here - 1 end    -- the workspace you're on shifted down
+            removed = true
+        end
+    end
+    busy = false
+    if removed then
+        sync()
+        focus(here)
+    end
+end
+
+-- run it shortly after things change (Hyprland updates window counts after the event)
+local pending = false
+local function prune_soon()
+    if pending then return end
+    pending = true
+    hl.timer(function() pending = false; W.prune() end, { timeout = 150, type = "oneshot" })
+end
+
 sync()
 W.check()                                  -- include workspaces already in use
 hl.on("window.open", function() W.check() end)
-hl.on("window.move_to_workspace", function() W.check() end)
+hl.on("window.move_to_workspace", function() W.check(); prune_soon() end)
+hl.on("window.close", prune_soon)
+hl.on("window.destroy", prune_soon)
+hl.on("workspace.active", prune_soon)
 
 return W

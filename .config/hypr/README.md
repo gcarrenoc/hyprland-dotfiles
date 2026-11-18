@@ -50,7 +50,7 @@ Hyprland 0.57. This is the only desktop now (GNOME was removed); the login scree
 
 | Keys | Action |
 |---|---|
-| `Super + 1 … 9, 0` | Go to exactly workspace 1 … 10 (the empty ones in between are created) |
+| `Super + 1 … 9, 0` | Go to workspace 1 … 10 (past the last one: a new workspace at the end) |
 | `Super + Shift + 1 … 9, 0` | Send window to exactly workspace 1 … 10 (stay here) |
 | `Super + Ctrl + H / L` | Previous / next workspace (next at the end = add a new one) |
 | `Super + Ctrl + Shift + H / L` | Take window to previous / next workspace |
@@ -107,6 +107,7 @@ App indicators (1Password, Insync, ZapZap, Bluetooth, network…) are hidden beh
 
 ## Automatic behaviour
 
+- **Empty workspaces disappear:** as soon as you're not on an empty workspace it's removed and the ones after it shift down (like GNOME). The one you're on stays even when empty, so you can open something there.
 - **Idle:** screen dims at 4.5 min, locks at 5 min, turns off at 5.5 min, suspends at 15 min
  . Videos and `caffeinate` prevent it.
 - **Lid / suspend:** the screen is locked before sleeping.
