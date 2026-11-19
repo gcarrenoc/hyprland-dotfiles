@@ -1,0 +1,39 @@
+# Local package: Anthropic's official Claude Desktop .deb (Linux beta, made for Ubuntu/Debian),
+# repackaged for Arch. Source verified before building:
+#   key https://downloads.claude.ai/claude-desktop/key.asc
+#       fingerprint 31DD DE24 DDFA B679 F42D 7BD2 BAA9 29FF 1A7E CACE (matches support.claude.com)
+#   InRelease signature → Packages sha256 → .deb sha256 (pinned below)
+# Not run from the Debian postinst: apt repo registration, AppArmor profile (Ubuntu),
+# GNOME Shell search provider.
+pkgname=claude-desktop
+pkgver=5.11492.5
+pkgrel=1
+pkgdesc='Claude desktop app (official Anthropic .deb, Linux beta)'
+arch=('x86_64')
+url='https://claude.ai'
+license=('LicenseRef-Anthropic')
+depends=('gtk3' 'libnotify' 'nss' 'xdg-utils' 'at-spi2-core' 'libdrm' 'mesa' 'libxcb' 'libsecret'
+         'glib2' 'glibc' 'libxtst' 'util-linux-libs' 'pipewire' 'xdg-desktop-portal')
+optdepends=('xdg-desktop-portal-gtk: file chooser'
+            'libayatana-appindicator: tray icon'
+            'gnome-keyring: keep you signed in'
+            'alsa-lib: audio'
+            'bubblewrap: sandboxing for local tools'
+            'openssh: SSH features'
+            'socat: Cowork'
+            'qemu-system-x86: Cowork (runs in a VM)'
+            'edk2-ovmf: Cowork'
+            'virtiofsd: Cowork')
+options=('!strip' '!debug')
+source=("claude-desktop_${pkgver}_amd64.deb")
+sha256sums=('b96208b207e450b740f7dbe304f6077fed80e7f3d37ddd545991c4e8201564cf')
+
+package() {
+    bsdtar -xf data.tar.xz -C "$pkgdir"
+    # Arch allows unprivileged user namespaces: Chromium's sandbox needs no setuid helper
+    chmod 0755 "$pkgdir/usr/lib/claude-desktop/chrome-sandbox"
+    # .mcpb / .dxt / .skill file types (the Debian postinst copies this)
+    install -Dm644 "$pkgdir/usr/lib/claude-desktop/resources/linux-mime/com.anthropic.Claude.xml" \
+        "$pkgdir/usr/share/mime/packages/com.anthropic.Claude.xml"
+    rm -rf "$pkgdir/usr/share/lintian"
+}

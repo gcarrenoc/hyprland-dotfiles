@@ -34,6 +34,7 @@
       "class<com.rtosta.zapzap>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",
       "class<com.stremio.Stremio|stremio|mpv|showtime|org.gnome.Showtime>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",
       "class<spotify|Spotify>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",
+      "class<com.anthropic.Claude>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",
       "class<zoom>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",
       "class<com.obsproject.Studio>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",
       "class<org.inkscape.Inkscape>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",
