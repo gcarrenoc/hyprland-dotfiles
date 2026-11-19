@@ -40,27 +40,11 @@
     }
   },
   "widgets": [
-    "title",
-    "dnd",
-    "notifications",
-    "mpris"
+    "notifications"
   ],
   "widget-config": {
-    "title": {
-      "text": "Notifications",
-      "clear-all-button": true,
-      "button-text": "Clear"
-    },
-    "dnd": {
-      "text": "Do not disturb"
-    },
     "notifications": {
-      "vexpand": true
-    },
-    "mpris": {
-      "autohide": true,
-      "show-album-art": "when-available",
-      "loop-carousel": false
+      "vexpand": false
     }
   }
 }
