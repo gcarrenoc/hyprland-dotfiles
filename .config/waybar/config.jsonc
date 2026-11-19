@@ -86,7 +86,7 @@
     "spacing": 10
   },
 
-  // Notification Center (swaync): click = open / close the panel, right-click = do not disturb.
+  // Do not disturb (swaync): click = on / off. The Notification Center opens from the date or the time.
   // Outline bell = nothing new; filled bell = notifications waiting; crossed-out bell = do not disturb.
   "custom/notifications": {
     "exec": "swaync-client -swb",
@@ -103,8 +103,7 @@
       "dnd-inhibited-none": "",
       "dnd-inhibited-notification": ""
     },
-    "on-click": "sleep 0.1; swaync-client -t -sw",
-    "on-click-right": "swaync-client -d -sw"
+    "on-click": "swaync-client -d -sw"
   },
 
   // Caffeinate: click = keep awake indefinitely / turn off; right-click = choose time and mode

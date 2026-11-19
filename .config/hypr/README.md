@@ -92,7 +92,7 @@ Icons: outline style — Octicons (`nf-oct-*`, in the Nerd Font) wherever one ex
 | Telescope | Spotlight (`Super + Space`) |
 | 1 · 2 · 3 … | Workspaces, each with icons of the apps running on it — the current one is highlighted; click to switch, scroll to move |
 | + | Add a new empty workspace at the end and go there |
-| Bell | **Notification Center.** Click: show your notifications as cards on the right (no panel, like macOS): one card per notification, or one stack per app — click a stack to expand it; ✕ on a card or stack dismisses it, `Super + Shift + N` clears them all. Filled bell = notifications waiting (outline = nothing new). Right-click: **do not disturb** on / off (amber crossed-out bell); while on, notifications skip the pop-up and go silently to the panel, and they stay there when you turn it off. Volume / brightness pop-ups and critical alerts (low battery) still show. |
+| Bell | **Do not disturb.** Click: on / off (amber crossed-out bell). While on, notifications skip the pop-up and go silently to the Notification Center, and they stay there when you turn it off; volume / brightness pop-ups and critical alerts (low battery) still show. Outline bell = nothing new, filled bell = notifications waiting. |
 | Coffee cup | Caffeinate. **Click:** keep awake indefinitely (click again = off) · **Right-click:** choose time (30 min … 5 h, ∞, custom) and mode (screen + system / system only). Dim cup = off, amber cup + time left = on. |
 | Moon | Night light. **Turns on at sunset and off at sunrise automatically** (Valparaíso times, recalculated daily). **Click:** on / off by hand (respected until the next sunset/sunrise) · **Scroll:** warmer / cooler while on (2500–6000 K). Hover shows today's times. |
 | Power profile | **Click** to cycle: rocket = performance (gold) → meter = balanced → leaf = power saver (green). Hover shows the current one. Performance is limited when the laptop detects it's on your lap. |
@@ -100,7 +100,7 @@ Icons: outline style — Octicons (`nf-oct-*`, in the Nerd Font) wherever one ex
 | Speaker | Sound settings · right-click mutes · scroll changes volume |
 | Brightness | Scroll to change |
 | Battery | Fills as it charges (empty · low · medium · full), bolt while charging, plug when plugged in but not charging · click to show % |
-| Date | Today's date · hover for a calendar · click: Notification Center |
+| Date | Today's date · hover for a calendar · click: **Notification Center** — your notifications as cards on the right, one per notification or one stack per app (click a stack to expand it; ✕ dismisses; `Super + Shift + N` clears all) |
 | Time | The time · click: Notification Center |
 | Power | Power menu |
 
