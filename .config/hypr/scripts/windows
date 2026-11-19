@@ -61,7 +61,7 @@ r = subprocess.run(
      "-p", "\U000f05b6",
      "-mesg", "↵ go to window",
      "-selected-row", "1" if len(rows) > 1 else "0",
-     "-theme-str", "window { width: 640px; } listview { lines: 8; fixed-height: false; } "
+     "-theme-str", "window { width: 169.33mm; } listview { lines: 8; fixed-height: false; } "
                    "textbox { text-color: @muted; horizontal-align: 0.5; }"],
     input="\n".join(rows), capture_output=True, text=True)
 choice = r.stdout.rstrip("\n")

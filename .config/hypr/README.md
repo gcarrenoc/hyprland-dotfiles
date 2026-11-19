@@ -55,6 +55,7 @@ Hyprland 0.57. This is the only desktop now (GNOME was removed); the login scree
 | `Super + Ctrl + H / L` | Previous / next workspace (next at the end = add a new one) |
 | `Super + Ctrl + Shift + H / L` | Take window to previous / next workspace |
 | `Super + Alt + H / L` | Move the whole current workspace left / right (reorder workspaces) |
+| `Super + Ctrl + Alt + H / L` | Insert a new empty workspace to the left / right of this one and go there (the ones after shift up) |
 | `Super + Ctrl + Q` | Remove the current workspace (its windows move to the previous one; the rest shift down) |
 | `Super + scroll` | Next / previous workspace (same rule) |
 | 4-finger swipe ← → | Next / previous workspace (same rule) |
@@ -167,6 +168,7 @@ Your config is versioned in Git (`~/.dotfiles`, files stay in place) and pushed 
 | Hyprland (keys, look, rules) | `~/.config/hypr/hyprland.lua` — saved changes apply instantly; no-gap workspace logic in `~/.config/hypr/workspaces.lua` |
 | Wallpaper & colours | `wallpaper <image>`; generated colour files: `waybar/colors.css`, `hypr/colors.lua`, `rofi/colors.rasi`, `swaync/colors.css`, `hypr/hyprlock-colors.conf`, `hypr/hyprtoolkit.conf` (password dialog), `zathura/colors` (PDF viewer), `alacritty/wallpaper-colors.toml`, `tmux/wallpaper.conf` |
 | Lock screen / idle timings | `~/.config/hypr/hyprlock.conf`, `~/.config/hypr/hypridle.conf` |
+| Screen scale | Laptop at **1.25** (fractional, 1536×960 logical): `hl.monitor` line in `hyprland.lua` and `LAPTOP` line in `scripts/display`. XWayland apps aren't upscaled (`force_zero_scaling`): rofi scales itself with `dpi: 120` in `rofi/config.rasi` (= 96 × scale; its sizes are in mm). Electron apps run on Wayland (`ELECTRON_OZONE_PLATFORM_HINT` in `uwsm/env-hyprland`). To change the scale, change those three numbers. |
 | Helper scripts | `~/.config/hypr/scripts/` (spotlight, launcher (app library), windows, keybinds, display, power-watch, nightlight + suntimes, osd, screenshot, clipboard, powermenu) |
 | Bar | `~/.config/waybar/config.jsonc`, `~/.config/waybar/style.css` |
 | Launcher / power menu | `~/.config/rofi/` |

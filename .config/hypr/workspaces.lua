@@ -21,6 +21,7 @@
 --   WS.send(n)    send window to workspace n exactly         Super+Shift+1…0
 --   WS.carry(±1)  take window to prev / next                Super+Ctrl+Shift+H/L
 --   WS.swap(±1)   move this workspace left / right          Super+Alt+H/L
+--   WS.insert(±1) new empty workspace left / right of this   Super+Ctrl+Alt+H/L
 --   WS.remove()   remove the current workspace              Super+Ctrl+Q
 --   WS.prune()    remove empty workspaces you're not on     automatic (window closed / moved, workspace changed)
 
@@ -147,6 +148,24 @@ function W.swap(d)
     for _, w in ipairs(theirs) do
         hl.dispatch(hl.dsp.window.move({ window = "address:" .. w.address, workspace = here, follow = false }))
     end
+    busy = false
+    focus(target)
+end
+
+-- insert an empty workspace before (-1) or after (+1) this one and go there;
+-- the workspaces from that spot on shift up by one
+function W.insert(d)
+    local here = current()
+    if #windows_on(here) == 0 then return end          -- already on an empty workspace
+    if count >= MAX then
+        hl.exec_cmd("notify-send -a Workspaces -u low 'Maximum of 10 workspaces'")
+        return
+    end
+    local target = d > 0 and here + 1 or here
+    busy = true
+    count = count + 1
+    sync()
+    for k = count - 1, target, -1 do move_all(k, k + 1) end
     busy = false
     focus(target)
 end

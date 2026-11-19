@@ -12,7 +12,8 @@ configuration {
     terminal:             "alacritty";
     matching:             "fuzzy";
     sort:                 true;
-    normal-window:        true;   /* a real window → Hyprland draws squircle corners, blur, border */
+    normal-window:        true;
+    dpi:                  120;    /* 96 × the screen scale (1.25): fonts and mm sizes follow it */   /* a real window → Hyprland draws squircle corners, blur, border */
 }
 
 @import "balcony.rasi"

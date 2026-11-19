@@ -103,7 +103,7 @@ toggle() { # Waybar left-click: off → awake indefinitely, on → off
 }
 
 pick() { # Waybar right-click: choose duration and mode with rofi
-  local r=(env -u WAYLAND_DISPLAY rofi -dmenu -i -no-custom -theme-str "window { width: 380px; } listview { lines: 7; fixed-height: false; } textbox { horizontal-align: 0.5; }")
+  local r=(env -u WAYLAND_DISPLAY rofi -dmenu -i -no-custom -theme-str "window { width: 100.54mm; } listview { lines: 7; fixed-height: false; } textbox { horizontal-align: 0.5; }")
   local options=("30 minutes" "1 hour" "2 hours" "5 hours" "∞ Indefinitely" "Custom…")
   is_active && options+=("■ Stop caffeinate")
   local choice dur mode
@@ -112,7 +112,7 @@ pick() { # Waybar right-click: choose duration and mode with rofi
     "30 minutes") dur=1800 ;; "1 hour") dur=3600 ;; "2 hours") dur=7200 ;; "5 hours") dur=18000 ;;
     "∞ Indefinitely") dur=inf ;;
     "Custom…")
-      dur=$(env -u WAYLAND_DISPLAY rofi -dmenu -p "☕" -mesg "Duration, e.g. 45m, 3h, 1h30m" -theme-str "window { width: 380px; } listview { lines: 0; }" </dev/null) || return 0
+      dur=$(env -u WAYLAND_DISPLAY rofi -dmenu -p "☕" -mesg "Duration, e.g. 45m, 3h, 1h30m" -theme-str "window { width: 100.54mm; } listview { lines: 0; }" </dev/null) || return 0
       dur=$(parse_duration "$dur" 2>/dev/null) || { notify-send -a Caffeinate "Invalid duration" "Use e.g. 45m, 3h, 1h30m"; return 0; } ;;
     "■ Stop caffeinate") stop >/dev/null; return 0 ;;
     *) return 0 ;;

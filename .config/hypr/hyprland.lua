@@ -21,8 +21,11 @@ end
 --------------------
 ---- MONITORS ----
 --------------------
-hl.monitor({ output = "eDP-1", mode = "1920x1200@60", position = "0x0", scale = 1 })
+hl.monitor({ output = "eDP-1", mode = "1920x1200@60", position = "0x0", scale = 1.25 })   -- fractional scaling: 1536x960 logical
 hl.monitor({ output = "",      mode = "preferred",    position = "auto", scale = "auto" }) -- anything plugged in
+-- XWayland apps are not upscaled (that blurs them): they draw at full resolution and scale
+-- themselves — rofi menus via dpi in ~/.config/rofi/config.rasi (96 × scale).
+hl.config({ xwayland = { force_zero_scaling = true } })
 
 -------------------
 ---- AUTOSTART ----
@@ -222,6 +225,8 @@ hl.bind(M .. " + CTRL + SHIFT + H",  function() WS.carry(-1) end)               
 hl.bind(M .. " + CTRL + SHIFT + L",  function() WS.carry(1) end)                         -- take window to next workspace
 hl.bind(M .. " + ALT + H",           function() WS.swap(-1) end)                         -- move this workspace left (reorder)
 hl.bind(M .. " + ALT + L",           function() WS.swap(1) end)                          -- move this workspace right (reorder)
+hl.bind(M .. " + CTRL + ALT + H",    function() WS.insert(-1) end)                       -- new empty workspace to the left
+hl.bind(M .. " + CTRL + ALT + L",    function() WS.insert(1) end)                        -- new empty workspace to the right
 hl.bind(M .. " + CTRL + Q",           function() WS.remove() end)                         -- remove this workspace (windows → previous)
 
 -- Screenshots, colour picker

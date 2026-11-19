@@ -3,10 +3,10 @@
 
 configuration { show-icons: false; }
 
-window   { width: 300px; }
-mainbox  { children: [ "message", "listview" ]; padding: 22px; }
-message  { background-color: transparent; padding: 0 4px 6px 4px; }
+window   { width: 79.38mm; }
+mainbox  { children: [ "message", "listview" ]; padding: 5.82mm; }
+message  { background-color: transparent; padding: 0 1.06mm 1.59mm 1.06mm; }
 textbox  { text-color: @selected; horizontal-align: 0.5; }
 listview { lines: 5; }
-element  { padding: 10px 14px; }
+element  { padding: 2.65mm 3.70mm; }
 element-text { horizontal-align: 0; }
