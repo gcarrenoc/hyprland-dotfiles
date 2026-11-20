@@ -11,7 +11,7 @@
   "custom/launcher": {
     "format": "",
     "tooltip": false,
-    "on-click": "~/.config/hypr/scripts/spotlight"
+    "on-click": "~/.config/hypr/scripts/spotlight-toggle"
   },
 
 
@@ -36,6 +36,7 @@
       "class<spotify|Spotify>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",
       "class<com.anthropic.Claude>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",
       "class<calibre-.*>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",
+      "class<chrome-127\\.0\\.0\\.1__.*>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",   // Jupyter windows
       "class<zoom>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",
       "class<com.obsproject.Studio>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",
       "class<org.inkscape.Inkscape>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",
@@ -85,6 +86,8 @@
 
   "tray": {
     "icon-size": 18,
+    // Claude Desktop's tray icon is black (made for light panels): show its colour logo instead
+    "icons": { "Claude_status_icon_*": "claude-desktop" },
     "spacing": 10
   },
 

@@ -1,0 +1,19 @@
+[Unit]
+Description=JupyterLab server (this computer only)
+After=graphical-session.target
+# its icon in the app-indicator tray (stops with the server: PartOf= in that unit)
+Wants=jupyterlab-tray.service
+
+[Service]
+Type=simple
+WorkingDirectory=%h
+# conda's tools first, so kernels and the Jupyter terminal find python, pip, conda…
+Environment=PATH=%h/anaconda3/bin:/usr/local/bin:/usr/bin
+# 127.0.0.1: only this computer can connect. Memory: a notebook that no window has open
+# and that has been idle for 1 h is shut down; the whole server stops after 2 h with no
+# notebooks, terminals or activity. Saved notebooks are never touched.
+ExecStart=%h/anaconda3/bin/jupyter-lab --no-browser \
+    --ServerApp.ip=127.0.0.1 --ServerApp.port=8888 --ServerApp.root_dir=%h \
+    --ServerApp.shutdown_no_activity_timeout=7200 \
+    --MappingKernelManager.cull_idle_timeout=3600 --MappingKernelManager.cull_interval=300
+Restart=no

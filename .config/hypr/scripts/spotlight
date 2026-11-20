@@ -19,6 +19,10 @@ Quick Look (right): PDF first page, images, text/code, folder contents, Nautilus
   Ctrl+Enter   search inside documents (LocalSearch index; snippets)
   ↑ ↓ choose · Esc / click outside / Super+Space again: close
 
+Fast: it stays loaded in the background (started hidden at login with --daemon) and
+Super+Space only shows the window (scripts/spotlight-toggle → D-Bus). Each time it
+opens it starts fresh: empty search, open apps, colours, files and actions refreshed.
+
 Colours come from ~/.config/rofi/colors.rasi (generated from the wallpaper by
 scripts/theme). Hyprland rule: class local.Spotlight. Picks: ~/.cache/spotlight-picks.json
 """
@@ -421,14 +425,37 @@ class Spotlight(Gtk.ApplicationWindow):
         self.add_controller(keys)
         self.connect("notify::is-active", self.on_active)
 
-        self.load_apps()
-        self.refresh()
-        threading.Thread(target=self.load_files, daemon=True).start()
-        threading.Thread(target=self.load_actions, daemon=True).start()
+        self.loading = set()                              # background loads in progress
+
+    def prepare(self):
+        """Fresh start each time the window opens (the process itself stays loaded)."""
+        self.docs, self.pending, self.calc = None, None, None
+        self.gen += 1
+        self.was_active = False
+        self.picks = load_picks()
+        self.hint.set_label(HINT)
+        self.load_apps()                                   # quick: also marks which apps are open
+        if self.entry.get_text():
+            self.entry.set_text("")                        # → on_changed → refresh
+        else:
+            self.refresh()
+        self.scroll.get_vadjustment().set_value(0)
+        for what in ("files", "actions"):                  # new files, on/off states: in the background
+            if what not in self.loading:
+                self.loading.add(what)
+                threading.Thread(target=getattr(self, "load_" + what), daemon=True).start()
+
+    def dismiss(self):
+        self.set_visible(False)
 
     # --- data
     def load_apps(self):
-        apps = launcher.load_apps()
+        self.apps = []
+        # the .desktop files are parsed again only when an applications folder changed (install / remove)
+        stamp = tuple(d.stat().st_mtime if d.is_dir() else 0 for d in launcher.APP_DIRS)
+        if getattr(self, "app_stamp", None) != stamp:
+            self.app_stamp, self.app_cache = stamp, launcher.load_apps()
+        apps = list(self.app_cache)
         hist = launcher.history()
         apps.sort(key=lambda a: (-hist.get(a["id"], 0), a["name"].lower()))
         try:
@@ -465,6 +492,7 @@ class Spotlight(Gtk.ApplicationWindow):
         GLib.idle_add(self.loaded, "actions", acts)
 
     def loaded(self, what, items):
+        self.loading.discard(what)
         setattr(self, what, items)
         if self.docs is None:
             self.refresh(keep_selection=True)
@@ -734,7 +762,7 @@ class Spotlight(Gtk.ApplicationWindow):
         shift = bool(state & Gdk.ModifierType.SHIFT_MASK)
         ctrl = bool(state & Gdk.ModifierType.CONTROL_MASK)
         if keyval == Gdk.KEY_Escape:
-            self.close(); return True
+            self.dismiss(); return True
         if keyval in (Gdk.KEY_Down, Gdk.KEY_Tab):
             self.move(1); return True
         if keyval in (Gdk.KEY_Up, Gdk.KEY_ISO_Left_Tab):
@@ -800,35 +828,43 @@ class Spotlight(Gtk.ApplicationWindow):
                 time.sleep(0.3)
                 subprocess.run(["pkill", "-SIGRTMIN+8", "-x", "waybar"], capture_output=True)
                 subprocess.run(["pkill", "-SIGRTMIN+9", "-x", "waybar"], capture_output=True)
-        self.close()
+        self.dismiss()
 
     def on_active(self, *_):
         if self.is_active():
             self.was_active = True
         elif self.was_active and self.get_visible():
-            self.close()                      # clicked outside
+            self.dismiss()                    # clicked outside
 
 
 class App(Gtk.Application):
-    def __init__(self):
+    def __init__(self, hidden=False):
         super().__init__(application_id=APP_ID, flags=Gio.ApplicationFlags.DEFAULT_FLAGS)
-        self.win = None
+        self.win, self.hidden = None, hidden
 
     def do_startup(self):
         Gtk.Application.do_startup(self)
-        css = Gtk.CssProvider()
-        css.load_from_string(theme_css())
-        Gtk.StyleContext.add_provider_for_display(Gdk.Display.get_default(), css,
+        self.hold()                                        # stay loaded with no window shown
+        self.css = Gtk.CssProvider()
+        self.css.load_from_string(theme_css())
+        Gtk.StyleContext.add_provider_for_display(Gdk.Display.get_default(), self.css,
                                                   Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+        self.win = Spotlight(self)
+        self.win.connect("close-request", lambda w: w.dismiss() or True)   # hide, never destroy
+        self.win.prepare()                                 # preload apps, files, actions
 
     def do_activate(self):
-        if self.win is not None:              # Super+Space again: close
-            self.win.close(); return
-        self.win = Spotlight(self)
-        self.win.connect("close-request", lambda *_: self.quit() or False)
+        if self.hidden:                                    # --daemon: start hidden at login
+            self.hidden = False
+            return
+        if self.win.get_visible():                         # Super+Space again: close
+            self.win.dismiss()
+            return
+        self.css.load_from_string(theme_css())             # follow wallpaper changes
+        self.win.prepare()
         self.win.present()
         self.win.entry.grab_focus()
 
 
 if __name__ == "__main__":
-    sys.exit(App().run(None))
+    sys.exit(App(hidden="--daemon" in sys.argv[1:]).run(None))

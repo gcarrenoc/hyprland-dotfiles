@@ -1,0 +1,73 @@
+#!/usr/bin/env python3
+"""jupyter-tray — JupyterLab's icon in the app-indicator tray, while its server runs.
+
+Started and stopped together with jupyterlab.service (jupyterlab-tray.service, PartOf=).
+Menu: Open JupyterLab · Open Jupyter Notebook · status (notebooks, memory, uptime) · Stop.
+"""
+import json, signal, subprocess, sys
+from pathlib import Path
+
+import gi
+gi.require_version("Gtk", "3.0")
+gi.require_version("AyatanaAppIndicator3", "0.1")
+from gi.repository import AyatanaAppIndicator3 as AppIndicator, GLib, Gtk
+
+APP = str(Path.home() / ".local/bin/jupyter-app")
+
+
+def item(label, action=None, sensitive=True):
+    it = Gtk.MenuItem(label=label)
+    it.set_sensitive(sensitive)
+    if action:
+        it.connect("activate", lambda *_: action())
+    return it
+
+
+def run_detached(*args):
+    # through systemd-run: "Stop" stops this tray's own service, which must not take the command with it
+    subprocess.Popen(["systemd-run", "--user", "--quiet", "--collect", APP, *args],
+                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+def status_text():
+    try:
+        d = json.loads(subprocess.run([APP, "waybar"], capture_output=True, text=True, timeout=5).stdout)
+        lines = d.get("tooltip", "").splitlines()
+    except (subprocess.TimeoutExpired, json.JSONDecodeError):
+        return "JupyterLab"
+    # "JupyterLab — running 12 min" · "1 notebook running" · "Memory: 240 MB"
+    up = lines[0].replace("JupyterLab — running", "").strip() if lines else ""
+    parts = [p for p in (lines[1] if len(lines) > 1 else "", lines[2].replace("Memory: ", "") if len(lines) > 2 else "", up) if p]
+    return " · ".join(parts) or "JupyterLab"
+
+
+def main():
+    signal.signal(signal.SIGTERM, lambda *_: Gtk.main_quit())
+    ind = AppIndicator.Indicator.new("jupyterlab", "org.jupyter.JupyterLab",
+                                     AppIndicator.IndicatorCategory.APPLICATION_STATUS)
+    ind.set_title("JupyterLab")
+    ind.set_status(AppIndicator.IndicatorStatus.ACTIVE)
+
+    menu = Gtk.Menu()
+    open_lab = item("Open JupyterLab", lambda: run_detached("open", "lab"))
+    menu.append(open_lab)
+    menu.append(item("Open Jupyter Notebook", lambda: run_detached("open", "notebook")))
+    menu.append(Gtk.SeparatorMenuItem())
+    status = item("JupyterLab", sensitive=False)
+    menu.append(status)
+    menu.append(Gtk.SeparatorMenuItem())
+    menu.append(item("Stop JupyterLab", lambda: run_detached("stop")))
+    menu.show_all()
+    ind.set_menu(menu)
+    ind.set_secondary_activate_target(open_lab)            # middle-click opens JupyterLab
+
+    def refresh():
+        status.set_label(status_text())
+        return True
+    refresh()
+    GLib.timeout_add_seconds(10, refresh)
+    Gtk.main()
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -34,6 +34,7 @@ hl.config({ xwayland = { force_zero_scaling = true } })
 -- Blueman, nm-applet) are started by uwsm automatically.
 hl.on("hyprland.start", function()
     hl.exec_cmd(app .. "waybar")
+    hl.exec_cmd(app .. scripts .. "spotlight --daemon")                -- Spotlight stays loaded, hidden: Super+Space opens it instantly
     hl.exec_cmd(scripts .. "theme; " .. app .. "hyprpaper")   -- whole theme follows the wallpaper
     hl.exec_cmd(app .. "hypridle")
     hl.exec_cmd("systemctl --user start swaync")                      -- notifications + Notification Center
@@ -175,7 +176,7 @@ local function run(cmd) return hl.dsp.exec_cmd(cmd) end
 hl.bind(M .. " + Return",             run(terminal))
 hl.bind("ALT + Return",               run(terminal .. " --class fly-term"))          -- floating terminal
 hl.bind(M .. " + Tab",                run(scripts .. "windows"))                    -- window switcher (recent first)
-hl.bind(M .. " + Space",              run(scripts .. "spotlight"))                  -- Spotlight: apps + files (↵ open / go to app, ⇧↵ new window / show in folder, ⌃↵ inside documents)
+hl.bind(M .. " + Space",              run(scripts .. "spotlight-toggle"))                  -- Spotlight: apps + files (↵ open / go to app, ⇧↵ new window / show in folder, ⌃↵ inside documents)
 hl.bind(M .. " + E",                  run(app .. "nautilus --new-window"))
 hl.bind("CTRL + ALT + P",             run(app .. "google-chrome-stable --profile-directory='Profile 1'"))  -- Chrome: personal
 hl.bind("CTRL + ALT + W",             run(app .. "google-chrome-stable --profile-directory=Default"))    -- University

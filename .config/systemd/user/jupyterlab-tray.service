@@ -1,0 +1,8 @@
+[Unit]
+Description=JupyterLab tray icon (runs while the JupyterLab server runs)
+PartOf=jupyterlab.service
+After=jupyterlab.service
+
+[Service]
+ExecStart=%h/.local/bin/jupyter-tray
+Restart=on-failure
