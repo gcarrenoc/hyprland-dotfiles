@@ -9,5 +9,11 @@ x-scheme-handler/jetbrains=jetbrainsd.desktop
 x-scheme-handler/webcal=google-chrome.desktop
 application/pdf=org.pwmt.zathura.desktop
 x-scheme-handler/mailto=google-chrome.desktop
+application/epub+zip=calibre-ebook-viewer.desktop
+application/x-mobipocket-ebook=calibre-ebook-viewer.desktop
+application/x-mobi8-ebook=calibre-ebook-viewer.desktop
+application/vnd.amazon.mobi8-ebook=calibre-ebook-viewer.desktop
+application/x-mobipocket-subscription=calibre-ebook-viewer.desktop
+application/x-topaz-ebook=calibre-ebook-viewer.desktop
 
 [Added Associations]
