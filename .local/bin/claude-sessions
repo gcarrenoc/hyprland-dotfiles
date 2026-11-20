@@ -1,0 +1,181 @@
+#!/usr/bin/env python3
+"""claude-sessions — list, preview and delete Claude Code sessions (used by cpick / cpurge).
+
+  claude-sessions list [--deletable]   one line per session, newest first: id<TAB>text
+  claude-sessions preview ID           title, folder, dates and the last messages
+  claude-sessions cwd ID               the folder the session belongs to
+  claude-sessions running ID           exit 0 if the session is open right now
+  claude-sessions delete ID…           delete sessions (never ones that are open)
+
+Sessions live in ~/.claude/projects/<folder>/<id>.jsonl (+ <id>/ next to it,
+~/.claude/session-env/<id>, ~/.claude/file-history/<id>). Open sessions are read
+from ~/.claude/sessions/<pid>.json (only records whose process is still alive).
+"""
+import json, os, shutil, sys, time
+from pathlib import Path
+
+CLAUDE = Path.home() / ".claude"
+PROJECTS = CLAUDE / "projects"
+GREY, BOLD, GREEN, RESET = "\033[90m", "\033[1m", "\033[32m", "\033[0m"
+
+
+def running_ids():
+    ids = {}
+    for f in (CLAUDE / "sessions").glob("*.json"):
+        try:
+            pid = int(f.name.split(".")[0])
+            if not Path(f"/proc/{pid}").exists():
+                continue
+            d = json.loads(f.read_text())
+            ids[d["sessionId"]] = "Claude Desktop" if d.get("entrypoint") == "claude-desktop" else "terminal"
+        except (ValueError, KeyError, OSError, json.JSONDecodeError):
+            continue
+    return ids
+
+
+def text_of(message):
+    c = message.get("content") if isinstance(message, dict) else None
+    if isinstance(c, str):
+        return c
+    if isinstance(c, list):
+        return " ".join(p.get("text", "") for p in c if isinstance(p, dict) and p.get("type") == "text")
+    return ""
+
+
+def scan(path, keep_messages=0):
+    """Title, folder, first prompt, message counts (and the last messages if asked)."""
+    info = {"custom": None, "ai": None, "first": None, "cwd": None, "users": 0, "replies": 0, "last": []}
+    with open(path, errors="replace") as f:
+        for line in f:
+            if '"type":"custom-title"' in line or '"type":"ai-title"' in line:
+                d = json.loads(line)
+                if d.get("customTitle"):
+                    info["custom"] = d["customTitle"]
+                if d.get("aiTitle"):
+                    info["ai"] = d["aiTitle"]
+            elif '"type":"user"' in line or '"type":"assistant"' in line:
+                try:
+                    d = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if d.get("isSidechain"):
+                    continue
+                info["cwd"] = info["cwd"] or d.get("cwd")
+                text = " ".join(text_of(d.get("message")).split())
+                if not text or text.startswith(("<command-", "<local-command", "<system-reminder", "Caveat:")):
+                    continue
+                if d["type"] == "user":
+                    info["users"] += 1
+                    info["first"] = info["first"] or text
+                else:
+                    info["replies"] += 1
+                if keep_messages:
+                    info["last"] = (info["last"] + [(d["type"], text)])[-keep_messages:]
+    return info
+
+
+def sessions():
+    out = []
+    for f in PROJECTS.glob("*/*.jsonl"):
+        out.append((f.stat().st_mtime, f.stem, f))
+    out.sort(reverse=True)
+    return out
+
+
+def find(sid):
+    hits = list(PROJECTS.glob(f"*/{sid}.jsonl"))
+    if not hits:
+        sys.exit(f"no session {sid}")
+    return hits[0]
+
+
+def ago(t):
+    s = time.time() - t
+    for unit, n in (("d", 86400), ("h", 3600), ("m", 60)):
+        if s >= n:
+            return f"{int(s // n)}{unit} ago"
+    return "now"
+
+
+def pretty(path):
+    p = str(path or "?")
+    home = str(Path.home())
+    return "~" + p[len(home):] if p.startswith(home) else p
+
+
+def title(info):
+    return info["custom"] or info["ai"] or (info["first"] or "(empty)")[:70]
+
+
+def cmd_list(deletable):
+    run = running_ids()
+    for mtime, sid, path in sessions():
+        if deletable and sid in run:
+            continue
+        info = scan(path)
+        if not info["users"] and not info["custom"] and not info["ai"]:
+            continue                                       # nothing in it
+        mark = f"{GREEN}●{RESET}" if sid in run else " "
+        folder = pretty(info["cwd"])
+        if len(folder) > 40:
+            folder = "…" + folder[-39:]
+        print(f"{sid}\t{mark} {GREY}{ago(mtime):>8}{RESET}  {BOLD}{title(info)[:60]}{RESET}  {GREY}{folder}{RESET}")
+
+
+def cmd_preview(sid):
+    path = find(sid)
+    info = scan(path, keep_messages=8)
+    run = running_ids()
+    print(f"{BOLD}{title(info)}{RESET}")
+    print(f"{GREY}{pretty(info['cwd'])}{RESET}")
+    st = path.stat()
+    print(f"{GREY}last used {ago(st.st_mtime)} · {info['users']} messages · {info['replies']} replies · "
+          f"{st.st_size / 1e6:.1f} MB{RESET}")
+    if sid in run:
+        print(f"{GREEN}● open now in {run[sid]}{RESET}")
+    print()
+    for who, text in info["last"]:
+        label = f"{BOLD}You:{RESET}" if who == "user" else f"{GREY}Claude:{RESET}"
+        print(f"{label} {text[:400]}\n")
+
+
+def cmd_delete(ids):
+    run = running_ids()
+    freed, n = 0, 0
+    for sid in ids:
+        if sid in run:
+            print(f"skipped {sid}: open now in {run[sid]}")
+            continue
+        path = find(sid)
+        parts = [path, path.with_suffix(""), CLAUDE / "session-env" / sid, CLAUDE / "file-history" / sid]
+        for p in parts:
+            if p.is_dir():
+                freed += sum(f.stat().st_size for f in p.rglob("*") if f.is_file())
+                shutil.rmtree(p)
+            elif p.exists():
+                freed += p.stat().st_size
+                p.unlink()
+        n += 1
+    print(f"deleted {n} session{'s' if n != 1 else ''} ({freed / 1e6:.1f} MB)")
+
+
+def main():
+    if len(sys.argv) < 2:
+        sys.exit(__doc__)
+    cmd, args = sys.argv[1], sys.argv[2:]
+    if cmd == "list":
+        cmd_list("--deletable" in args)
+    elif cmd == "preview" and args:
+        cmd_preview(args[0])
+    elif cmd == "cwd" and args:
+        print(scan(find(args[0]))["cwd"] or "")
+    elif cmd == "running" and args:
+        sys.exit(0 if args[0] in running_ids() else 1)
+    elif cmd == "delete" and args:
+        cmd_delete(args)
+    else:
+        sys.exit(__doc__)
+
+
+if __name__ == "__main__":
+    main()

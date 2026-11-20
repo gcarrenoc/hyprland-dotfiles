@@ -48,3 +48,6 @@ eval "$(zoxide init bash)"
 
 # Added by Antigravity CLI installer
 export PATH="/home/gcarreno/.local/bin:$PATH"
+
+# Claude Code sessions: cnew, cpick, cpurge
+[[ -f ~/.config/bash/sessions.sh ]] && . ~/.config/bash/sessions.sh
