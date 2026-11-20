@@ -15,7 +15,9 @@ from pathlib import Path
 SERVICE = "jupyterlab.service"
 RUNTIME = Path.home() / ".local/share/jupyter/runtime"
 ICON = "<span font_family='lucide'>\ue3e7</span>"          # lucide "orbit"
-PAGES = {"lab": "lab", "notebook": "tree"}
+# "notebook" = JupyterLab's single-document view: Notebook 7 itself opens every file in a new
+# browser tab (no setting for it), which an app window turns into a separate browser window
+PAGES = {"lab": "lab", "notebook": "doc/workspaces/notebook"}
 
 
 def run(*cmd):

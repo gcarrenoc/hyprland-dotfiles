@@ -2,11 +2,11 @@
 Type=Application
 Name=Jupyter Notebook
 GenericName=Python Notebooks
-Comment=The classic notebook view (same background server as JupyterLab, own window)
+Comment=One notebook at a time, files open in the same window (JupyterLab simple view, same background server)
 Exec=/home/gcarreno/.local/bin/jupyter-app open notebook
 Icon=jupyter
 Terminal=false
 Categories=Development;
 Keywords=jupyter;python;notebook;ipynb;data;
 StartupNotify=false
-StartupWMClass=chrome-127.0.0.1__tree-Default
+StartupWMClass=chrome-127.0.0.1__doc_workspaces_notebook-Default
