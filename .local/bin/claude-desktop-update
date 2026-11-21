@@ -3,6 +3,8 @@
 
   claude-desktop-update           verify, build and install the newest version (asks for your password)
   claude-desktop-update --check   only say whether a newer version exists
+  claude-desktop-update --notify  like --check, but a notification with an Update button
+                                  (run daily by claude-desktop-update.timer)
 
 Anthropic publishes Claude Desktop for Linux (beta) as a .deb in its apt repository.
 Every step is verified before anything is built:
@@ -16,7 +18,7 @@ Then the recipe in ~/.local/src/claude-desktop/PKGBUILD is updated to the new ve
 built with makepkg and installed with pacman. Uses temporary keyrings: your GPG keyring
 is never touched.
 """
-import hashlib, re, shutil, subprocess, sys, tempfile, urllib.request
+import hashlib, re, shutil, subprocess, sys, tempfile, urllib.error, urllib.request
 from pathlib import Path
 
 REPO = "https://downloads.claude.ai/claude-desktop/apt/stable"
@@ -57,8 +59,25 @@ def newer(a, b):            # pacman's version comparison: is a newer than b?
     return subprocess.run(["vercmp", a, b], capture_output=True, text=True).stdout.strip() == "1"
 
 
+TERMINAL = ["uwsm", "app", "--", "alacritty", "--config-file", str(Path.home() / ".config/alacritty/balcony.toml"),
+            "--class", "fly-term", "-e", "sh", "-c",
+            f'{Path(__file__).resolve()}; echo; read -r -p "Press Enter to close " _']
+
+
+def offer_update(version, installed):
+    """Notification with an Update button; the update itself runs in a floating terminal (password)."""
+    r = subprocess.run(["notify-send", "-a", "Claude Desktop", "-i", "claude-desktop", "--wait",
+                        "--action=update=Update", "--action=later=Later",
+                        f"Claude Desktop {version} is available",
+                        f"You have {installed}. Update verifies Anthropic's signature, builds and installs it."],
+                       capture_output=True, text=True)
+    if r.stdout.strip() == "update":
+        subprocess.Popen(TERMINAL, start_new_session=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
 def main():
-    check_only = "--check" in sys.argv
+    notify_mode = "--notify" in sys.argv
+    check_only = "--check" in sys.argv or notify_mode
     if not KEY.exists() or not RECIPE.exists():
         fail(f"missing {KEY} or {RECIPE}")
     work = Path(tempfile.mkdtemp(prefix="claude-desktop-update-"))
@@ -111,6 +130,8 @@ def main():
             say(f"up to date: {installed}")
             return
         say(f"new version: {version}" + (f" (installed: {installed})" if installed else ""))
+        if notify_mode:
+            offer_update(version, installed or "none")
         if check_only:
             return
 
@@ -144,4 +165,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except (OSError, urllib.error.URLError) as e:              # offline, server down…: no crash, just say so
+        fail(f"could not check for updates: {e}")

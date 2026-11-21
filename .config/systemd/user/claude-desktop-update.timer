@@ -1,0 +1,12 @@
+[Unit]
+Description=Check for a new Claude Desktop version once a day
+
+[Timer]
+OnCalendar=daily
+RandomizedDelaySec=1h
+# missed (laptop off or asleep)? check soon after it's back
+Persistent=true
+OnStartupSec=5min
+
+[Install]
+WantedBy=timers.target
