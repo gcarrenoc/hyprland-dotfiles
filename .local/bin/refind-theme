@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# refind-theme — install the rEFInd setup to the EFI partition (asks for your password).
+#   Menu:  ~/.config/refind/refind.conf
+#   Theme: ~/.config/refind/themes/brads-refind-theme  (github.com/toptensoftware/brads-refind-theme, see SOURCE.txt)
+#   Run it after editing either of them.
+set -euo pipefail
+SRC=~/.config/refind
+THEME=brads-refind-theme
+pkexec sh -c "
+set -e
+R=/boot/EFI/refind
+rm -rf \$R/themes/balcony                                   # the earlier home-made theme
+install -d \$R/themes/$THEME/icons
+install -m 644 '$SRC/themes/$THEME'/*.png '$SRC/themes/$THEME/theme.conf' \$R/themes/$THEME/
+install -m 644 '$SRC/themes/$THEME'/icons/*.png \$R/themes/$THEME/icons/
+install -m 644 '$SRC/refind.conf' \$R/refind.conf
+missing=0
+for f in /vmlinuz-linux /initramfs-linux.img /vmlinuz-linux-lts /initramfs-linux-lts.img \
+         /EFI/Microsoft/Boot/bootmgfw.efi /EFI/refind/themes/$THEME/theme.conf \
+         /EFI/refind/themes/$THEME/icons/os_arch.png /EFI/refind/themes/$THEME/icons/os_win11.png; do
+    [ -e /boot\$f ] || { echo \"  missing: \$f\"; missing=1; }
+done
+exit \$missing
+"
+echo "✓ rEFInd menu and theme installed"

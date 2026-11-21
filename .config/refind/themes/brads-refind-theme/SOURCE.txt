@@ -1,0 +1,1 @@
+Source: https://github.com/toptensoftware/brads-refind-theme (commit 9ce5e30, 2021-11-02). No licence file; OS logos derived from Creative Commons images (see readme.md).
