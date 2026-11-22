@@ -82,6 +82,34 @@ Hyprland 0.57. This is the only desktop now (GNOME was removed); the login scree
 Volume, mute, mic mute, brightness and media (play/pause/next/previous) keys work as usual and
 show a small pop-up. They also work on the lock screen.
 
+### PDF viewer (Zathura)
+
+Inside Zathura (`~/.config/zathura/zathurarc`).
+
+| Keys | Action |
+|---|---|
+| `j` / `k` or `↓` / `↑` | Scroll down / up |
+| `J` / `K` | Next / previous page |
+| `Space` / `Shift + Space` | One screen down / up |
+| `gg` / `G` | First / last page |
+| `25G` | Go to page 25 (any number) |
+| `Ctrl + o` / `Ctrl + i` | Jump back / forward (after a link or jump) |
+| `+` / `-` or `Ctrl + scroll` | Zoom in / out |
+| `=` | Actual size (100 %) |
+| `s` / `a` | Fit width / fit whole page |
+| `d` | Two pages side by side |
+| `r` | Rotate |
+| `Ctrl + r` | Dark reading mode (images keep their colours) |
+| `F11` / `F5` | Fullscreen / presentation mode |
+| `/` or `?` | Search forward / backward |
+| `n` / `N` | Next / previous match |
+| `Tab` | Table of contents (`Enter` opens a chapter) |
+| `f` | Follow a link (type its number) |
+| `m` + letter / `'` + letter | Set a mark / jump back to it |
+| `Ctrl + c` | Copy the text selected with the mouse |
+| `R` | Reload the file |
+| `q` | Quit |
+
 ## The bar (Waybar)
 
 
@@ -93,8 +121,8 @@ Icons: outline style — Octicons (`nf-oct-*`, in the Nerd Font) wherever one ex
 | 1 · 2 · 3 … | Workspaces, each with icons of the apps running on it — the current one is highlighted; click to switch, scroll to move |
 | + | Add a new empty workspace at the end and go there |
 | Bell | **Do not disturb.** Click: on / off (amber crossed-out bell). While on, notifications skip the pop-up and go silently to the Notification Center, and they stay there when you turn it off; volume / brightness pop-ups and critical alerts (low battery) still show. Outline bell = nothing new, filled bell = notifications waiting. |
-| Coffee cup | Caffeinate. **Click:** keep awake indefinitely (click again = off) · **Right-click:** choose time (30 min … 5 h, ∞, custom) and mode (screen + system / system only). Dim cup = off, amber cup + time left = on. |
-| Moon | Night light. **Turns on at sunset and off at sunrise automatically** (Valparaíso times, recalculated daily). **Click:** on / off by hand (respected until the next sunset/sunrise) · **Scroll:** warmer / cooler while on (2500–6000 K). Hover shows today's times. |
+| Coffee cup (tray) | **Caffeinate**, in the app-indicator tray (the `<` drawer). Click: menu — keep awake until turned off, for 30 min … 5 h, system only, more options, turn off. Full steaming cup = on (time left in the menu), empty cup = off. |
+| Bulb (tray) | **Night light**, in the app-indicator tray. **Turns on at sunset and off at sunrise automatically** (Valparaíso times, recalculated daily); the menu shows today's times. Click: menu — turn on / off by hand (respected until the next sunset/sunrise), warmer / cooler while on. |
 | Power profile | **Click** to cycle: rocket = performance (gold) → meter = balanced → leaf = power saver (green). Hover shows the current one. Performance is limited when the laptop detects it's on your lap. |
 | Wi-Fi | Network settings (`nmtui`) |
 | Speaker | Sound settings · right-click mutes · scroll changes volume |

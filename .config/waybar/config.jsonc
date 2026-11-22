@@ -6,7 +6,7 @@
   "spacing": 0,
 
   "modules-left":  ["custom/launcher", "hyprland/workspaces", "custom/newws"],
-  "modules-right": ["group/indicators", "custom/notifications", "custom/caffeinate", "custom/nightlight", "power-profiles-daemon", "network", "pulseaudio", "backlight", "battery", "clock#date", "clock", "custom/power"],
+  "modules-right": ["group/indicators", "custom/notifications", "power-profiles-daemon", "network", "pulseaudio", "backlight", "battery", "clock#date", "clock", "custom/power"],
 
   "custom/launcher": {
     "format": "",
@@ -112,27 +112,6 @@
     "on-click": "swaync-client -d -sw"
   },
 
-  // Caffeinate: click = keep awake indefinitely / turn off; right-click = choose time and mode
-  "custom/caffeinate": {
-    "exec": "~/.local/bin/caffeinate waybar",
-    "return-type": "json",
-    "interval": 30,
-    "signal": 8,
-    "on-click": "~/.local/bin/caffeinate toggle",
-    "on-click-right": "~/.local/bin/caffeinate pick"
-  },
-
-  // Night light: click = on/off, scroll = warmer / cooler
-  "custom/nightlight": {
-    "exec": "~/.config/hypr/scripts/nightlight waybar",
-    "return-type": "json",
-    "interval": "once",
-    "signal": 9,
-    "on-click": "~/.config/hypr/scripts/nightlight toggle",
-    "on-scroll-up": "~/.config/hypr/scripts/nightlight up",
-    "on-scroll-down": "~/.config/hypr/scripts/nightlight down"
-  },
-
   // Power profile: click cycles performance → balanced → power saver
   "power-profiles-daemon": {
     "format": "{icon}",
@@ -181,9 +160,9 @@
     "interval": 60,
     "states": { "warning": 30, "critical": 15 },
     "format": "{icon}",
-    "format-charging": "{icon}",
-    "format-plugged": "{icon}",
-    "format-alt": "{icon} {capacity}%",
+    // no format-charging / format-plugged: they would override the click (the icons already change by state)
+    // the Lucide icon sits ~3.5 px higher than the digits: lowered only in the percentage view
+    "format-alt": "<span rise='-2150'>{icon}</span> {capacity}%",
     // Lucide outline battery: empty → low → medium → full; charging; plugged (not charging)
     "format-icons": {
       "default":  ["<span font_family='lucide'></span>", "<span font_family='lucide'></span>", "<span font_family='lucide'></span>", "<span font_family='lucide'></span>"],

@@ -29,7 +29,7 @@ tooltip label {
 
 /* Pills */
 #custom-launcher, #workspaces,
-#indicators, #custom-notifications, #custom-caffeinate, #custom-nightlight, #power-profiles-daemon, #clock, #custom-power,
+#indicators, #custom-notifications, #power-profiles-daemon, #clock, #custom-power,
 #network, #pulseaudio, #backlight, #battery {
   background-color: @pill;
   color: @text;
@@ -69,9 +69,6 @@ tooltip label {
 #tray > .passive { -gtk-icon-effect: dim; }
 #tray > .needs-attention { background-color: @alert; border-radius: 6px; }
 
-#custom-caffeinate        { color: @accent; }          /* on: screen + system awake (amber) */
-#custom-caffeinate.system { color: @steel; }           /* on: system only */
-#custom-caffeinate.off    { color: alpha(@muted, 0.8); } /* off: dim cup */
 #custom-notifications              { color: alpha(@muted, 0.8); }  /* nothing new: dim bell */
 #custom-notifications.notification { color: @light; }            /* notifications waiting: bright bell + dot */
 #custom-notifications.dnd-none, #custom-notifications.dnd-notification,
@@ -79,8 +76,6 @@ tooltip label {
 #power-profiles-daemon             { color: @light; }
 #power-profiles-daemon.performance { color: @accent; }   /* performance: accent */
 #power-profiles-daemon.power-saver { color: #8fd18f; }   /* power saver: green leaf */
-#custom-nightlight.on     { color: @accent; }          /* night light on (amber) */
-#custom-nightlight.off    { color: alpha(@muted, 0.8); } /* off: dim moon */
 
 /* network · volume · brightness · battery are one joined pill */
 #network, #pulseaudio, #backlight, #battery {
@@ -115,7 +110,7 @@ tooltip label {
 #custom-power:hover { color: @alert; }
 
 /* Icon pills: proportional Nerd Font so each icon gets its real width (centred) */
-#custom-launcher, #custom-tray-toggle, #custom-notifications, #custom-caffeinate, #custom-nightlight, #power-profiles-daemon, #custom-power,
+#custom-launcher, #custom-tray-toggle, #custom-notifications, #power-profiles-daemon, #custom-power,
 #network, #pulseaudio, #backlight, #battery {
   font-family: "PaperMono Nerd Font";
 }
@@ -123,7 +118,7 @@ tooltip label {
 /* --- Optical centring (measured): Nerd Font icons draw a few px wider than their
        advance, so icon-only pills get a little less padding on the left --- */
 #custom-launcher { padding: 0 17px 0 11px; }
-#custom-notifications, #custom-caffeinate, #custom-nightlight, #power-profiles-daemon { padding: 0 12px 0 9px; }
+#custom-notifications, #power-profiles-daemon { padding: 0 12px 0 9px; }
 #custom-power { padding: 0 14px 0 10px; }
 #battery { padding-right: 20px; }
 #workspaces button:not(.empty) { padding: 0 12px 0 8px; }

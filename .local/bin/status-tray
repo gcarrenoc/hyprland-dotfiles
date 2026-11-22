@@ -1,0 +1,120 @@
+#!/usr/bin/env python3
+"""status-tray — Night light and Caffeinate as icons in the app-indicator tray.
+
+Each icon shows its state (on / off) and has a menu with the same actions the bar
+pills had. Runs as the user service status-tray.service (started with the session).
+State is re-read every 10 s and at once on SIGUSR1, which the nightlight / caffeinate
+scripts and Spotlight send after a change:  systemctl --user kill -s USR1 status-tray
+"""
+import json, signal, subprocess, sys
+from pathlib import Path
+
+import gi
+gi.require_version("Gtk", "3.0")
+gi.require_version("AyatanaAppIndicator3", "0.1")
+from gi.repository import AyatanaAppIndicator3 as AppIndicator, GLib, Gtk
+try:                                                      # GLib ≥ 2.86: unix signals live in GLibUnix
+    gi.require_version("GLibUnix", "2.0")
+    from gi.repository import GLibUnix
+    signal_add = GLibUnix.signal_add
+except (ValueError, ImportError):
+    signal_add = GLib.unix_signal_add
+
+NIGHT = str(Path.home() / ".config/hypr/scripts/nightlight")
+CAFF = str(Path.home() / ".local/bin/caffeinate")
+
+
+def state(cmd):
+    """The script's own status JSON (the one the bar used): class + tooltip lines."""
+    try:
+        d = json.loads(subprocess.run([cmd, "waybar"], capture_output=True, text=True, timeout=5).stdout)
+        return d.get("class", "off"), [l for l in d.get("tooltip", "").splitlines() if l.strip()]
+    except (OSError, subprocess.TimeoutExpired, json.JSONDecodeError):
+        return "off", []
+
+
+def run(*cmd):
+    subprocess.Popen(list(cmd), start_new_session=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    GLib.timeout_add(600, lambda: refresh() and False)
+
+
+def item(menu, label, action=None, sensitive=True):
+    it = Gtk.MenuItem(label=label)
+    it.set_sensitive(sensitive and action is not None)
+    if action:
+        it.connect("activate", lambda *_: action())
+    menu.append(it)
+    return it
+
+
+def indicator(ident, title):
+    ind = AppIndicator.Indicator.new(ident, "image-missing", AppIndicator.IndicatorCategory.HARDWARE)
+    ind.set_title(title)
+    ind.set_status(AppIndicator.IndicatorStatus.ACTIVE)
+    return ind
+
+
+night = indicator("night-light", "Night light")
+caff = indicator("caffeinate", "Caffeinate")
+
+
+def build_night(cls, lines):
+    on = cls == "on"
+    night.set_icon_full("redshift-status-on" if on else "redshift-status-off", "Night light " + ("on" if on else "off"))
+    m = Gtk.Menu()
+    item(m, lines[0] if lines else "Night light")              # "Night light on · 4000K" / "Night light off"
+    for l in lines[1:]:
+        if l.startswith("Auto:"):
+            item(m, l)                                           # today's sunset / sunrise
+    m.append(Gtk.SeparatorMenuItem())
+    item(m, "Turn off" if on else "Turn on", lambda: run(NIGHT, "toggle"))
+    item(m, "Warmer", lambda: run(NIGHT, "down"), sensitive=on)
+    item(m, "Cooler", lambda: run(NIGHT, "up"), sensitive=on)
+    m.show_all()
+    night.set_menu(m)
+
+
+def build_caff(cls, lines):
+    on = cls != "off"
+    caff.set_icon_full("caffeine-cup-full" if on else "caffeine-cup-empty", "Caffeinate " + ("on" if on else "off"))
+    status = lines[0] if lines else "Caffeinate"
+    status = status.replace("Caffeinate is on: ", "On: ").replace("Caffeinate is off", "Off — the laptop sleeps as usual")
+    m = Gtk.Menu()
+    item(m, status)
+    m.append(Gtk.SeparatorMenuItem())
+    if on:
+        item(m, "Turn off", lambda: run(CAFF, "stop"))
+        m.append(Gtk.SeparatorMenuItem())
+    item(m, "Keep awake until turned off", lambda: run(CAFF, "inf"))
+    for label, d in (("30 minutes", "30m"), ("1 hour", "1h"), ("2 hours", "2h"), ("5 hours", "5h")):
+        item(m, f"Keep awake for {label}", lambda d=d: run(CAFF, d))
+    item(m, "System only (screen may turn off), until turned off", lambda: run(CAFF, "-s", "inf"))
+    m.append(Gtk.SeparatorMenuItem())
+    item(m, "More options…", lambda: run(CAFF, "pick"))
+    m.show_all()
+    caff.set_menu(m)
+
+
+last = {}
+
+
+def refresh():
+    for key, cmd, build in (("night", NIGHT, build_night), ("caff", CAFF, build_caff)):
+        s = state(cmd)
+        if last.get(key) != s:                                   # rebuild only when something changed
+            last[key] = s
+            build(*s)
+    return True
+
+
+def main():
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
+    signal_add(GLib.PRIORITY_DEFAULT, signal.SIGUSR1, lambda: refresh() or True)
+    signal_add(GLib.PRIORITY_DEFAULT, signal.SIGTERM, lambda: Gtk.main_quit() or False)
+    refresh()
+    GLib.timeout_add_seconds(10, refresh)
+    Gtk.main()
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -12,7 +12,7 @@ DEFAULT=4000 MIN=2500 MAX=6000 STEP=250
 
 on=0 temp=$DEFAULT period=""
 [[ -f $STATE ]] && read -r on temp period < "$STATE"
-save() { mkdir -p "${STATE%/*}"; echo "$on $temp $period" > "$STATE"; pkill -RTMIN+9 -x waybar 2>/dev/null || true; }
+save() { mkdir -p "${STATE%/*}"; echo "$on $temp $period" > "$STATE"; systemctl --user kill -s USR1 status-tray.service 2>/dev/null || true; }
 SUN="$(dirname "$(readlink -f "$0")")/suntimes"
 ensure() { pgrep -x hyprsunset >/dev/null || { setsid -f uwsm app -- hyprsunset -i >/dev/null 2>&1; sleep 0.8; }; }
 apply() { ensure; if (( on )); then hyprctl hyprsunset temperature "$temp" >/dev/null; else hyprctl hyprsunset identity >/dev/null; fi; }

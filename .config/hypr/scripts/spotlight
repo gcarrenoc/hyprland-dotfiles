@@ -824,10 +824,9 @@ class Spotlight(Gtk.ApplicationWindow):
             spawn("xdg-open", WEB.format(quote_plus(target)))
         elif kind == "action":
             detach(*target)
-            if item["key"] in ("action:awake", "action:night"):    # their bar pills refresh on a signal
+            if item["key"] in ("action:awake", "action:night"):    # their tray icons (status-tray) refresh on a signal
                 time.sleep(0.3)
-                subprocess.run(["pkill", "-SIGRTMIN+8", "-x", "waybar"], capture_output=True)
-                subprocess.run(["pkill", "-SIGRTMIN+9", "-x", "waybar"], capture_output=True)
+                subprocess.run(["systemctl", "--user", "kill", "-s", "USR1", "status-tray.service"], capture_output=True)
         self.dismiss()
 
     def on_active(self, *_):
