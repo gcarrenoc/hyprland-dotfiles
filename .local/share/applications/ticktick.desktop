@@ -1,0 +1,14 @@
+[Desktop Entry]
+Type=Application
+Name=TickTick
+GenericName=To-do list
+Comment=To-do lists, tasks and habits with cloud sync
+# official AppImage 8.0.30 (download.ticktick.app), unpacked to ~/.local/opt/ticktick.
+# The vendor launcher adds --no-sandbox; this one keeps Chromium's sandbox on.
+# --force-device-scale-factor=1.4: TickTick drawn ~12 % bigger than the 1.25 screen scale (user asked)
+Exec=/home/gcarreno/.local/opt/ticktick/ticktick --force-device-scale-factor=1.4 %U
+Icon=ticktick
+Terminal=false
+Categories=Office;
+Keywords=tasks;todo;to-do;reminders;habits;calendar;
+StartupWMClass=ticktick
