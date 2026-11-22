@@ -1,9 +1,8 @@
 [Unit]
-Description=Check for a new Claude Desktop version (notification with an Update button)
+Description=Update Claude Desktop in the home folder (verified, no password; used from its next start)
 After=network-online.target graphical-session.target
 
 [Service]
 Type=oneshot
-ExecStart=%h/.local/bin/claude-desktop-update --notify
-# the notification waits for your click
-TimeoutStartSec=infinity
+ExecStart=%h/.local/bin/claude-desktop-update
+TimeoutStartSec=15min

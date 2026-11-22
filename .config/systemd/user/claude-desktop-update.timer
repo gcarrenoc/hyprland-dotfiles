@@ -1,5 +1,5 @@
 [Unit]
-Description=Check for a new Claude Desktop version once a day
+Description=Update Claude Desktop once a day and after login
 
 [Timer]
 OnCalendar=daily

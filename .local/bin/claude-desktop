@@ -1,0 +1,8 @@
+#!/bin/sh
+# Start Claude Desktop from ~/.local/opt/claude-desktop/current.
+# If an update was unpacked while Claude was open, switch to it first (like Discord does at start).
+OPT="$HOME/.local/opt/claude-desktop"
+if [ -L "$OPT/next" ] && ! pgrep -f "^$OPT/[^ ]*/claude-desktop( |$)" >/dev/null; then
+    ln -sfn "$(readlink "$OPT/next")" "$OPT/current.new" && mv -Tf "$OPT/current.new" "$OPT/current" && rm -f "$OPT/next"
+fi
+exec "$OPT/current/claude-desktop" "$@"

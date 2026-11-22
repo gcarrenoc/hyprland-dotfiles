@@ -1,32 +1,32 @@
 #!/usr/bin/env python3
-"""claude-desktop-update — update Claude Desktop from Anthropic's official repository.
+"""claude-desktop-update — keep Claude Desktop up to date, Discord-style (no password).
 
-  claude-desktop-update           verify, build and install the newest version (asks for your password)
+  claude-desktop-update           download + verify the newest version and get it ready
   claude-desktop-update --check   only say whether a newer version exists
-  claude-desktop-update --notify  like --check, but a notification with an Update button
-                                  (run daily by claude-desktop-update.timer)
 
-Anthropic publishes Claude Desktop for Linux (beta) as a .deb in its apt repository.
-Every step is verified before anything is built:
+Claude Desktop lives in your home folder: ~/.local/opt/claude-desktop/<version>/,
+with `current` pointing at the one in use. A new version is unpacked next to it and
+used from the next start (`claude-desktop` launcher), or at once if Claude isn't open.
+Runs daily and 5 min after login (claude-desktop-update.timer).
+
+Every download is verified before it's used (Anthropic publishes Linux as a .deb):
   1. the saved key ~/.local/src/claude-desktop/anthropic-claude-desktop-key.asc has the
      pinned fingerprint (the one on support.claude.com)
   2. the repository index (InRelease) is signed by that key — checksums are read only
      from the verified text
   3. the package list matches the signed SHA-256
   4. the .deb matches the package list's SHA-256
-Then the recipe in ~/.local/src/claude-desktop/PKGBUILD is updated to the new version,
-built with makepkg and installed with pacman. Uses temporary keyrings: your GPG keyring
-is never touched.
+Temporary keyrings only: your GPG keyring is never touched.
 """
-import hashlib, re, shutil, subprocess, sys, tempfile, urllib.error, urllib.request
+import hashlib, json, os, re, shutil, subprocess, sys, tempfile, urllib.error, urllib.request
 from pathlib import Path
 
 REPO = "https://downloads.claude.ai/claude-desktop/apt/stable"
 FINGERPRINT = "31DDDE24DDFAB679F42D7BD2BAA929FF1A7ECACE"     # Anthropic Claude Code Release Signing
-SRC = Path.home() / ".local/src/claude-desktop"
-KEY = SRC / "anthropic-claude-desktop-key.asc"
-RECIPE = SRC / "PKGBUILD"
+KEY = Path.home() / ".local/src/claude-desktop/anthropic-claude-desktop-key.asc"
+OPT = Path.home() / ".local/opt/claude-desktop"
 ARCH = "amd64"
+KEEP = 2                                                   # versions kept on disk (current + previous)
 
 
 def say(msg):
@@ -59,27 +59,65 @@ def newer(a, b):            # pacman's version comparison: is a newer than b?
     return subprocess.run(["vercmp", a, b], capture_output=True, text=True).stdout.strip() == "1"
 
 
-TERMINAL = ["uwsm", "app", "--", "alacritty", "--config-file", str(Path.home() / ".config/alacritty/balcony.toml"),
-            "--class", "fly-term", "-e", "sh", "-c",
-            f'{Path(__file__).resolve()}; echo; read -r -p "Press Enter to close " _']
+def installed():
+    try:
+        return (OPT / "current" / "VERSION").read_text().strip()
+    except OSError:
+        return None
 
 
-def offer_update(version, installed):
-    """Notification with an Update button; the update itself runs in a floating terminal (password)."""
-    r = subprocess.run(["notify-send", "-a", "Claude Desktop", "-i", "claude-desktop", "--wait",
-                        "--action=update=Update", "--action=later=Later",
-                        f"Claude Desktop {version} is available",
-                        f"You have {installed}. Update verifies Anthropic's signature, builds and installs it."],
-                       capture_output=True, text=True)
-    if r.stdout.strip() == "update":
-        subprocess.Popen(TERMINAL, start_new_session=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+def running():
+    return subprocess.run(["pgrep", "-f", f"^{OPT}/[^ ]*/claude-desktop( |$)"], capture_output=True).returncode == 0
+
+
+def switch_if_idle():
+    """Use the newest unpacked version now, unless Claude is open (then: at its next start)."""
+    nxt = OPT / "next"
+    if not nxt.is_symlink() or running():
+        return False
+    target = os.readlink(nxt)
+    tmp = OPT / "current.new"
+    tmp.unlink(missing_ok=True)
+    tmp.symlink_to(target)
+    tmp.replace(OPT / "current")
+    nxt.unlink()
+    versions = sorted((p for p in OPT.iterdir() if p.is_dir() and not p.is_symlink()),
+                      key=lambda p: p.stat().st_mtime, reverse=True)
+    for old in versions[KEEP:]:
+        shutil.rmtree(old, ignore_errors=True)
+    return True
+
+
+def integrate(app):
+    """Launcher entry, icons and file types in your home folder (no root)."""
+    share = Path.home() / ".local/share"
+    root = app / "_deb"
+    desk = root / "usr/share/applications/com.anthropic.Claude.desktop"
+    text = desk.read_text()
+    launcher = Path.home() / ".local/bin/claude-desktop"
+    text = re.sub(r"^Exec=claude-desktop", f"Exec={launcher}", text, flags=re.M)
+    (share / "applications").mkdir(parents=True, exist_ok=True)
+    (share / "applications/com.anthropic.Claude.desktop").write_text(text)
+    for png in (root / "usr/share/icons").rglob("*.png"):
+        dest = share / "icons" / png.relative_to(root / "usr/share/icons")
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(png, dest)
+    mime = share / "mime/packages"
+    mime.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(app / "resources/linux-mime/com.anthropic.Claude.xml", mime / "com.anthropic.Claude.xml")
+    for cmd in (["update-mime-database", str(share / "mime")], ["update-desktop-database", str(share / "applications")],
+                ["gtk-update-icon-cache", "-q", "-t", "-f", str(share / "icons/hicolor")]):
+        subprocess.run(cmd, capture_output=True)
+    shutil.rmtree(root, ignore_errors=True)
 
 
 def main():
-    notify_mode = "--notify" in sys.argv
-    check_only = "--check" in sys.argv or notify_mode
-    if not KEY.exists() or not RECIPE.exists():
-        fail(f"missing {KEY} or {RECIPE}")
+    check_only = "--check" in sys.argv
+    OPT.mkdir(parents=True, exist_ok=True)
+    if not check_only and switch_if_idle():
+        say(f"now using {installed()} (unpacked earlier)")
+    if not KEY.exists():
+        fail(f"missing {KEY}")
     work = Path(tempfile.mkdtemp(prefix="claude-desktop-update-"))
     try:
         gnupg = work / "gnupg"; gnupg.mkdir(mode=0o700)
@@ -87,13 +125,11 @@ def main():
         # 1. key fingerprint
         out = subprocess.run(["gpg", "--homedir", str(gnupg), "--show-keys", "--with-colons", str(KEY)],
                              capture_output=True, text=True).stdout
-        fprs = re.findall(r"^fpr:+([0-9A-F]{40}):", out, re.M)
-        if FINGERPRINT not in fprs:
+        if FINGERPRINT not in re.findall(r"^fpr:+([0-9A-F]{40}):", out, re.M):
             fail(f"saved key does not have the pinned fingerprint {FINGERPRINT}")
         keyring = work / "key.gpg"
         keyring.write_bytes(subprocess.run(["gpg", "--homedir", str(gnupg), "--dearmor"],
                                            input=KEY.read_bytes(), capture_output=True).stdout)
-        say("Anthropic's key: fingerprint OK")
 
         # 2. signed index
         fetch(f"{REPO}/dists/stable/InRelease", work / "InRelease")
@@ -102,9 +138,7 @@ def main():
                            capture_output=True, text=True)
         if r.returncode != 0 or "Good signature" not in r.stderr:
             fail("repository index signature is NOT valid:\n" + r.stderr)
-        say("repository index: good signature")
-        text = verified.read_text()
-        m = re.search(rf"^ ([0-9a-f]{{64}}) +\d+ main/binary-{ARCH}/Packages$", text, re.M)
+        m = re.search(rf"^ ([0-9a-f]{{64}}) +\d+ main/binary-{ARCH}/Packages$", verified.read_text(), re.M)
         if not m:
             fail("no checksum for the package list in the signed index")
 
@@ -112,7 +146,7 @@ def main():
         fetch(f"{REPO}/dists/stable/main/binary-{ARCH}/Packages", work / "Packages")
         if sha256(work / "Packages") != m.group(1):
             fail("package list does not match the signed checksum")
-        say("package list: checksum OK")
+        say("signature and checksums OK")
         entries = [dict(re.findall(r"^([A-Za-z0-9-]+): (.*)$", b, re.M))
                    for b in (work / "Packages").read_text().strip().split("\n\n")]
         entries = [e for e in entries if e.get("Package") == "claude-desktop" and e.get("Architecture") == ARCH]
@@ -124,42 +158,48 @@ def main():
                 best = e
         version = best["Version"]
 
-        q = subprocess.run(["pacman", "-Q", "claude-desktop"], capture_output=True, text=True).stdout.split()
-        installed = q[1].rsplit("-", 1)[0] if len(q) == 2 else None
-        if installed and not newer(version, installed):
-            say(f"up to date: {installed}")
+        have = installed()
+        pending = os.readlink(OPT / "next").split("/")[-1] if (OPT / "next").is_symlink() else None
+        if (have and not newer(version, have)) or pending == version:
+            say(f"up to date: {have}" + (f" ({pending} ready for the next start)" if pending else ""))
             return
-        say(f"new version: {version}" + (f" (installed: {installed})" if installed else ""))
-        if notify_mode:
-            offer_update(version, installed or "none")
+        say(f"new version: {version}" + (f" (in use: {have})" if have else ""))
         if check_only:
             return
 
         # 4. the .deb
-        deb = work / f"claude-desktop_{version}_{ARCH}.deb"
-        say(f"downloading {best['Filename'].rsplit('/', 1)[-1]} ({int(best['Size']) // 1_000_000} MB)…")
+        deb = work / "claude-desktop.deb"
         fetch(f"{REPO}/{best['Filename']}", deb)
         if sha256(deb) != best["SHA256"]:
             fail(".deb does not match the package list's checksum")
-        say(".deb: checksum OK")
+        say(".deb checksum OK — unpacking")
 
-        # build with the saved recipe, updated to this version
-        recipe = RECIPE.read_text()
-        recipe = re.sub(r"^pkgver=.*$", f"pkgver={version}", recipe, flags=re.M)
-        recipe = re.sub(r"^pkgrel=.*$", "pkgrel=1", recipe, flags=re.M)
-        recipe = re.sub(r"^sha256sums=\('[0-9a-f]+'\)$", f"sha256sums=('{best['SHA256']}')", recipe, flags=re.M)
-        build = work / "build"; build.mkdir()
-        (build / "PKGBUILD").write_text(recipe)
-        deb.rename(build / deb.name)
-        say("building the package…")
-        if subprocess.run(["makepkg", "-f", "--noconfirm"], cwd=build).returncode != 0:
-            fail("makepkg failed")
-        pkg = next(build.glob("claude-desktop-*.pkg.tar.zst"))
-        say("installing (asks for your password)…")
-        if subprocess.run(["pkexec", "pacman", "-U", "--noconfirm", str(pkg)]).returncode != 0:
-            fail("pacman did not install the package")
-        RECIPE.write_text(recipe)
-        say(f"Claude Desktop {version} installed — restart the app to use it")
+        # unpack next to the current version: <OPT>/<version>/ (= /usr/lib/claude-desktop of the .deb)
+        stage = work / "deb"; stage.mkdir()
+        subprocess.run(["bsdtar", "-xf", str(deb), "-C", str(stage)], check=True)
+        root = stage / "root"; root.mkdir()
+        data = next(stage.glob("data.tar.*"))
+        subprocess.run(["bsdtar", "-xf", str(data), "-C", str(root)], check=True)
+        dest = OPT / version
+        shutil.rmtree(dest, ignore_errors=True)
+        shutil.move(str(root / "usr/lib/claude-desktop"), dest)
+        shutil.move(str(root), dest / "_deb")                     # desktop entry, icons (for integrate)
+        (dest / "chrome-sandbox").chmod(0o755)                   # no setuid: Arch's user-namespace sandbox works
+        (dest / "VERSION").write_text(version + "\n")
+        integrate(dest)
+
+        nxt = OPT / "next"
+        nxt.unlink(missing_ok=True)
+        nxt.symlink_to(version)
+        if switch_if_idle():
+            say(f"Claude Desktop {version} installed and in use")
+            subprocess.run(["notify-send", "-a", "Claude Desktop", "-u", "low", "-i", "claude-desktop",
+                            f"Claude Desktop updated to {version}"], capture_output=True)
+        else:
+            say(f"Claude Desktop {version} ready — used from its next start")
+            subprocess.run(["notify-send", "-a", "Claude Desktop", "-u", "low", "-i", "claude-desktop",
+                            f"Claude Desktop {version} is ready", "It's used the next time you open Claude."],
+                           capture_output=True)
     finally:
         shutil.rmtree(work, ignore_errors=True)
 
@@ -167,5 +207,5 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-    except (OSError, urllib.error.URLError) as e:              # offline, server down…: no crash, just say so
-        fail(f"could not check for updates: {e}")
+    except (OSError, urllib.error.URLError, subprocess.CalledProcessError) as e:   # offline, server down…
+        fail(f"could not update: {e}")

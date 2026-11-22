@@ -4,7 +4,8 @@
 Each icon shows its state (on / off) and has a menu with the same actions the bar
 pills had. Runs as the user service status-tray.service (started with the session).
 State is re-read every 10 s and at once on SIGUSR1, which the nightlight / caffeinate
-scripts and Spotlight send after a change:  systemctl --user kill -s USR1 status-tray
+scripts and Spotlight send after a change:  systemctl --user kill --kill-whom=main -s USR1 status-tray
+(--kill-whom=main: only this program — the scripts its menu started would be killed by USR1)
 """
 import json, signal, subprocess, sys
 from pathlib import Path

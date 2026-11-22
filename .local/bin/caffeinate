@@ -84,7 +84,7 @@ start() { # $1 = seconds|inf, $2 = full|system
     --description="Caffeinate ($until_txt)" \
     --setenv=CAFFEINATE_END="$end" --setenv=CAFFEINATE_MODE="$mode" \
     --property=ExecStopPost="-notify-send -a Caffeinate -i weather-clear 'Caffeinate ended' 'Normal screen and sleep settings are back.'" \
-    --property=ExecStopPost="-systemctl --user kill -s USR1 status-tray.service" \
+    --property=ExecStopPost="-systemctl --user kill --kill-whom=main -s USR1 status-tray.service" \
     "${cmd[@]}"
   refresh_bar
   command -v notify-send >/dev/null && notify-send -a Caffeinate -i weather-clear "Caffeinate on" "$reason $until_txt." || true
@@ -96,7 +96,7 @@ stop() {
   refresh_bar
 }
 
-refresh_bar() { systemctl --user kill -s USR1 status-tray.service 2>/dev/null || true; }   # its icon lives in the tray (status-tray)
+refresh_bar() { systemctl --user kill --kill-whom=main -s USR1 status-tray.service 2>/dev/null || true; }   # its icon lives in the tray (status-tray)
 
 toggle() { # Waybar left-click: off → awake indefinitely, on → off
   if is_active; then stop >/dev/null; else start inf full >/dev/null; fi
