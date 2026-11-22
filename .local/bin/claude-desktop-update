@@ -191,15 +191,10 @@ def main():
         nxt = OPT / "next"
         nxt.unlink(missing_ok=True)
         nxt.symlink_to(version)
-        if switch_if_idle():
+        if switch_if_idle():                                   # silent: no notifications (only the log)
             say(f"Claude Desktop {version} installed and in use")
-            subprocess.run(["notify-send", "-a", "Claude Desktop", "-u", "low", "-i", "claude-desktop",
-                            f"Claude Desktop updated to {version}"], capture_output=True)
         else:
             say(f"Claude Desktop {version} ready — used from its next start")
-            subprocess.run(["notify-send", "-a", "Claude Desktop", "-u", "low", "-i", "claude-desktop",
-                            f"Claude Desktop {version} is ready", "It's used the next time you open Claude."],
-                           capture_output=True)
     finally:
         shutil.rmtree(work, ignore_errors=True)
 
