@@ -92,6 +92,7 @@ hl.config({
         mouse_move_enables_dpms  = true,
         key_press_enables_dpms   = true,
         focus_on_activate        = true,   -- notifications/links take you to their app (switches workspace)
+        bell_sound               = "none", -- no system bell sound (rofi, terminal…); "default" brings it back
     },
 })
 

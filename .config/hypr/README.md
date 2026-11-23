@@ -97,6 +97,7 @@ Inside Zathura (`~/.config/zathura/zathurarc`).
 | `+` / `-` or `Ctrl + scroll` | Zoom in / out |
 | `=` | Actual size (100 %) |
 | `s` / `a` | Fit width / fit whole page |
+| `w` | Single page / continuous |
 | `d` | Two pages side by side |
 | `r` | Rotate |
 | `Ctrl + r` | Dark reading mode (images keep their colours) |
