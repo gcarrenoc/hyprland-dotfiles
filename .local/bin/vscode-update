@@ -1,0 +1,191 @@
+#!/usr/bin/env python3
+"""vscode-update — keep Visual Studio Code up to date in the background (no password, silent).
+
+  vscode-update           download + verify the newest version and get it ready
+  vscode-update --check   only say whether a newer version exists
+
+VS Code lives in ~/.local/opt/vscode/<version>/, with `current` pointing at the one in
+use. A new version is unpacked next to it and used from the next start (`code` launcher),
+or at once if VS Code isn't open. Runs daily and after login (vscode-update.timer).
+
+Every download is verified before it's used (Microsoft's signed apt repository):
+  1. the saved key ~/.local/src/vscode/microsoft.asc has the pinned fingerprint
+     (the one on learn.microsoft.com/linux/packages)
+  2. the repository index (InRelease) is signed by that key — checksums are read only
+     from the verified text
+  3. the package list matches the signed SHA-256
+  4. the .deb matches the package list's SHA-256
+Temporary keyrings only: your GPG keyring is never touched.
+"""
+import fcntl, hashlib, os, re, shutil, subprocess, sys, tempfile, urllib.error, urllib.request
+from pathlib import Path
+
+REPO = "https://packages.microsoft.com/repos/code"
+FINGERPRINT = "BC528686B50D79E339D3721CEB3E94ADBE1229CF"     # Microsoft (Release signing)
+KEY = Path.home() / ".local/src/vscode/microsoft.asc"
+OPT = Path.home() / ".local/opt/vscode"
+ARCH = "amd64"
+KEEP = 2                                                   # versions kept on disk (current + previous)
+
+
+def say(msg):
+    print(f"→ {msg}", flush=True)
+
+
+def fail(msg):
+    print(f"✗ {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
+def fetch(url, dest):
+    req = urllib.request.Request(url, headers={"User-Agent": "vscode-update"})
+    with urllib.request.urlopen(req, timeout=60) as r, open(dest, "wb") as f:
+        shutil.copyfileobj(r, f)
+
+
+def sha256(path):
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def key_of(version):        # "1.147.0-1794902874" → (1, 147, 0, 1794902874); None if it looks different
+    m = re.fullmatch(r"(\d+)\.(\d+)\.(\d+)-(\d+)", version or "")
+    return tuple(map(int, m.groups())) if m else None
+
+
+def installed():
+    try:
+        return (OPT / "current" / "VERSION").read_text().strip()
+    except OSError:
+        return None
+
+
+def running():
+    return subprocess.run(["pgrep", "-f", f"^{OPT}/[^ ]*/code( |$)"], capture_output=True).returncode == 0
+
+
+def switch_if_idle():
+    """Use the newest unpacked version now, unless VS Code is open (then: at its next start)."""
+    nxt = OPT / "next"
+    if not nxt.is_symlink() or running():
+        return False
+    tmp = OPT / "current.new"
+    tmp.unlink(missing_ok=True)
+    tmp.symlink_to(os.readlink(nxt))
+    tmp.replace(OPT / "current")
+    nxt.unlink()
+    return True
+
+
+def prune():
+    """Drop old versions, never the one in use or the one waiting. Not while VS Code is open."""
+    if running():
+        return
+    keep = {os.readlink(OPT / n) for n in ("current", "next") if (OPT / n).is_symlink()}
+    versions = sorted((p for p in OPT.iterdir() if p.is_dir() and not p.is_symlink() and key_of(p.name)),
+                      key=lambda p: key_of(p.name), reverse=True)
+    for old in [p for p in versions if p.name not in keep][max(0, KEEP - len(keep)):]:
+        shutil.rmtree(old, ignore_errors=True)
+
+
+def main():
+    check_only = "--check" in sys.argv
+    OPT.mkdir(parents=True, exist_ok=True)
+    lock = open(OPT / ".lock", "w")
+    try:
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        fail("another update is running")
+    if not check_only:
+        if switch_if_idle():
+            say(f"now using {installed()} (unpacked earlier)")
+        prune()
+    if not KEY.exists():
+        fail(f"missing {KEY}")
+    # inside OPT's filesystem, so the unpacked version is moved into place in one step
+    work = Path(tempfile.mkdtemp(prefix=".update-", dir=OPT))
+    try:
+        gnupg = work / "gnupg"; gnupg.mkdir(mode=0o700)
+
+        # 1. key fingerprint (and only that key in the file)
+        out = subprocess.run(["gpg", "--homedir", str(gnupg), "--show-keys", "--with-colons", str(KEY)],
+                             capture_output=True, text=True).stdout
+        if len(re.findall(r"^pub:", out, re.M)) != 1 or FINGERPRINT not in re.findall(r"^fpr:+([0-9A-F]{40}):", out, re.M)[:1]:
+            fail(f"saved key is not the pinned one ({FINGERPRINT})")
+        keyring = work / "key.gpg"
+        keyring.write_bytes(subprocess.run(["gpg", "--homedir", str(gnupg), "--dearmor"],
+                                           input=KEY.read_bytes(), capture_output=True, check=True).stdout)
+
+        # 2. signed index
+        fetch(f"{REPO}/dists/stable/InRelease", work / "InRelease")
+        verified = work / "Release.verified"
+        r = subprocess.run(["gpgv", "--keyring", str(keyring), "--output", str(verified), str(work / "InRelease")],
+                           capture_output=True, text=True)
+        if r.returncode != 0 or not verified.exists():
+            fail("repository index signature is NOT valid:\n" + r.stderr)
+        m = re.search(rf"^ ([0-9a-f]{{64}}) +\d+ main/binary-{ARCH}/Packages$", verified.read_text(), re.M)
+        if not m:
+            fail("no checksum for the package list in the signed index")
+
+        # 3. package list
+        fetch(f"{REPO}/dists/stable/main/binary-{ARCH}/Packages", work / "Packages")
+        if sha256(work / "Packages") != m.group(1):
+            fail("package list does not match the signed checksum")
+        say("signature and checksums OK")
+        entries = [dict(re.findall(r"^([A-Za-z0-9-]+): (.*)$", b, re.M))
+                   for b in (work / "Packages").read_text().strip().split("\n\n")]
+        entries = [e for e in entries if e.get("Package") == "code" and e.get("Architecture") == ARCH
+                   and key_of(e.get("Version"))]
+        if not entries:
+            fail("no VS Code package in the repository")
+        best = max(entries, key=lambda e: key_of(e["Version"]))
+        version = best["Version"]
+
+        have = installed()
+        pending = os.readlink(OPT / "next") if (OPT / "next").is_symlink() else None
+        if (have and key_of(version) <= (key_of(have) or ())) or pending == version:
+            say(f"up to date: {have}" + (f" ({pending} ready for the next start)" if pending else ""))
+            return
+        say(f"new version: {version}" + (f" (in use: {have})" if have else ""))
+        if check_only:
+            return
+
+        # 4. the .deb
+        deb = work / "code.deb"
+        fetch(f"{REPO}/{best['Filename']}", deb)
+        if sha256(deb) != best["SHA256"]:
+            fail(".deb does not match the package list's checksum")
+        say(".deb checksum OK — unpacking")
+
+        stage = work / "deb"; stage.mkdir()
+        subprocess.run(["bsdtar", "-xf", str(deb), "-C", str(stage)], check=True)
+        root = work / "root"; root.mkdir()
+        subprocess.run(["bsdtar", "-xf", str(next(stage.glob("data.tar.*"))), "-C", str(root)], check=True)
+        app = root / "usr/share/code"
+        (app / "chrome-sandbox").chmod(0o755)                    # no setuid: Arch's user-namespace sandbox works
+        (app / "VERSION").write_text(version + "\n")
+        dest = OPT / version
+        shutil.rmtree(dest, ignore_errors=True)                  # a leftover; never `current` or `next` (checked above)
+        app.rename(dest)
+
+        nxt = OPT / "next.new"
+        nxt.unlink(missing_ok=True)
+        nxt.symlink_to(version)
+        nxt.replace(OPT / "next")
+        if switch_if_idle():                                     # silent: no notifications (only the log)
+            say(f"VS Code {version} installed and in use")
+            prune()
+        else:
+            say(f"VS Code {version} ready — used from its next start")
+    finally:
+        shutil.rmtree(work, ignore_errors=True)
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except (OSError, urllib.error.URLError, subprocess.CalledProcessError, StopIteration) as e:   # offline, server down…
+        fail(f"could not update: {e}")

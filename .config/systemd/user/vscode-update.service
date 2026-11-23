@@ -1,0 +1,8 @@
+[Unit]
+Description=Update VS Code in the home folder (verified, no password; used from its next start)
+After=network-online.target graphical-session.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/vscode-update
+TimeoutStartSec=15min

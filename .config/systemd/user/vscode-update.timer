@@ -1,0 +1,12 @@
+[Unit]
+Description=Update VS Code once a day and after login
+
+[Timer]
+OnCalendar=daily
+RandomizedDelaySec=1h
+# missed (laptop off or asleep)? check soon after it's back
+Persistent=true
+OnStartupSec=8min
+
+[Install]
+WantedBy=timers.target

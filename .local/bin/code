@@ -1,0 +1,8 @@
+#!/bin/sh
+# Start VS Code from ~/.local/opt/vscode/current (kept up to date by vscode-update).
+# If an update was unpacked while VS Code was open, switch to it first.
+OPT="$HOME/.local/opt/vscode"
+if [ -L "$OPT/next" ] && ! pgrep -f "^$OPT/[^ ]*/code( |\$)" >/dev/null; then
+    ln -sfn "$(readlink "$OPT/next")" "$OPT/current.new" && mv -Tf "$OPT/current.new" "$OPT/current" && rm -f "$OPT/next"
+fi
+exec "$(readlink -f "$OPT/current")/bin/code" "$@"

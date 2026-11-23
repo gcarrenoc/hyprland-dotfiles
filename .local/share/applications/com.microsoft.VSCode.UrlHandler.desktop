@@ -1,0 +1,13 @@
+[Desktop Entry]
+# Microsoft's official build in ~/.local/opt/vscode (vscode-update); only its own file types
+Name=Visual Studio Code - URL Handler
+Comment=Code Editing. Redefined.
+GenericName=Text Editor
+Exec=/home/gcarreno/.local/bin/code --open-url %U
+Icon=vscode-official
+Type=Application
+NoDisplay=true
+StartupNotify=true
+Categories=Utility;TextEditor;Development;IDE;
+MimeType=x-scheme-handler/vscode;
+Keywords=vscode;
