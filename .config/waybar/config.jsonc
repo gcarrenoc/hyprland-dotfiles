@@ -26,7 +26,6 @@
       "class<firefox>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",
       "class<Alacritty|fly-term|kitty>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",
       "class<obsidian|md.obsidian.Obsidian>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",
-      "class<jetbrains-pycharm.*>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",
       "class<texstudio>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",
       "class<org.gnome.Nautilus>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",
       "class<org.pwmt.zathura|org.gnome.Papers>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",
