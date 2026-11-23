@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Google Tasks
+GenericName=To-do list
+Comment=Your Google Tasks in their own window (tasks.google.com in Chrome)
+Exec=/home/gcarreno/.local/bin/google-tasks
+Icon=google-tasks-desktop
+Terminal=false
+Categories=Office;
+Keywords=tasks;todo;to-do;reminders;google;
+StartupNotify=false
+StartupWMClass=chrome-tasks.google.com__-Profile_1

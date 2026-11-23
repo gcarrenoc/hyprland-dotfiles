@@ -1,0 +1,11 @@
+#!/bin/sh
+# Google Tasks (tasks.google.com) in its own Chrome window. Already open? Go to it.
+PROFILE="Profile 1"        # Chrome profile: "Profile 1" = personal, "Default" = University
+addr=$(hyprctl clients -j 2>/dev/null | python3 -c '
+import json, sys
+print(next((c["address"] for c in json.load(sys.stdin) if c["class"].startswith("chrome-tasks.google.com__")), ""))')
+if [ -n "$addr" ]; then
+    hyprctl dispatch "hl.dsp.focus({ window = \"address:$addr\" })" >/dev/null
+else
+    exec google-chrome-stable --profile-directory="$PROFILE" --app=https://tasks.google.com/
+fi

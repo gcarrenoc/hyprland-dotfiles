@@ -37,7 +37,7 @@
       "class<com.anthropic.Claude>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",
       "class<calibre-.*>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",
       "class<chrome-127\\.0\\.0\\.1__.*>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",   // Jupyter windows
-      "class<TickTick|ticktick>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",
+      "class<chrome-tasks\\.google\\.com__.*>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",   // Jupyter windows
       "class<zoom>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",
       "class<com.obsproject.Studio>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",
       "class<org.inkscape.Inkscape>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",
