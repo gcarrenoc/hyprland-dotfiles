@@ -69,6 +69,7 @@ and a Nerd Font (PaperMono Nerd Font).
 ## Credits and licences
 
 - Look based on [1amSimp1e/dots](https://github.com/1amSimp1e/dots).
+- Current wallpaper: photo by Arnaud Mariat on [Unsplash](https://unsplash.com/photos/45Z6hW1dQMI). The repo only holds a link to the local file, not the photo.
 - [Lucide](https://lucide.dev) icon font: ISC, see [`LICENSE`](../.local/share/fonts/Lucide/LICENSE).
 - [Brad's rEFInd theme](https://github.com/toptensoftware/brads-refind-theme) by Topten Software: Apache 2.0, see its [`readme.md`](../.config/refind/themes/brads-refind-theme/readme.md).
 - Third-party apps and fonts belong to their authors. Everything else here is free to reuse.
