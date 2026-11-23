@@ -68,8 +68,10 @@ and a Nerd Font (PaperMono Nerd Font).
 
 ## Credits and licences
 
-- Look based on [1amSimp1e/dots](https://github.com/1amSimp1e/dots).
+My own work here is under the [MIT licence](LICENSE). It doesn't cover the third-party parts below:
+
+- Look based on [1amSimp1e/dots](https://github.com/1amSimp1e/dots) (GPL-3.0). The [Waybar](../.config/waybar) and [Rofi](../.config/rofi) files started from it and from [adi1090x/rofi](https://github.com/adi1090x/rofi) (GPL-3.0), so they are not under MIT.
 - Current wallpaper: photo by Arnaud Mariat on [Unsplash](https://unsplash.com/photos/45Z6hW1dQMI). The repo only holds a link to the local file, not the photo.
 - [Lucide](https://lucide.dev) icon font: ISC, see [`LICENSE`](../.local/share/fonts/Lucide/LICENSE).
 - [Brad's rEFInd theme](https://github.com/toptensoftware/brads-refind-theme) by Topten Software: Apache 2.0, see its [`readme.md`](../.config/refind/themes/brads-refind-theme/readme.md).
-- Third-party apps and fonts belong to their authors. Everything else here is free to reuse.
+- Third-party apps and fonts belong to their authors.
