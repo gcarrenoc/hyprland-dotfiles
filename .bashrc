@@ -39,7 +39,11 @@ open() {
 }
 
 # Jump to this semester's university folder
-alias uni='cd "$HOME/Insync/YOUR-GOOGLE-ACCOUNT/Google Drive/University/2026/spring"'
+uni() {   # finds the Insync Google Drive folder without naming the account
+    local d
+    for d in "$HOME"/Insync/*/"Google Drive"/University/2026/spring; do [ -d "$d" ] && { cd "$d"; return; }; done
+    echo "uni: this semester's folder isn't in ~/Insync" >&2; return 1
+}
 
 # zoxide: smarter cd. `z <part of path>` jumps to the best match, `zi` picks with fzf.
 # Keep this at the end of .bashrc.
