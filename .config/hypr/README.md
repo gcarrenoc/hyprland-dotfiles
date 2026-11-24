@@ -121,15 +121,14 @@ Icons: outline style — Octicons (`nf-oct-*`, in the Nerd Font) wherever one ex
 | Telescope | Spotlight (`Super + Space`) |
 | 1 · 2 · 3 … | Workspaces, each with icons of the apps running on it — the current one is highlighted; click to switch, scroll to move |
 | + | Add a new empty workspace at the end and go there |
-| Bell | **Do not disturb.** Click: on / off (amber crossed-out bell). While on, notifications skip the pop-up and go silently to the Notification Center, and they stay there when you turn it off; volume / brightness pop-ups and critical alerts (low battery) still show. Outline bell = nothing new, filled bell = notifications waiting. |
 | Coffee cup (tray) | **Caffeinate**, in the app-indicator tray (the `<` drawer). Click: menu — keep awake until turned off, for 30 min … 5 h, system only, more options, turn off. Full steaming cup = on (time left in the menu), empty cup = off. |
 | Wi-Fi | **Wi-Fi panel:** on / off, networks (click to join; type the password if it is new), details, disconnect, forget, cable, VPN, network settings. Click again, click outside or Esc closes. Middle-click opens `nmtui` |
 | Bluetooth | **Bluetooth panel:** on / off, your devices (click to connect; `…` to disconnect or forget; battery when known), nearby devices (click to pair, codes are shown there), blueman. Muted = off |
 | Speaker | **Sound panel:** output and microphone (volume, mute, device), now playing, volume of each app. Click again, click outside or Esc closes · `m` mutes. Right-click mutes · scroll changes volume · middle-click opens the full mixer |
 | Sun | **Brightness panel:** screen brightness and **night light** (on / off, warmth). Night light **turns on at sunset and off at sunrise automatically** (Valparaíso times, recalculated daily); what you choose by hand stays until the next one. Scroll changes the brightness |
 | Battery | Always shows the percentage (the icon fills as it charges; bolt while charging, plug when plugged in but not charging). Click: **Battery panel** — time left, **power mode** (power saver · balanced · performance), power in use, health and cycles, charge limit. Click again, click outside or Esc closes |
-| Date | Today's date · hover for a calendar · click: **Notification Center** — your notifications as cards on the right, one per notification or one stack per app (click a stack to expand it; ✕ dismisses; `Super + Shift + N` clears all) |
-| Time | The time · click: Notification Center |
+| Date | Today's date · hover for a calendar |
+| Time | The time · click: **Notification Center** — **do not disturb** on top, then your notifications as cards, one per notification or one stack per app (click a stack to expand it; ✕ dismisses; `Super + Shift + N` clears all). While do not disturb is on, notifications skip the pop-up and go silently to the Center, and they stay there when you turn it off; volume / brightness pop-ups and critical alerts (low battery) still show |
 | Power | Power menu |
 
 App indicators (1Password, Insync, ZapZap, Caffeinate…) are hidden behind the **‹** arrow on the right of the bar: click it to show or hide them.

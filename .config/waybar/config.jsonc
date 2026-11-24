@@ -6,7 +6,7 @@
   "spacing": 0,
 
   "modules-left":  ["custom/launcher", "hyprland/workspaces", "custom/newws"],
-  "modules-right": ["group/indicators", "custom/notifications", "network", "bluetooth", "pulseaudio", "backlight", "battery", "clock#date", "clock", "custom/power"],
+  "modules-right": ["group/indicators", "network", "bluetooth", "pulseaudio", "backlight", "battery", "clock#date", "clock", "custom/power"],
 
   "custom/launcher": {
     "format": "",
@@ -91,26 +91,6 @@
     "spacing": 10
   },
 
-  // Do not disturb (swaync): click = on / off. The Notification Center opens from the date or the time.
-  // Outline bell = nothing new; filled bell = notifications waiting; crossed-out bell = do not disturb.
-  "custom/notifications": {
-    "exec": "swaync-client -swb",
-    "return-type": "json",
-    "escape": true,
-    "format": "{icon}",
-    "format-icons": {
-      "none": "",
-      "notification": "",
-      "dnd-none": "",
-      "dnd-notification": "",
-      "inhibited-none": "",
-      "inhibited-notification": "",
-      "dnd-inhibited-none": "",
-      "dnd-inhibited-notification": ""
-    },
-    "on-click": "swaync-client -d -sw"
-  },
-
   // Power profile: click cycles performance → balanced → power saver
   "network": {
     "format-wifi": "{icon}",
@@ -181,7 +161,6 @@
   // Date pill (hover: calendar) and time pill
   "clock#date": {
     "format": "{:%a %d %b}",
-    "on-click": "sleep 0.1; swaync-client -t -sw",
     "tooltip-format": "<big>{:%B %Y}</big>\n<tt><small>{calendar}</small></tt>",
     "calendar": {
       "mode": "month",

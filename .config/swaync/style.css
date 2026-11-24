@@ -23,7 +23,7 @@
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
 }
 .notification-default-action { padding: 8px; }
-.notification-content .text-box .summary { font-weight: bold; }
+.notification-content .text-box .summary { font-weight: bold; margin-right: 8px; }
 .notification-content .text-box .time { color: var(--text-color-disabled); font-size: 11px; margin-right: 26px; }
 .notification-content .text-box .body { color: var(--text-color); }
 .notification-content .app-icon { opacity: 0.9; }
@@ -44,16 +44,35 @@
 }
 .notification-row:focus, .notification-group:focus { background: transparent; }   /* no grey box behind the focused card */
 
+/* do not disturb: a small card of its own above the notifications */
+.widget-dnd {
+  background: rgb(var(--noti-bg));
+  border: 1px solid var(--noti-border-color);
+  border-radius: var(--border-radius);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+  margin: 4px 8px; padding: 10px 14px;
+  min-width: 284px;                             /* as wide as a notification card */
+  color: var(--text-color); font-size: 13px; font-weight: bold;
+}
+.widget-dnd label { font-size: 13px; font-weight: bold; color: var(--text-color); }
+.widget-dnd > switch, .widget-dnd switch {
+  background: rgba(22, 27, 45, 0.25); border: none; border-radius: 12px; min-height: 22px; padding: 0; margin: 0; box-shadow: none; outline: none;
+}
+.widget-dnd switch:checked { background: var(--bg-selected); }
+.widget-dnd switch slider {
+  background: #ffffff; border: none; border-radius: 10px; min-width: 18px; min-height: 18px; margin: 2px; box-shadow: none;
+}
+
 /* nothing to show: one small card */
 .control-center .control-center-list-placeholder {
   background: rgb(var(--noti-bg));
   border: 1px solid var(--noti-border-color);
   border-radius: var(--border-radius);
-  margin: 4px 6px; padding: 14px;
+  margin: 4px 8px; padding: 14px;
   color: var(--text-color-disabled); opacity: 1; font-size: 13px;
-  min-width: 358px;                             /* as wide as a notification card */
+  min-width: 284px;                             /* as wide as a notification card */
 }
-.control-center .control-center-list-placeholder image { -gtk-icon-size: 28px; color: var(--text-color-disabled); }
+.control-center .control-center-list-placeholder image { margin: -54px 0; opacity: 0; }   /* text only: swaync fixes its icon at 96 px, this takes its space back */
 
 /* grouped stacks: header with app name, "show less" and clear buttons */
 .notification-group .notification-group-headers .notification-group-header { font-weight: bold; font-size: 13px; }
