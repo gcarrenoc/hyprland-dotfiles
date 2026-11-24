@@ -1,0 +1,6 @@
+{
+    // JupyterLab Shell
+    // @jupyterlab/application-extension:shell
+    // Start in simple mode (one document at a time)
+    "startMode": "single"
+}
