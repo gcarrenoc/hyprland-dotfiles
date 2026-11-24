@@ -1,0 +1,5 @@
+{
+    // Terminal
+    // @jupyterlab/terminal-extension:plugin
+    "fontSize": 20
+}

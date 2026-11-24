@@ -1,0 +1,13 @@
+{
+    // Theme
+    // @jupyterlab/apputils-extension:themes
+    // Theme manager settings.
+    // *************************************
+
+    // Theme CSS Overrides
+    // Override theme CSS variables by setting key-value pairs here
+    "overrides": {
+        "content-font-size1": "20px",
+        "code-font-size": "20px"
+    }
+}
