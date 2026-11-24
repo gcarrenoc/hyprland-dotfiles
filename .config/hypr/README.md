@@ -125,8 +125,8 @@ Icons: outline style — Octicons (`nf-oct-*`, in the Nerd Font) wherever one ex
 | Coffee cup (tray) | **Caffeinate**, in the app-indicator tray (the `<` drawer). Click: menu — keep awake until turned off, for 30 min … 5 h, system only, more options, turn off. Full steaming cup = on (time left in the menu), empty cup = off. |
 | Bulb (tray) | **Night light**, in the app-indicator tray. **Turns on at sunset and off at sunrise automatically** (Valparaíso times, recalculated daily); the menu shows today's times. Click: menu — turn on / off by hand (respected until the next sunset/sunrise), warmer / cooler while on. |
 | Power profile | **Click** to cycle: rocket = performance (gold) → meter = balanced → leaf = power saver (green). Hover shows the current one. Performance is limited when the laptop detects it's on your lap. |
-| Wi-Fi | Network settings (`nmtui`) |
-| Speaker | Sound settings · right-click mutes · scroll changes volume |
+| Wi-Fi | **Wi-Fi panel:** on / off, networks (click to join; type the password if it is new), details, disconnect, forget, cable, VPN, network settings. Click again, click outside or Esc closes. Middle-click opens `nmtui` |
+| Speaker | **Sound panel:** output and microphone (volume, mute, device), now playing, volume of each app. Click again, click outside or Esc closes · `m` mutes. Right-click mutes · scroll changes volume · middle-click opens the full mixer |
 | Brightness | Scroll to change |
 | Battery | Fills as it charges (empty · low · medium · full), bolt while charging, plug when plugged in but not charging · click to show % |
 | Date | Today's date · hover for a calendar · click: **Notification Center** — your notifications as cards on the right, one per notification or one stack per app (click a stack to expand it; ✕ dismisses; `Super + Shift + N` clears all) |

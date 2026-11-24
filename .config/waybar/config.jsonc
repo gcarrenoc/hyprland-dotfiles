@@ -88,7 +88,7 @@
   "tray": {
     "icon-size": 18,
     // Claude Desktop's tray icon is black (made for light panels): show its colour logo instead
-    "icons": { "Claude_status_icon_*": "claude-desktop" },
+    "icons": { "Claude_status_icon_*": "claude-desktop", "nm-applet": false },
     "spacing": 10
   },
 
@@ -133,7 +133,8 @@
     "tooltip-format-wifi": "{essid}  ·  {signalStrength}%\n{ipaddr}",
     "tooltip-format-ethernet": "{ifname}  ·  {ipaddr}",
     "tooltip-format-disconnected": "Disconnected",
-    "on-click": "uwsm app -- alacritty --config-file ~/.config/alacritty/balcony.toml --class fly-term -e nmtui"
+    "on-click": "~/.config/hypr/scripts/panel wifi",
+    "on-click-middle": "uwsm app -- alacritty --config-file ~/.config/alacritty/balcony.toml --class fly-term -e nmtui"
   },
 
   "pulseaudio": {
@@ -141,8 +142,9 @@
     "format-muted": "",
     "format-icons": { "default": "" },
     "tooltip-format": "{desc}  ·  {volume}%",
-    "on-click": "uwsm app -- pavucontrol",
+    "on-click": "~/.config/hypr/scripts/panel sound",
     "on-click-right": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
+    "on-click-middle": "uwsm app -- pavucontrol",
     "scroll-step": 5
   },
 

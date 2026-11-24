@@ -35,6 +35,7 @@ hl.config({ xwayland = { force_zero_scaling = true } })
 hl.on("hyprland.start", function()
     hl.exec_cmd(app .. "waybar")
     hl.exec_cmd(app .. scripts .. "spotlight --daemon")                -- Spotlight stays loaded, hidden: Super+Space opens it instantly
+    hl.exec_cmd(app .. scripts .. "bar-panels")                         -- the sound and Wi-Fi panels of the bar stay loaded too
     hl.exec_cmd(scripts .. "theme; " .. app .. "hyprpaper")   -- whole theme follows the wallpaper
     hl.exec_cmd(app .. "hypridle")
     hl.exec_cmd("systemctl --user start swaync")                      -- notifications + Notification Center
