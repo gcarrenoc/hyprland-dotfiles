@@ -34,7 +34,6 @@ Everything recolours itself from the wallpaper.
 | `nightlight` | hyprsunset night light that turns on at sunset and off at sunrise (local sun times). Controlled from the brightness panel. |
 | `claude-desktop-update` | Installs and updates [Claude Desktop](https://claude.ai/download) in `~/.local/opt` from Anthropic's signed apt repo. It verifies the key fingerprint, signature and checksums, needs no root, and runs silently. |
 | `vscode-update` | The same for [VS Code](https://code.visualstudio.com), from Microsoft's signed repo |
-| `google-tasks` | Google Tasks in its own Chrome window; goes to it if it's already open |
 | `cnew` / `cpick` / `cpurge` | Start, resume and delete Claude Code conversations (Fish and Bash) |
 | `jupyter-app` / `jupyter-tray` | JupyterLab as a desktop app with a tray icon to stop it |
 | `refind-theme` | Installs the rEFInd menu and theme to the EFI partition |
