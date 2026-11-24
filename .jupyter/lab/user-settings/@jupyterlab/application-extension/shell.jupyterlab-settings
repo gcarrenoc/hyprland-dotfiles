@@ -1,6 +1,6 @@
 {
     // JupyterLab Shell
     // @jupyterlab/application-extension:shell
-    // Start in simple mode (one document at a time)
-    "startMode": "single"
+    // Start in normal mode, with tabs (single = simple mode, "" = the web address decides)
+    "startMode": "multiple"
 }
