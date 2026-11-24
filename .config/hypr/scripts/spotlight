@@ -12,6 +12,9 @@ Results update as you type, in sections:
   Documents · Folders · Images · Files    in ~ (newest first; hidden folders, node_modules… skipped)
   Search          the web (Google) · inside documents
 Matching: the start of any word ("week 14" finds week_14.pdf).
+Wildcards find files and folders, newest first: * = anything, ? = one character, [0-9] = one of these.
+  *.pdf · week_?.pdf · *report* · calculus *.pdf (a word + a pattern) · inf285/*.ipynb (inside a folder)
+  Nothing matches: normal search. Plain arithmetic (5*3) stays a calculation.
 Quick Look (right): PDF first page, images, text/code, folder contents, Nautilus thumbnails, details.
 
   Enter        open · go to an app that's already open · copy a result · run an action
@@ -28,7 +31,7 @@ Colours come from ~/.config/rofi/colors.rasi (generated from the wallpaper by
 scripts/theme). It is a layer over the screen (gtk4-layer-shell, namespace spotlight), so the
 search bar never moves while the results unfold. Picks: ~/.cache/spotlight-picks.json
 """
-import hashlib, html, json, re, subprocess, sys, threading, time, unicodedata
+import fnmatch, hashlib, html, json, re, subprocess, sys, threading, time, unicodedata
 from importlib.machinery import SourceFileLoader
 from pathlib import Path
 from urllib.parse import quote_plus, unquote, urlparse
@@ -138,9 +141,45 @@ def looks_like_maths(text):
     return bool(re.search(r"\d", text) and re.search(r"[-+*/^×÷%()]|\bto\b", text))
 
 
+ARITHMETIC = re.compile(r"[\d\s.,+\-*/^×÷%()]+")
+WILD_CAP = 40                                             # shown per section for a wildcard search
+
+
+def is_pattern(text):
+    """Does it have wildcards? (5*3 is a sum; 2024* and *.pdf are patterns)"""
+    if "*" not in text and "?" not in text:
+        return False
+    return not ARITHMETIC.fullmatch(text) or text.endswith("*") or text.startswith("*")
+
+
+def is_file_pattern(text):
+    """Surely about files, so not a sum either: *.pdf, 12*.pdf, 2024*, week_?"""
+    return is_pattern(text) and bool(re.search(r"^\*|\*$|\?|\.[^\W\d]|[*?]\.", text))
+
+
+def wild_matcher(text):
+    """A function item → bool for a search with wildcards."""
+    def glob(pattern):
+        rx = re.compile(fnmatch.translate(pattern))
+        return lambda i: bool(rx.match(i["fname"]) or rx.match(i["fstem"]))
+    def inside(pattern):                                   # with a folder: anywhere in the path
+        rx = re.compile(fnmatch.translate("*" + pattern.removeprefix("~").lstrip("/")))
+        return lambda i: bool(rx.match(i["fpath"]))
+    def word(w):
+        return lambda i: any(x.startswith(w) for x in i["words"] + i["extra"])
+    tests = []
+    for t in fold(text).split():
+        if "*" in t or "?" in t:
+            tests.append(inside(t) if "/" in t else glob(t))
+        else:
+            tests += [word(w) for w in fold(name_words(t)).split()]
+    whole = glob(fold(text)) if " " in text else None       # "week 1*.pdf" as one pattern
+    return lambda i: bool(whole and whole(i)) or all(t(i) for t in tests)
+
+
 def calculate(text):
     """qalc result for a real calculation / conversion, else None ("hello" is not maths)."""
-    if not looks_like_maths(text):
+    if not looks_like_maths(text) or is_file_pattern(text):
         return None
     expr = re.sub(r"\bto\s+(?=[A-Za-z])", "to -", text)     # "5 km to mi" → decimal miles, not mi + yd + in
     try:
@@ -335,7 +374,7 @@ def gnome_thumbnail(p):
 TEXT_EXT = (".py", ".md", ".tex", ".json", ".ipynb", ".sh", ".lua", ".css", ".js", ".c", ".h", ".java", ".txt", ".csv")
 
 
-def text_head(p, lines=28):
+def text_head(p, lines=21):
     try:
         with open(p, "rb") as f:
             data = f.read(6000)
@@ -516,7 +555,8 @@ class Spotlight(Gtk.ApplicationWindow):
             files.append({"kind": "file", "section": section, "key": f"file:{p}", "target": p, "icon": icon,
                           "ctype": ctype, "is_dir": is_dir, "title": p.name,
                           "markup": f"<b>{html.escape(p.name)}</b>   <span alpha='75%'>{html.escape(d)}</span>",
-                          "words": words_of(p.name), "extra": words_of(d)})
+                          "words": words_of(p.name), "extra": words_of(d), "fname": fold(p.name),
+                          "fstem": fold(p.stem), "fpath": fold(f"{d}/{p.name}")})
         GLib.idle_add(self.loaded, "files", files)
 
     def load_actions(self):
@@ -548,6 +588,10 @@ class Spotlight(Gtk.ApplicationWindow):
         if not text:
             recent = [f for f in self.files if not f["is_dir"]][:EMPTY_RECENT]
             return [("Applications", self.apps[:EMPTY_APPS]), ("Recent Files", recent)]
+        if is_pattern(text):
+            wild = self.build_wild(text)
+            if wild:
+                return wild
         tokens = fold(name_words(text)).split()
         scores = pick_scores(self.picks, text)
         found = {}
@@ -561,9 +605,7 @@ class Spotlight(Gtk.ApplicationWindow):
         # Top Hit: a result, else the most-picked match, else the best name match (apps, actions, files)
         top = None
         if self.calc and self.calc[0] == text:
-            top = {"kind": "calc", "key": None, "target": self.calc[1], "icon": "accessories-calculator",
-                   "title": f"= {self.calc[1]}", "expr": text,
-                   "markup": f"<b>= {html.escape(self.calc[1])}</b>   <span alpha='75%'>Calculator · ↵ copy</span>"}
+            top = self.calc_item(text)
         else:
             picked = [x for sec in found.values() for x in sec if x[1] < 0]
             if picked:
@@ -577,13 +619,38 @@ class Spotlight(Gtk.ApplicationWindow):
             items = [x[3] for x in found.get(s, []) if x[3] is not top][:cap]
             if items:
                 out.append((title, items))
+        return out + [self.search_section(text)]
+
+    def calc_item(self, text):
+        return {"kind": "calc", "key": None, "target": self.calc[1], "icon": "accessories-calculator",
+                "title": f"= {self.calc[1]}", "expr": text,
+                "markup": f"<b>= {html.escape(self.calc[1])}</b>   <span alpha='75%'>Calculator · ↵ copy</span>"}
+
+    @staticmethod
+    def search_section(text):
         q = html.escape(text)
-        out.append(("Search", [
+        return ("Search", [
             {"kind": "web", "key": None, "target": text, "icon": "internet-web-browser", "title": "Search the web",
              "markup": f"Search the web for <b>“{q}”</b>"},
             {"kind": "docs", "key": None, "target": text, "icon": "preferences-system-search",
-             "title": "Search inside documents", "markup": f"Search inside documents for <b>“{q}”</b>"}]))
-        return out
+             "title": "Search inside documents", "markup": f"Search inside documents for <b>“{q}”</b>"}])
+
+    def build_wild(self, text):
+        """Files and folders for a search with wildcards (None: nothing matches)."""
+        try:
+            match = wild_matcher(text)
+        except re.error:                                    # half-typed [ ]
+            return None
+        hits = [f for f in self.files if match(f)]            # newest first already
+        if not hits:
+            return None
+        out = [("Top Hit", [self.calc_item(text)])] if self.calc and self.calc[0] == text else []
+        for sec, title, _cap in SECTIONS:
+            found = [f for f in hits if f["section"] == sec]
+            shown = found[:WILD_CAP]
+            if shown:
+                out.append((f"{title} · {len(shown)} of {len(found)}" if len(shown) < len(found) else f"{title} · {len(found)}", shown))
+        return out + [self.search_section(text)]
 
     def text(self):
         return self.entry.get_text().strip()
