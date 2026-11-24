@@ -6,7 +6,7 @@
   "spacing": 0,
 
   "modules-left":  ["custom/launcher", "hyprland/workspaces", "custom/newws"],
-  "modules-right": ["group/indicators", "custom/notifications", "power-profiles-daemon", "network", "pulseaudio", "backlight", "battery", "clock#date", "clock", "custom/power"],
+  "modules-right": ["group/indicators", "custom/notifications", "network", "pulseaudio", "backlight", "battery", "clock#date", "clock", "custom/power"],
 
   "custom/launcher": {
     "format": "",
@@ -113,18 +113,6 @@
   },
 
   // Power profile: click cycles performance → balanced → power saver
-  "power-profiles-daemon": {
-    "format": "{icon}",
-    "tooltip-format": "Power profile: {profile}\nClick to change",
-    "tooltip": true,
-    "format-icons": {
-      "default": "",
-      "performance": "",
-      "balanced": "",
-      "power-saver": "<span font_family='lucide'></span>"
-    }
-  },
-
   "network": {
     "format-wifi": "{icon}",
     "format-ethernet": "<span font_family='lucide'></span>",
@@ -161,10 +149,9 @@
     "bat": "BAT0",
     "interval": 60,
     "states": { "warning": 30, "critical": 15 },
-    "format": "{icon}",
-    // no format-charging / format-plugged: they would override the click (the icons already change by state)
-    // the Lucide icon sits ~3.5 px higher than the digits: lowered only in the percentage view
-    "format-alt": "<span rise='-2150'>{icon}</span> {capacity}%",
+    // the Lucide icon sits ~3.5 px higher than the digits: lowered to line up with them
+    "format": "<span rise='-2150'>{icon}</span> {capacity}%",
+    "on-click": "~/.config/hypr/scripts/panel battery",
     // Lucide outline battery: empty → low → medium → full; charging; plugged (not charging)
     "format-icons": {
       "default":  ["<span font_family='lucide'></span>", "<span font_family='lucide'></span>", "<span font_family='lucide'></span>", "<span font_family='lucide'></span>"],

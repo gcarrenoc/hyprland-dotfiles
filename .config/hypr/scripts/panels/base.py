@@ -8,7 +8,7 @@ import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Gdk", "4.0")
 gi.require_version("Gtk4LayerShell", "1.0")
-from gi.repository import Gdk, GLib, Gtk, Gtk4LayerShell as Layer, Pango
+from gi.repository import Gdk, Gio, GLib, Gtk, Gtk4LayerShell as Layer, Pango
 
 COLORS = Path.home() / ".config/rofi/colors.rasi"
 WIDTH = 340
@@ -19,6 +19,8 @@ G = {k: chr(v) for k, v in {
     "check": 0xe06c, "play": 0xe13c, "pause": 0xe12e, "prev": 0xe15f, "next": 0xe160, "sliders": 0xe29a,
     "wifi0": 0xe5f9, "wifi1": 0xe5f8, "wifi2": 0xe5f7, "wifi3": 0xe1ae, "wifioff": 0xe1af, "lock": 0xe10b,
     "cable": 0xe620, "shield": 0xe158, "globe": 0xe0e8,
+    "battery": 0xe053, "charging": 0xe054, "full": 0xe055, "low": 0xe056, "medium": 0xe057, "plug": 0xe37f,
+    "leaf": 0xe2de, "scale": 0xe212, "rocket": 0xe286,
 }.items()}
 
 
@@ -83,6 +85,10 @@ def theme_css():
     .panel switch:checked {{ background: {sel}; }}
     .panel switch > slider {{ background: {on_sel}; border: none; box-shadow: none; border-radius: 10px;
                               min-width: 18px; min-height: 18px; margin: 2px; }}
+    .panel progressbar trough, .panel progressbar progress {{ min-height: 8px; min-width: 0; border-radius: 6px; border: none; }}
+    .panel progressbar trough {{ background: alpha({fg}, 0.16); }}
+    .panel progressbar progress {{ background: {sel}; }}
+    .panel progressbar.low progress {{ background: {urgent}; }}
     .panel spinner {{ color: {sel}; min-width: 16px; min-height: 16px; }}
     .panel scrolledwindow {{ border-radius: 13px; }}
     .panel scrollbar {{ background: none; border: none; }}
