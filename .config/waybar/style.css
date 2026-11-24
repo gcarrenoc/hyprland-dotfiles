@@ -30,7 +30,7 @@ tooltip label {
 /* Pills */
 #custom-launcher, #workspaces,
 #indicators, #custom-notifications, #clock, #custom-power,
-#network, #pulseaudio, #backlight, #battery {
+#network, #bluetooth, #pulseaudio, #backlight, #battery {
   background-color: @pill;
   color: @text;
   padding: 0 11px;
@@ -75,7 +75,7 @@ tooltip label {
 #custom-notifications.dnd-inhibited-none, #custom-notifications.dnd-inhibited-notification { color: @accent; }  /* do not disturb (amber) */
 
 /* network · volume · brightness · battery are one joined pill */
-#network, #pulseaudio, #backlight, #battery {
+#network, #bluetooth, #pulseaudio, #backlight, #battery {
   margin-left: 0;
   margin-right: 0;
   border-radius: 0;
@@ -83,7 +83,11 @@ tooltip label {
 }
 #network { color: @steel; border-radius: 8px 0 0 8px; padding-left: 12px; margin-left: 4px; }
 #network.disconnected { color: @alert; }
-#pulseaudio { color: @light; }
+/* Lucide glyphs are narrower than the Octicons next to them: less padding, even gaps (measured) */
+#network { padding-right: 2px; }
+#bluetooth { color: @steel; padding: 0 0 0 3px; }
+#bluetooth.off, #bluetooth.disabled { color: @muted; }
+#pulseaudio { color: @light; padding-left: 6px; }
 #pulseaudio.muted { color: @alert; }
 #backlight { color: @muted; }
 #battery { color: @light; border-radius: 0 8px 8px 0; padding-right: 12px; margin-right: 4px; }
@@ -108,7 +112,7 @@ tooltip label {
 
 /* Icon pills: proportional Nerd Font so each icon gets its real width (centred) */
 #custom-launcher, #custom-tray-toggle, #custom-notifications, #custom-power,
-#network, #pulseaudio, #backlight, #battery {
+#network, #bluetooth, #pulseaudio, #backlight, #battery {
   font-family: "PaperMono Nerd Font";
 }
 

@@ -9,7 +9,7 @@
 m = mute. Talks to PipeWire through pactl, and only while open. Volume stops at 100 %, like the keys.
 """
 import json, re, subprocess, threading, time
-from base import DropPanel, G, Gdk, GLib, Gtk, box, button, launch, lucide, out, text
+from base import Commands, DropPanel, G, Gdk, GLib, Gtk, box, button, launch, lucide, out, text
 
 LISTENERS_IGNORED = {"PulseAudio Volume Control", "pavucontrol"}     # level meters, not recordings
 
@@ -82,28 +82,6 @@ def snapshot():
         "listening": sorted(listening),
         "players": players(),
     }
-
-
-class Commands(threading.Thread):
-    """Runs pactl one at a time; while a slider is dragged only its newest value is sent."""
-    def __init__(self):
-        super().__init__(daemon=True)
-        self.todo, self.cond = {}, threading.Condition()
-        self.start()
-
-    def send(self, key, *cmd):
-        with self.cond:
-            self.todo.pop(key, None)
-            self.todo[key] = cmd
-            self.cond.notify()
-
-    def run(self):
-        while True:
-            with self.cond:
-                while not self.todo:
-                    self.cond.wait()
-                cmd = self.todo.pop(next(iter(self.todo)))
-            out(*cmd)
 
 
 def speaker_glyph(vol, mute):

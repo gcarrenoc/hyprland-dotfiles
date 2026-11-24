@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # Night light (hyprsunset).
-#   nightlight toggle     on/off              (Waybar click)
-#   nightlight up|down    cooler / warmer      (Waybar scroll, only while on)
+#   nightlight toggle     on/off              (Spotlight)
+#   nightlight on|off     (brightness panel)
+#   nightlight up|down    cooler / warmer      (only while on)
+#   nightlight set K      warmth in kelvin (2500 warm … 6000 cool)
 #   nightlight auto       follow the sun: on at sunset, off at sunrise
 #                         (only acts when day/night changes, so a manual toggle is respected)
 #   nightlight waybar     JSON status for the bar
@@ -12,7 +14,7 @@ DEFAULT=4000 MIN=2500 MAX=6000 STEP=250
 
 on=0 temp=$DEFAULT period=""
 [[ -f $STATE ]] && read -r on temp period < "$STATE"
-save() { mkdir -p "${STATE%/*}"; echo "$on $temp $period" > "$STATE"; systemctl --user kill --kill-whom=main -s USR1 status-tray.service 2>/dev/null || true; }
+save() { mkdir -p "${STATE%/*}"; echo "$on $temp $period" > "$STATE"; }
 SUN="$(dirname "$(readlink -f "$0")")/suntimes"
 ensure() { pgrep -x hyprsunset >/dev/null || { setsid -f uwsm app -- hyprsunset -i >/dev/null 2>&1; sleep 0.8; }; }
 apply() { ensure; if (( on )); then hyprctl hyprsunset temperature "$temp" >/dev/null; else hyprctl hyprsunset identity >/dev/null; fi; }
@@ -21,6 +23,9 @@ case ${1:-} in
   toggle) on=$(( 1 - on )); apply; save ;;
   up)     (( on )) || exit 0; temp=$(( temp + STEP > MAX ? MAX : temp + STEP )); apply; save ;;
   down)   (( on )) || exit 0; temp=$(( temp - STEP < MIN ? MIN : temp - STEP )); apply; save ;;
+  on|off) [[ $1 == on ]] && on=1 || on=0; apply; save ;;
+  set)    [[ ${2:-} =~ ^[0-9]{4}$ ]] || exit 2
+          temp=$(( $2 > MAX ? MAX : $2 < MIN ? MIN : $2 )); (( on )) && apply; save ;;
   restore) apply ;;                        # at login: reapply last state
   auto)
     read -r now rise sset < <("$SUN")
@@ -37,5 +42,5 @@ case ${1:-} in
       read -r _ rise sset < <("$SUN")
       printf '{"text":"\uf4ee","class":"off","tooltip":"Night light off\\nAuto: on at sunset %s, off at sunrise %s\\nClick: on (%sK)"}\n' "$sset" "$rise" "$temp"
     fi ;;
-  *) sed -n '2,6p' "$0" | sed 's/^# \{0,1\}//' ;;
+  *) sed -n '2,9p' "$0" | sed 's/^# \{0,1\}//' ;;
 esac

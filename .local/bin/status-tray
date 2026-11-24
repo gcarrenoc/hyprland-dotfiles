@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-"""status-tray — Night light and Caffeinate as icons in the app-indicator tray.
+"""status-tray — Caffeinate as an icon in the app-indicator tray (night light is in the brightness panel).
 
-Each icon shows its state (on / off) and has a menu with the same actions the bar
-pills had. Runs as the user service status-tray.service (started with the session).
-State is re-read every 10 s and at once on SIGUSR1, which the nightlight / caffeinate
-scripts and Spotlight send after a change:  systemctl --user kill --kill-whom=main -s USR1 status-tray
+The icon shows its state (on / off) and has a menu. Runs as the user service status-tray.service.
+State is re-read every 10 s and at once on SIGUSR1, which caffeinate and Spotlight send after a
+change:  systemctl --user kill --kill-whom=main -s USR1 status-tray
 (--kill-whom=main: only this program — the scripts its menu started would be killed by USR1)
 """
 import json, signal, subprocess, sys
@@ -21,7 +20,6 @@ try:                                                      # GLib ≥ 2.86: unix 
 except (ValueError, ImportError):
     signal_add = GLib.unix_signal_add
 
-NIGHT = str(Path.home() / ".config/hypr/scripts/nightlight")
 CAFF = str(Path.home() / ".local/bin/caffeinate")
 
 
@@ -55,24 +53,7 @@ def indicator(ident, title):
     return ind
 
 
-night = indicator("night-light", "Night light")
 caff = indicator("caffeinate", "Caffeinate")
-
-
-def build_night(cls, lines):
-    on = cls == "on"
-    night.set_icon_full("redshift-status-on" if on else "redshift-status-off", "Night light " + ("on" if on else "off"))
-    m = Gtk.Menu()
-    item(m, lines[0] if lines else "Night light")              # "Night light on · 4000K" / "Night light off"
-    for l in lines[1:]:
-        if l.startswith("Auto:"):
-            item(m, l)                                           # today's sunset / sunrise
-    m.append(Gtk.SeparatorMenuItem())
-    item(m, "Turn off" if on else "Turn on", lambda: run(NIGHT, "toggle"))
-    item(m, "Warmer", lambda: run(NIGHT, "down"), sensitive=on)
-    item(m, "Cooler", lambda: run(NIGHT, "up"), sensitive=on)
-    m.show_all()
-    night.set_menu(m)
 
 
 def build_caff(cls, lines):
@@ -100,7 +81,7 @@ last = {}
 
 
 def refresh():
-    for key, cmd, build in (("night", NIGHT, build_night), ("caff", CAFF, build_caff)):
+    for key, cmd, build in (("caff", CAFF, build_caff),):
         s = state(cmd)
         if last.get(key) != s:                                   # rebuild only when something changed
             last[key] = s

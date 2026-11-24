@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""bar-panels — the panels that drop down from the bar: sound, wifi and battery (macOS-style, frosted).
+"""bar-panels — the panels that drop down from the bar: wifi, bluetooth, sound, brightness, battery (macOS-style, frosted).
 
 Fast like Spotlight: stays loaded, hidden (started at login) and the bar only shows a panel:
-    scripts/panel sound | wifi | battery   (→ D-Bus; also starts this program if it isn't running)
+    scripts/panel wifi | bluetooth | sound | brightness | battery
+           (→ D-Bus; also starts this program if it isn't running)
 Click the icon again, click outside or press Esc to close. The panels: scripts/panels/*.py
 Colours come from ~/.config/rofi/colors.rasi (generated from the wallpaper by scripts/theme).
 """
@@ -14,10 +15,13 @@ sys.dont_write_bytecode = True
 from base import Gdk, Gtk, theme_css                      # first: loads layer-shell before GTK
 from gi.repository import Gio, GLib
 from battery import BatteryPanel
+from bluetooth import BluetoothPanel
+from brightness import BrightnessPanel
 from sound import SoundPanel
 from wifi import WifiPanel
 
-PANELS = {"sound": SoundPanel, "wifi": WifiPanel, "battery": BatteryPanel}
+PANELS = {"sound": SoundPanel, "wifi": WifiPanel, "battery": BatteryPanel,
+          "bluetooth": BluetoothPanel, "brightness": BrightnessPanel}
 
 
 class App(Gtk.Application):

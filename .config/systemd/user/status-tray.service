@@ -1,5 +1,5 @@
 [Unit]
-Description=Night light and Caffeinate icons in the app-indicator tray
+Description=Caffeinate icon in the app-indicator tray
 PartOf=graphical-session.target
 After=graphical-session.target
 

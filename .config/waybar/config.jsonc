@@ -6,7 +6,7 @@
   "spacing": 0,
 
   "modules-left":  ["custom/launcher", "hyprland/workspaces", "custom/newws"],
-  "modules-right": ["group/indicators", "custom/notifications", "network", "pulseaudio", "backlight", "battery", "clock#date", "clock", "custom/power"],
+  "modules-right": ["group/indicators", "custom/notifications", "network", "bluetooth", "pulseaudio", "backlight", "battery", "clock#date", "clock", "custom/power"],
 
   "custom/launcher": {
     "format": "",
@@ -88,7 +88,7 @@
   "tray": {
     "icon-size": 18,
     // Claude Desktop's tray icon is black (made for light panels): show its colour logo instead
-    "icons": { "Claude_status_icon_*": "claude-desktop", "nm-applet": false },
+    "icons": { "Claude_status_icon_*": "claude-desktop", "nm-applet": false, "blueman": false },
     "spacing": 10
   },
 
@@ -125,6 +125,22 @@
     "on-click-middle": "uwsm app -- alacritty --config-file ~/.config/alacritty/balcony.toml --class fly-term -e nmtui"
   },
 
+  // Lucide: Bluetooth off / on / connected
+  "bluetooth": {
+    "format": "<span font_family='lucide'></span>",
+    "format-off": "<span font_family='lucide'></span>",
+    "format-disabled": "<span font_family='lucide'></span>",
+    "format-connected": "<span font_family='lucide'></span>",
+    "format-no-controller": "",
+    "tooltip-format": "Bluetooth on  ·  nothing connected",
+    "tooltip-format-off": "Bluetooth off",
+    "tooltip-format-disabled": "Bluetooth off",
+    "tooltip-format-connected": "{device_enumerate}",
+    "tooltip-format-enumerate-connected": "{device_alias}",
+    "tooltip-format-enumerate-connected-battery": "{device_alias}  ·  {device_battery_percentage}%",
+    "on-click": "~/.config/hypr/scripts/panel bluetooth"
+  },
+
   "pulseaudio": {
     "format": "{icon}",
     "format-muted": "",
@@ -141,6 +157,7 @@
     "format": "{icon}",
     "tooltip-format": "Brightness  {percent}%",
     "format-icons": [""],
+    "on-click": "~/.config/hypr/scripts/panel brightness",
     "on-scroll-up": "brightnessctl -q set 5%+",
     "on-scroll-down": "brightnessctl -q set 5%-"
   },

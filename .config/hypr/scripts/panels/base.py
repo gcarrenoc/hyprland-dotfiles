@@ -1,5 +1,5 @@
 """What the bar's panels share: look, helpers and a window that drops down under the bar."""
-import json, re, subprocess, time
+import json, re, subprocess, threading, time
 from ctypes import CDLL
 from pathlib import Path
 
@@ -20,6 +20,8 @@ G = {k: chr(v) for k, v in {
     "wifi0": 0xe5f9, "wifi1": 0xe5f8, "wifi2": 0xe5f7, "wifi3": 0xe1ae, "wifioff": 0xe1af, "lock": 0xe10b,
     "cable": 0xe620, "shield": 0xe158, "globe": 0xe0e8,
     "battery": 0xe053, "charging": 0xe054, "full": 0xe055, "low": 0xe056, "medium": 0xe057, "plug": 0xe37f,
+    "btoff": 0xe1b9, "more": 0xe0b6, "keyboard": 0xe284, "mouse": 0xe28e, "gamepad": 0xe0df, "phone": 0xe163,
+    "printer": 0xe141, "watch": 0xe1ad, "loudspeaker": 0xe166, "sun": 0xe178, "moon": 0xe11e, "warm": 0xe186,
     "leaf": 0xe2de, "scale": 0xe212, "rocket": 0xe286,
 }.items()}
 
@@ -79,7 +81,7 @@ def theme_css():
     .panel button.action:hover label {{ color: {on_sel}; }}
     .panel .error {{ color: {urgent}; font-size: 9.5pt; font-weight: bold; }}
     .panel entry, .panel passwordentry, .panel entry > text, .panel passwordentry > text {{ color: {fg}; caret-color: {fg}; }}
-    .panel passwordentry {{ background-color: {field}; border: 1px solid alpha({fg}, 0.2); border-radius: 9px;
+    .panel entry, .panel passwordentry {{ background-color: {field}; border: 1px solid alpha({fg}, 0.2); border-radius: 9px;
                             padding: 4px 8px; min-height: 0; outline: none; box-shadow: none; }}
     .panel switch {{ background: alpha({fg}, 0.25); border: none; border-radius: 12px; min-height: 22px; outline: none; }}
     .panel switch:checked {{ background: {sel}; }}
@@ -114,6 +116,28 @@ def button(child, tip, action, *classes):
     b = Gtk.Button(child=child, tooltip_text=tip, css_classes=list(classes))
     b.connect("clicked", lambda *_: action())
     return b
+
+
+class Commands(threading.Thread):
+    """Runs commands one at a time; while a slider is dragged only its newest value is sent."""
+    def __init__(self):
+        super().__init__(daemon=True)
+        self.todo, self.cond = {}, threading.Condition()
+        self.start()
+
+    def send(self, key, *cmd):
+        with self.cond:
+            self.todo.pop(key, None)
+            self.todo[key] = cmd
+            self.cond.notify()
+
+    def run(self):
+        while True:
+            with self.cond:
+                while not self.todo:
+                    self.cond.wait()
+                cmd = self.todo.pop(next(iter(self.todo)))
+            out(*cmd)
 
 
 class DropPanel(Gtk.ApplicationWindow):
