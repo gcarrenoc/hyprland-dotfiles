@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""Spotlight (Super+Space, and the telescope button on the bar) — a small GTK4 window, macOS-style.
+"""Spotlight (Super+Space, and the telescope button on the bar) — a small GTK4 panel, macOS-style.
 
+Opens as a search bar only; the rest unfolds when you type (or press ↓: apps and recent files).
 Results update as you type, in sections:
   Top Hit         a calculation (100-36, 5 km to mi, 100 usd to clp), else what you picked before
                   for a similar search (it learns, files and actions too), else the best name match
@@ -24,19 +25,23 @@ Super+Space only shows the window (scripts/spotlight-toggle → D-Bus). Each tim
 opens it starts fresh: empty search, open apps, colours, files and actions refreshed.
 
 Colours come from ~/.config/rofi/colors.rasi (generated from the wallpaper by
-scripts/theme). Hyprland rule: class local.Spotlight. Picks: ~/.cache/spotlight-picks.json
+scripts/theme). It is a layer over the screen (gtk4-layer-shell, namespace spotlight), so the
+search bar never moves while the results unfold. Picks: ~/.cache/spotlight-picks.json
 """
 import hashlib, html, json, re, subprocess, sys, threading, time, unicodedata
 from importlib.machinery import SourceFileLoader
 from pathlib import Path
 from urllib.parse import quote_plus, unquote, urlparse
 
+from ctypes import CDLL
+CDLL("libgtk4-layer-shell.so.0")                          # has to be loaded before GTK
 import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Gdk", "4.0")
 gi.require_version("Tsparql", "3.0")
 gi.require_version("GdkPixbuf", "2.0")
-from gi.repository import Gdk, GdkPixbuf, Gio, GLib, Gtk, Pango, Tsparql
+gi.require_version("Gtk4LayerShell", "1.0")
+from gi.repository import Gdk, GdkPixbuf, Gio, GLib, Gtk, Gtk4LayerShell as Layer, Pango, Tsparql
 
 APP_ID = "local.Spotlight"
 HOME = Path.home()
@@ -51,6 +56,7 @@ THUMBS = HOME / ".cache/spotlight-previews"
 SECTIONS = [("app", "Applications", 5), ("action", "System", 4), ("doc", "Documents", 8),
             ("folder", "Folders", 5), ("image", "Images", 5), ("other", "Files", 6)]
 EMPTY_APPS, EMPTY_RECENT = 8, 10
+WIDTH, BODY, PREVIEW = 900, 500, 300                      # panel width · height that unfolds · Quick Look width
 HINT = "↵ open    ⇧↵ new window · show in folder    ⌃↵ search inside documents"
 DOC_TYPES = ("application/pdf", "text/", "application/vnd.oasis", "application/msword",
              "application/vnd.openxmlformats", "application/vnd.ms-", "application/rtf",
@@ -349,10 +355,12 @@ def theme_css():
         return f"rgba({int(h[0:2], 16)}, {int(h[2:4], 16)}, {int(h[4:6], 16)}, {a:.3f})"
     bg, alt, fg = rgba("background", "#dbdfebb3"), rgba("background-alt", "#f2f3f8f0"), rgba("foreground", "#161b2d")
     sel, on_sel, muted = rgba("selected", "#3e528e"), rgba("on-selected", "#ffffff"), rgba("muted", "#343b51")
-    card = rgba("background-alt", "#f2f3f8", 0.55)
+    card, border = rgba("background-alt", "#f2f3f8", 0.55), rgba("active", "#c6cbdd")
     return f"""
     * {{ font-family: "PaperMono Nerd Font"; font-size: 11pt; }}
-    window.spotlight {{ background-color: {bg}; backdrop-filter: blur(20px); color: {fg}; }}
+    window.spotlight {{ background: none; }}
+    .spot {{ background-color: {bg}; backdrop-filter: blur(20px); color: {fg};
+             border: 1px solid {border}; border-radius: 19px; padding: 14px; }}
     .inputbar {{ background-color: {alt}; border-radius: 12px; padding: 10px 14px; }}
     .inputbar .prompt {{ color: {sel}; }}
     .inputbar text, .inputbar entry {{ background: none; border: none; box-shadow: none; outline: none;
@@ -374,7 +382,7 @@ def theme_css():
     """
 
 
-def picture(path, width=324, height=330):
+def picture(path, width=264, height=330):
     """Image scaled to fit the preview (a Gtk.Picture of the full file would widen the window)."""
     try:
         pb = GdkPixbuf.Pixbuf.new_from_file_at_scale(str(path), width, height, True)
@@ -388,9 +396,14 @@ def picture(path, width=324, height=330):
 # ---------- the window ----------
 class Spotlight(Gtk.ApplicationWindow):
     def __init__(self, app):
-        super().__init__(application=app, title="Spotlight", decorated=False, resizable=False)
+        super().__init__(application=app, title="Spotlight", decorated=False)
         self.add_css_class("spotlight")
-        self.set_default_size(1080, 600)
+        Layer.init_for_window(self)                       # the screen below the bar, transparent: a click outside closes
+        Layer.set_namespace(self, "spotlight")
+        Layer.set_layer(self, Layer.Layer.OVERLAY)        # also over full-screen windows
+        for edge in (Layer.Edge.TOP, Layer.Edge.BOTTOM, Layer.Edge.LEFT, Layer.Edge.RIGHT):
+            Layer.set_anchor(self, edge, True)
+        Layer.set_keyboard_mode(self, Layer.KeyboardMode.EXCLUSIVE)
         self.apps, self.files, self.actions = [], [], []
         self.docs = None                                  # None = normal mode, else (query, results)
         self.gen, self.calc = 0, None                     # calc: (text, result) for the current text
@@ -399,7 +412,8 @@ class Spotlight(Gtk.ApplicationWindow):
         self.was_active = False
         self.preview_gen = 0
 
-        outer = Gtk.Box(spacing=16, margin_top=26, margin_bottom=26, margin_start=26, margin_end=26)
+        self.card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, css_classes=["spot"],
+                            valign=Gtk.Align.START)       # exact width: side margins set in prepare()
         left = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10, hexpand=True)
         bar = Gtk.Box(spacing=10, css_classes=["inputbar"])
         bar.append(Gtk.Label(label="\U000f0349", css_classes=["prompt"]))
@@ -409,13 +423,21 @@ class Spotlight(Gtk.ApplicationWindow):
         self.list = Gtk.ListBox(selection_mode=Gtk.SelectionMode.BROWSE)
         self.list.set_activate_on_single_click(True)
         self.scroll = Gtk.ScrolledWindow(vexpand=True, hscrollbar_policy=Gtk.PolicyType.NEVER, child=self.list)
-        for w in (bar, self.hint, self.scroll):
+        for w in (self.hint, self.scroll):
             left.append(w)
         self.preview = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8, css_classes=["preview"])
-        self.preview.set_size_request(360, -1)
-        self.preview.set_hexpand(False)
-        outer.append(left); outer.append(self.preview)
-        self.set_child(outer)
+        self.preview_box = Gtk.ScrolledWindow(child=self.preview, hscrollbar_policy=Gtk.PolicyType.EXTERNAL,
+                                              vscrollbar_policy=Gtk.PolicyType.EXTERNAL, hexpand=False)
+        self.preview_box.set_size_request(PREVIEW, -1)     # always this wide, whatever is shown
+        body = Gtk.Box(spacing=16, margin_top=12)
+        body.set_size_request(-1, BODY)
+        body.append(left); body.append(self.preview_box)
+        self.body = Gtk.Revealer(child=body, transition_type=Gtk.RevealerTransitionType.SLIDE_DOWN)
+        self.card.append(bar); self.card.append(self.body)
+        self.set_child(self.card)
+        click = Gtk.GestureClick(button=0)
+        click.connect("pressed", self.on_click)
+        self.add_controller(click)
 
         self.entry.connect("changed", lambda *_: self.on_changed())
         self.list.connect("row-activated", lambda _l, row: self.activate(row, shift=False))
@@ -433,6 +455,12 @@ class Spotlight(Gtk.ApplicationWindow):
         self.gen += 1
         self.was_active = False
         self.picks = load_picks()
+        self.unfold(False, 0)
+        mons = Gdk.Display.get_default().get_monitors()    # where the unfolded panel would be centred
+        geo = mons.get_item(0).get_geometry() if mons.get_n_items() else None
+        width, height = (geo.width, geo.height) if geo else (1536, 960)
+        self.card.set_margin_start(max(8, (width - WIDTH) // 2)); self.card.set_margin_end(max(8, (width - WIDTH) // 2))
+        self.card.set_margin_top(max(16, (height - 37 - BODY - 90) // 2))
         self.hint.set_label(HINT)
         self.load_apps()                                   # quick: also marks which apps are open
         if self.entry.get_text():
@@ -444,6 +472,15 @@ class Spotlight(Gtk.ApplicationWindow):
             if what not in self.loading:
                 self.loading.add(what)
                 threading.Thread(target=getattr(self, "load_" + what), daemon=True).start()
+
+    def unfold(self, on, ms=120):
+        self.body.set_transition_duration(ms)
+        self.body.set_reveal_child(on)
+
+    def on_click(self, _g, _n, x, y):
+        hit = self.pick(x, y, Gtk.PickFlags.DEFAULT)
+        if hit is None or not (hit == self.card or hit.is_ancestor(self.card)):
+            self.dismiss()
 
     def dismiss(self):
         self.set_visible(False)
@@ -563,6 +600,7 @@ class Spotlight(Gtk.ApplicationWindow):
                 GLib.idle_add(self.calc_done, gen, text, calculate(text))
             threading.Thread(target=work, daemon=True).start()
         self.refresh()
+        self.unfold(bool(text))                            # only the search bar while nothing is typed
 
     def calc_done(self, gen, text, result):
         if gen == self.gen:
@@ -646,7 +684,7 @@ class Spotlight(Gtk.ApplicationWindow):
 
     @staticmethod
     def label(text, cls, markup=False, wrap=True):
-        l = Gtk.Label(xalign=0, wrap=wrap, css_classes=[cls], max_width_chars=34, width_chars=1)
+        l = Gtk.Label(xalign=0, wrap=wrap, css_classes=[cls], max_width_chars=28, width_chars=1)
         l.set_wrap_mode(Pango.WrapMode.WORD_CHAR)
         if not wrap:
             l.set_ellipsize(Pango.EllipsizeMode.END)
@@ -763,8 +801,13 @@ class Spotlight(Gtk.ApplicationWindow):
         ctrl = bool(state & Gdk.ModifierType.CONTROL_MASK)
         if keyval == Gdk.KEY_Escape:
             self.dismiss(); return True
+        folded = not self.body.get_reveal_child()
         if keyval in (Gdk.KEY_Down, Gdk.KEY_Tab):
-            self.move(1); return True
+            if folded:
+                self.unfold(True)                         # ↓ on an empty bar: apps and recent files
+            else:
+                self.move(1)
+            return True
         if keyval in (Gdk.KEY_Up, Gdk.KEY_ISO_Left_Tab):
             self.move(-1); return True
         if keyval in (Gdk.KEY_Return, Gdk.KEY_KP_Enter):
@@ -773,7 +816,7 @@ class Spotlight(Gtk.ApplicationWindow):
                     self.search_docs(self.text())
                 return True
             row = self.list.get_selected_row()
-            if row:
+            if row and not folded:                        # never open what you can't see
                 self.activate(row, shift)
             return True
         return False

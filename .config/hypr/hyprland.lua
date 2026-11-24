@@ -154,7 +154,6 @@ hl.window_rule({ name = "pip",               match = { title = "^(Picture.in.[Pp
 -- rofi menus run as normal windows (normal-window in rofi config) so they get
 -- the same squircle corners, blur and border as apps: float, centered, focused
 hl.window_rule({ name = "rofi-menus", match = { class = "^(rofi|Rofi)$" }, float = true, center = true, stay_focused = true, pin = true })
-hl.window_rule({ name = "spotlight", match = { class = "^(local\\.Spotlight)$" }, float = true, center = true, pin = true })   -- scripts/spotlight (GTK4)
 
 -- Floating "fly" terminal (Alt+Return)
 hl.window_rule({ name = "fly-term", match = { class = "^(fly-term)$" }, float = true, size = "900 550", center = true })
