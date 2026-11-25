@@ -3,7 +3,7 @@
 #   • battery 20%  → power saver plan (the previous plan comes back when you plug in)
 #   • battery 15%  → low-battery notification
 #   • battery 8%   → urgent notification      (both also show in do not disturb)
-#   • battery 5%   → suspend, with enough left to survive asleep for hours (no hibernation here)
+#   • battery 5%   → hibernate once that has been tested (scripts/hibernate --tested), else suspend
 #   • on battery   → lighter blur (1 pass) to save power; plugged in → 3 passes
 # Warnings fire once per discharge and reset when you plug in.
 set -u
@@ -20,8 +20,10 @@ notify() { notify-send -a Battery "$@"; }
 
 if [[ $status == Discharging ]]; then
   if (( cap <= SUSPEND )); then
-    notify -u critical -i battery-empty "Battery at ${cap}%" "Suspending now — plug in the charger."
-    sleep 5; systemctl suspend
+    how=suspend what="Suspending"
+    if "$HOME/.config/hypr/scripts/hibernate" --auto; then how=hibernate what="Hibernating"; fi
+    notify -u critical -i battery-empty "Battery at ${cap}%" "$what now — plug in the charger."
+    sleep 5; systemctl "$how" || systemctl suspend
   elif (( cap <= CRIT && warned < 2 )); then
     notify -u critical -i battery-caution "Battery at ${cap}% — plug in now" "The laptop will suspend at ${SUSPEND}%."
     warned=2

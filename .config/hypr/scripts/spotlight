@@ -271,6 +271,8 @@ def system_actions():
     acts = [
         ("lock", "Lock Screen", "Lock now", "system-lock-screen", "lock", ["loginctl", "lock-session"], False),
         ("sleep", "Sleep", "Suspend the laptop", "system-suspend", "suspend", ["systemctl", "suspend"], False),
+        *([("hibernate", "Hibernate", "Save everything to disk and turn off", "system-suspend-hibernate", "hibernate sleep disk",
+            [str(SCRIPTS / "hibernate")], True)] if state(lambda: subprocess.run([str(SCRIPTS / "hibernate"), "--can"]).returncode == 0) else []),
         ("restart", "Restart", "Restart the computer", "system-reboot", "reboot reset", ["systemctl", "reboot"], True),
         ("shutdown", "Shut Down", "Turn the computer off", "system-shutdown", "power off poweroff turn off",
          ["systemctl", "poweroff"], True),

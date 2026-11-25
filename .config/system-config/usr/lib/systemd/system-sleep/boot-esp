@@ -1,0 +1,11 @@
+#!/bin/sh
+# Hibernation: the boot partition is shared with Windows. Unmount it before the image is written and
+# mount it again afterwards, so starting Windows in between can't clash with what Linux remembers of it.
+case "$2" in
+  hibernate|hybrid-sleep|suspend-then-hibernate)
+    case "$1" in
+      pre)  sync; umount /boot ;;
+      post) mountpoint -q /boot || mount /boot ;;
+    esac ;;
+esac
+exit 0

@@ -73,7 +73,7 @@ Hyprland 0.57. This is the only desktop now (GNOME was removed); the login scree
 | Keys | Action |
 |---|---|
 | `Super + Escape` | Lock screen |
-| `Super + Shift + E` | Power menu (lock, suspend, log out, restart, shut down) |
+| `Super + Shift + E` | Power menu (lock, suspend, hibernate, log out, restart, shut down) |
 | `Super + N` | Notification Center (open / close) |
 | `Super + Shift + N` | Clear all notifications |
 
@@ -151,9 +151,10 @@ App indicators (1Password, Insync, ZapZap…) are hidden behind the **‹** arro
 - **Lid / suspend:** the screen is locked before sleeping.
 - **Workspaces are a row** (like GNOME / macOS Spaces): workspaces 1 … N (up to 10) always exist, **empty ones disappear** once you leave them, there are never gaps, and N is remembered across logins. Add one with **+** or by going past the end. Keys, Super+scroll, the 4-finger swipe and the bar all follow the same rule. Logic: `~/.config/hypr/workspaces.lua`. With several screens each workspace stays on its screen and nothing is renumbered.
 - **Night light:** on at sunset, off at sunrise (timer `nightlight-auto.timer`, checks every 5 min). Location for the sun times: `LAT/LON` in `~/.config/hypr/scripts/suntimes`.
-- **Battery:** power saver plan at 20 % (your previous plan comes back when you plug in, unless you changed it yourself), notification at 15 %, urgent one at 8 % (both also in do not disturb), suspends at 5 % (`power-watch.timer`, every minute). On battery the blur is lighter (1 pass) to save power; on the charger it's back to 3.
+- **Battery:** power saver plan at 20 % (your previous plan comes back when you plug in, unless you changed it yourself), notification at 15 %, urgent one at 8 % (both also in do not disturb), hibernates at 5 % once you have tested it (`~/.config/hypr/scripts/hibernate --tested`), else suspends (`power-watch.timer`, every minute). On battery the blur is lighter (1 pass) to save power; on the charger it's back to 3.
 - **App activation:** clicking a notification or link takes you to that app's window, switching workspace if needed.
 - **If something crashes:** the bar, Spotlight, the panels, wallpaper, idle/lock and clipboard history are systemd user services and restart by themselves (`systemctl --user status waybar`).
+- **Hibernation:** everything is saved to `/swapfile` on the encrypted disk (16 GB; zram is still used first) and the laptop turns off; on start, unlock the disk as usual and it all comes back. Power menu or Spotlight. The LTS boot entry never resumes: it is the fallback. Don't start Windows and change the shared boot partition with it hibernated if you can avoid it (it is unmounted first, just in case).
 - **Firewall:** nothing from the network gets in unless this laptop started it (`/etc/nftables.conf`; mDNS allowed so printers and TVs are found; for a hotspot see the notes in the file).
 - **App updates:** Claude Desktop and VS Code update by themselves; you're told only if that stops working (`~/.local/lib/apt_app.py`).
 - **Apps at login:** Everything in `~/.config/autostart` (1Password, Insync,

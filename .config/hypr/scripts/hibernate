@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# hibernate — save everything to the encrypted disk and turn off (power menu, Spotlight, empty battery).
+#   hibernate          do it
+#   hibernate --can    exit 0 if it's possible right now (swap file, and started with resume=)
+#   hibernate --auto   exit 0 if the battery rule may use it by itself: possible and tested once
+#   hibernate --tested you tried it and it came back fine
+TESTED="$HOME/.local/state/hibernation-tested"
+can() { grep -q 'resume=' /proc/cmdline && grep -q '^/swapfile ' /proc/swaps &&
+        [[ $(busctl call org.freedesktop.login1 /org/freedesktop/login1 org.freedesktop.login1.Manager CanHibernate 2>/dev/null) == *yes* ]]; }
+case ${1:-} in
+  --can)    can ;;
+  --auto)   can && [[ -e $TESTED ]] ;;
+  --tested) mkdir -p "${TESTED%/*}" && touch "$TESTED" && echo "The battery rule may hibernate now." ;;
+  "")       if can; then systemctl hibernate
+            else notify-send -a Hibernate "Can't hibernate now" "Restart first, with the normal Arch entry."; exit 1; fi ;;
+  *)        sed -n '2,6p' "$0" | sed 's/^# //'; exit 2 ;;
+esac

@@ -3,7 +3,8 @@
 #   1. git clone --bare https://github.com/gcarrenoc/hyprland-dotfiles.git ~/.dotfiles
 #   2. git --git-dir=$HOME/.dotfiles --work-tree=$HOME checkout
 #   3. ~/.config/system-config/setup
-# Not included (do by hand): disk encryption, boot entries (~/.config/refind), AUR packages
+# Not included (do by hand): disk encryption, boot entries (~/.config/refind: its PARTUUID and
+# resume_offset belong to one disk), the hibernation swap file, AUR packages
 # (packages/aur.txt: review each PKGBUILD), signing in to apps.
 set -euo pipefail
 DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
@@ -21,7 +22,7 @@ if [[ -s $DIR/packages/flatpak.txt ]] && ask "Install the Flatpak apps?"; then
   xargs -r flatpak install -y flathub < "$DIR/packages/flatpak.txt"
 fi
 if ask "Copy the system files to /etc (login screen, keyboard, mirrors, swap, firewall)?"; then
-  sudo cp -rv --no-preserve=ownership "$DIR/etc/." /etc/
+  sudo cp -rv --no-preserve=ownership "$DIR/etc/." /etc/        # not mkinitcpio.conf's image: run  sudo mkinitcpio -P
   sudo systemctl enable --now nftables.service
 fi
 if ask "Enable the desktop services and timers?"; then

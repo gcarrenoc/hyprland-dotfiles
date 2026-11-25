@@ -2,7 +2,10 @@
 # Power menu (rofi). Used by Super+Shift+E and the ⏻ button in Waybar.
 lock="  Lock"; suspend="󰤄  Suspend"; logout="󰍃  Log out"; reboot="  Restart"; shutdown="⏻  Shut down"
 
-choice=$(printf '%s\n' "$lock" "$suspend" "$logout" "$reboot" "$shutdown" |
+options=("$lock" "$suspend")
+hibernate="󰒲  Hibernate"; ~/.config/hypr/scripts/hibernate --can && options+=("$hibernate")
+options+=("$logout" "$reboot" "$shutdown")
+choice=$(printf '%s\n' "${options[@]}" |
   ~/.config/hypr/scripts/menu -dmenu -i -p "" -theme ~/.config/rofi/powermenu.rasi \
        -mesg "  $(uptime -p | sed 's/^up //')") || exit 0
 
@@ -13,6 +16,7 @@ confirm() {
 case $choice in
   "$lock")     loginctl lock-session ;;
   "$suspend")  systemctl suspend ;;
+  "$hibernate") ~/.config/hypr/scripts/hibernate ;;
   "$logout")   confirm "Log out" && uwsm stop ;;
   "$reboot")   confirm "Restart" && systemctl reboot ;;
   "$shutdown") confirm "Shut down" && systemctl poweroff ;;
