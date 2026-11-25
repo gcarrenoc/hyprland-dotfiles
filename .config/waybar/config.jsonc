@@ -9,7 +9,7 @@
   "modules-right": ["group/indicators", "custom/state", "network", "bluetooth", "pulseaudio", "backlight", "battery", "clock#date", "clock", "custom/power"],
 
   "custom/launcher": {
-    "format": "<span font_family='Font Awesome 7 Free Solid' size='13087'></span>​",
+    "format": "<span font_family='Font Awesome 7 Brands' size='13087'></span>​",
     "tooltip": false,
     "on-click": "~/.config/hypr/scripts/spotlight-toggle"
   },
