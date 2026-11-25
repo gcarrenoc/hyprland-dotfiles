@@ -1,0 +1,15 @@
+[Unit]
+Description=Spotlight stays loaded (Super+Space only shows it)
+PartOf=graphical-session.target
+After=graphical-session.target
+ConditionEnvironment=WAYLAND_DISPLAY
+
+[Service]
+ExecStart=%h/.config/hypr/scripts/spotlight --daemon
+Restart=on-failure
+RestartSec=2
+# menus it opened (power menu, screenshot editor…) survive a restart
+KillMode=process
+
+[Install]
+WantedBy=graphical-session.target

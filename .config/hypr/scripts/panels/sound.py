@@ -80,6 +80,7 @@ def snapshot():
         "sources": [d for d in (device(s, source) for s in pa("sources") if not s["name"].endswith(".monitor")) if d],
         "apps": [app_of(s) for s in pa("sink-inputs")],
         "listening": sorted(listening),
+        "pinned": re.findall(r"^\s+\d+\. Audio/(Sink|Source)\s+\S", out("wpctl", "status").partition("Default Configured")[2], re.M),
         "players": players(),
     }
 
@@ -205,7 +206,7 @@ class SoundPanel(DropPanel):
     def build(self, d):
         shape = json.dumps([[(x["id"], x["name"], x["default"]) for x in d["sinks"]],
                             [(x["id"], x["name"], x["default"]) for x in d["sources"]],
-                            [(x["id"], x["name"], x["media"]) for x in d["apps"]], d["listening"], d["players"]])
+                            [(x["id"], x["name"], x["media"]) for x in d["apps"]], d["listening"], d["players"], d["pinned"]])
         if shape != self.shape:
             self.shape = shape
             focus = next((k for k, l in self.levels.items() if l.scale.is_focus()), None)
@@ -227,12 +228,11 @@ class SoundPanel(DropPanel):
             if "app" + a["id"] in self.levels:
                 self.levels["app" + a["id"]].show_state(a["vol"], a["mute"])
 
-    def devices(self, card, kind, items):
+    def devices(self, card, kind, items, pinned=False):
         if len(items) < 2:                                      # a single one: just say which
             for x in items:
                 card.append(text(x["name"], "note"))
-            return
-        for x in items:
+        for x in items if len(items) > 1 else []:
             row = box(False, 8)
             row.append(lucide(x["icon"] if kind == "sink" or x["icon"] != "speaker" else "mic"))
             row.append(text(x["name"]))
@@ -240,6 +240,11 @@ class SoundPanel(DropPanel):
                 row.append(lucide("check"))
             card.append(button(row, x["name"], lambda i=x["id"]: self.run("pactl", f"set-default-{kind}", i),
                                "device", *(["on"] if x["default"] else [])))
+        if pinned:                                              # you chose one: it stays, even if headphones come
+            row = box(False, 8)
+            row.append(lucide("auto")); row.append(text("Choose automatically"))
+            card.append(button(row, "Follow what is plugged in (headphones take over)",
+                               lambda: self.run("wpctl", "clear-default", "0" if kind == "sink" else "1"), "device"))
 
     def fill(self, d):
         cur = next((x for x in d["sinks"] if x["default"]), None)
@@ -247,7 +252,7 @@ class SoundPanel(DropPanel):
         if cur:
             self.levels["out"] = Level(self, "sink", cur["id"], "the output", speaker_glyph)
             card.append(self.levels["out"])
-            self.devices(card, "sink", d["sinks"])
+            self.devices(card, "sink", d["sinks"], "Sink" in d["pinned"])
         else:
             card.append(text("No output found", "note"))
 
@@ -257,7 +262,7 @@ class SoundPanel(DropPanel):
             self.levels["mic"] = Level(self, "source", cur["id"], "the microphone",
                                        lambda v, m: G["micoff"] if m else G["mic"])
             card.append(self.levels["mic"])
-            self.devices(card, "source", d["sources"])
+            self.devices(card, "source", d["sources"], "Source" in d["pinned"])
             if d["listening"]:
                 card.append(text("In use by " + ", ".join(d["listening"]), "note"))
 

@@ -11,6 +11,9 @@ case ${1:-full} in
     wl-copy < "$file"
     notify-send -a Screenshot -i "$file" "Screenshot saved" "Copied to clipboard · ${file/#$HOME/~}" ;;
   area)
-    geom=$(slurp -b 20212c88 -c a7caffee -w 2) || exit 0   # Esc cancels
+    css=~/.config/waybar/colors.css                        # colours of the wallpaper
+    colour() { sed -n "s/^@define-color $1 *#\([0-9a-fA-F]\{6\}\);.*/\1/p" "$css" 2>/dev/null; }
+    line=$(colour steel); shade=$(colour tooltip)
+    geom=$(slurp -b "${shade:-20212c}88" -c "${line:-a7caff}ee" -w 2) || exit 0   # Esc cancels
     grim -g "$geom" - | swappy -f - -o "$file" ;;
 esac

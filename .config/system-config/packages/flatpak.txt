@@ -1,0 +1,3 @@
+com.rtosta.zapzap
+com.stremio.Stremio
+it.mijorus.smile

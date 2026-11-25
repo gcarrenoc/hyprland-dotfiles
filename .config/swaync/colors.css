@@ -12,7 +12,7 @@
   --text-color: #161b2d;
   --text-color-disabled: #343b51;
   --bg-selected: #3e528e;
-  --alert: #be3742;
+  --alert: #9d252f;
 }
 @define-color cc-bg rgba(219, 223, 235, 0.7);
 @define-color noti-border-color #c6cbdd;
@@ -24,5 +24,5 @@
 @define-color text-color #161b2d;
 @define-color text-color-disabled #343b51;
 @define-color bg-selected #3e528e;
-@define-color alert #be3742;
+@define-color alert #9d252f;
 @define-color noti-bg rgba(242, 243, 248, 0.94);

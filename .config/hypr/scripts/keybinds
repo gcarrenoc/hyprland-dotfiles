@@ -45,7 +45,7 @@ for section, rows in groups.items():
     lines += [f"<b>{html.escape(k.ljust(width))}</b>{html.escape(a)}\0meta\x1f{name}" for k, a in rows]
 
 subprocess.run(
-    ["env", "-u", "WAYLAND_DISPLAY", "rofi", "-dmenu", "-i", "-markup-rows", "-no-custom", "-no-sort", "-selected-row", "1", "-p", "\U000f030c",
+    [str(Path.home() / ".config/hypr/scripts/menu"), "-dmenu", "-i", "-markup-rows", "-no-custom", "-no-sort", "-selected-row", "1", "-p", "\U000f030c",
      "-theme-str",
      "window { width: 216.96mm; } listview { lines: 20; spacing: 0.53mm; } element { padding: 1.06mm 2.65mm; } "
      "element selected.normal { background-color: @background-alt; text-color: @foreground; }"],

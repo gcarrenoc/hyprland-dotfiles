@@ -1,8 +1,15 @@
 [Unit]
 Description=Update Claude Desktop in the home folder (verified, no password; used from its next start)
-After=network-online.target graphical-session.target
+After=graphical-session.target
+# no connection yet? try again every 20 min, at most 12 times
+StartLimitIntervalSec=6h
+StartLimitBurst=12
 
 [Service]
 Type=oneshot
 ExecStart=%h/.local/bin/claude-desktop-update
 TimeoutStartSec=15min
+Restart=on-failure
+RestartSec=20min
+# 1 = something is wrong (it notified): trying again soon won't help
+RestartPreventExitStatus=1

@@ -57,7 +57,7 @@ for c in clients:
     rows.append(f"{label}\0icon\x1f{icon}")
 
 r = subprocess.run(
-    ["env", "-u", "WAYLAND_DISPLAY", "rofi", "-dmenu", "-i", "-markup-rows", "-show-icons", "-no-custom", "-format", "s",
+    [str(Path.home() / ".config/hypr/scripts/menu"), "-dmenu", "-i", "-markup-rows", "-show-icons", "-no-custom", "-format", "s",
      "-p", "\U000f05b6",
      "-mesg", "↵ go to window",
      "-selected-row", "1" if len(rows) > 1 else "0",

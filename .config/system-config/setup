@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# setup — rebuild this desktop on a fresh Arch install. Asks before each step; safe to run again.
+#   1. git clone --bare https://github.com/gcarrenoc/hyprland-dotfiles.git ~/.dotfiles
+#   2. git --git-dir=$HOME/.dotfiles --work-tree=$HOME checkout
+#   3. ~/.config/system-config/setup
+# Not included (do by hand): disk encryption, boot entries (~/.config/refind), AUR packages
+# (packages/aur.txt: review each PKGBUILD), signing in to apps.
+set -euo pipefail
+DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+ask() { local a; read -rp "$1 [y/N] " a; [[ ${a,,} == y ]]; }
+
+if [[ $HOME != /home/gcarreno ]] && ask "Point the config files at $HOME instead of /home/gcarreno?"; then
+  git --git-dir="$HOME/.dotfiles" --work-tree="$HOME" grep -lI /home/gcarreno -- . |
+    while read -r f; do [[ $f == *system-config/setup ]] || sed -i "s|/home/gcarreno|$HOME|g" "$HOME/$f"; done
+fi
+if ask "Install the Arch packages ($(wc -l < "$DIR/packages/arch.txt"))?"; then
+  sudo pacman -Syu --needed $(comm -12 <(sort "$DIR/packages/arch.txt") <(pacman -Slq | sort -u))
+fi
+if [[ -s $DIR/packages/flatpak.txt ]] && ask "Install the Flatpak apps?"; then
+  flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+  xargs -r flatpak install -y flathub < "$DIR/packages/flatpak.txt"
+fi
+if ask "Copy the system files to /etc (login screen, keyboard, mirrors, swap, firewall)?"; then
+  sudo cp -rv --no-preserve=ownership "$DIR/etc/." /etc/
+  sudo systemctl enable --now nftables.service
+fi
+if ask "Enable the desktop services and timers?"; then
+  systemctl --user daemon-reload
+  systemctl --user enable waybar spotlight bar-panels hyprpaper hypridle hyprsunset \
+    clipboard-history@text clipboard-history@image \
+    nightlight-auto.timer power-watch.timer claude-desktop-update.timer vscode-update.timer
+fi
+if ask "Download Claude Desktop and VS Code (verified)?"; then
+  "$HOME/.local/bin/claude-desktop-update"; "$HOME/.local/bin/vscode-update"
+fi
+echo
+echo "AUR packages to review and install by hand:"; sed 's/^/  /' "$DIR/packages/aur.txt"
+echo "Colours: run  wallpaper <image>   ·   then log in to \"Hyprland (uwsm-managed)\"."

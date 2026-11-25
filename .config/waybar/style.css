@@ -29,7 +29,7 @@ tooltip label {
 
 /* Pills */
 #custom-launcher, #workspaces,
-#indicators, #clock, #custom-power,
+#indicators, #custom-state, #clock, #custom-power,
 #network, #bluetooth, #pulseaudio, #backlight, #battery {
   background-color: @pill;
   color: @text;
@@ -46,10 +46,10 @@ tooltip label {
 
 
 #workspaces { padding: 0 6px; }
-#custom-newws { color: alpha(@muted, 0.7); font-family: "PaperMono Nerd Font"; padding: 0 6px; margin-left: 0; background: transparent; }
+#custom-newws { color: @light; text-shadow: 0 0 3px @base, 0 0 3px @base; font-family: "PaperMono Nerd Font"; padding: 0 6px; margin-left: 0; background: transparent; }
 #custom-newws:hover { color: @star; }
 #workspaces button {
-  color: alpha(@muted, 0.55);                 /* empty workspace: dim */
+  color: @muted;                              /* empty workspace: dim, still readable */
   font-family: "PaperMono Nerd Font";
   font-weight: bold;
   padding: 0 9px;
@@ -59,7 +59,6 @@ tooltip label {
   background: transparent;
   transition: all 0.2s ease-out;
 }
-/* the * rule sets 15px on the label itself, so size the numbers here; app icons = 111% of 18 = 20px */
 #workspaces button:not(.empty) { color: @light; }      /* has apps: brighter */
 #workspaces button.active { color: @star; background: alpha(@steel, 0.18); }
 #workspaces button.urgent { color: @alert; }
@@ -87,7 +86,7 @@ tooltip label {
 #pulseaudio.muted { color: @alert; }
 #backlight { color: @muted; }
 #battery { color: @light; border-radius: 0 8px 8px 0; padding-right: 12px; margin-right: 4px; }
-#battery.warning:not(.charging)  { color: @star; }
+#battery.warning:not(.charging)  { color: @accent; }   /* 30 %: amber · 15 %: red */
 #battery.critical:not(.charging) { color: @alert; }
 
 
@@ -96,6 +95,8 @@ tooltip label {
   font-family: "PaperMono Nerd Font";
   font-weight: bold;
 }
+
+#custom-state { color: @accent; padding: 0 12px 0 10px; }
 
 #clock.date { font-weight: normal; color: @light; }
 

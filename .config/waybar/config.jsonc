@@ -6,7 +6,7 @@
   "spacing": 0,
 
   "modules-left":  ["custom/launcher", "hyprland/workspaces", "custom/newws"],
-  "modules-right": ["group/indicators", "network", "bluetooth", "pulseaudio", "backlight", "battery", "clock#date", "clock", "custom/power"],
+  "modules-right": ["group/indicators", "custom/state", "network", "bluetooth", "pulseaudio", "backlight", "battery", "clock#date", "clock", "custom/power"],
 
   "custom/launcher": {
     "format": "",
@@ -91,7 +91,6 @@
     "spacing": 10
   },
 
-  // Power profile: click cycles performance → balanced → power saver
   "network": {
     "format-wifi": "{icon}",
     "format-ethernet": "<span font_family='lucide'></span>",
@@ -102,6 +101,14 @@
     "tooltip-format-disconnected": "Disconnected",
     "on-click": "~/.config/hypr/scripts/panel wifi",
     "on-click-middle": "uwsm app -- alacritty --config-file ~/.config/alacritty/balcony.toml --class fly-term -e nmtui"
+  },
+
+  // Only when something isn't as usual: do not disturb, keep awake, power saver / performance
+  "custom/state": {
+    "exec": "~/.config/hypr/scripts/bar-state",
+    "return-type": "json",
+    "restart-interval": 5,
+    "on-click": "~/.config/hypr/scripts/panel battery"
   },
 
   // Lucide: Bluetooth off / on / connected
@@ -134,11 +141,11 @@
   "backlight": {
     "device": "intel_backlight",
     "format": "{icon}",
-    "tooltip-format": "Brightness  {percent}%",
+    "tooltip-format": "Brightness and night light",
     "format-icons": [""],
     "on-click": "~/.config/hypr/scripts/panel brightness",
-    "on-scroll-up": "brightnessctl -q set 5%+",
-    "on-scroll-down": "brightnessctl -q set 5%-"
+    "on-scroll-up": "brightnessctl -q -e2 -n50 set 5%+",
+    "on-scroll-down": "brightnessctl -q -e2 -n50 set 5%-"
   },
 
   "battery": {
@@ -166,9 +173,9 @@
       "mode": "month",
       "weeks-pos": "",
       "format": {
-        "months": "<span color='#ecd3a0'><b>{}</b></span>",
-        "weekdays": "<span color='#7a95c9'><b>{}</b></span>",
-        "today": "<span color='#fb958b'><b><u>{}</u></b></span>"
+        "months": "<b>{}</b>",
+        "weekdays": "<span alpha='70%'><b>{}</b></span>",
+        "today": "<b><u>{}</u></b>"
       }
     }
   },

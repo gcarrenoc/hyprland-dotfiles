@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# bar-state — small icons on the bar only while something isn't as usual (nothing otherwise):
+#   do not disturb · keep awake (caffeinate) · power saver / performance
+# Waybar runs it and reads one JSON line per change. It sleeps until something happens:
+# swaync and power-profiles-daemon tell it, caffeinate writes to the pipe $XDG_RUNTIME_DIR/bar-state.
+set -u
+PIPE="${XDG_RUNTIME_DIR:-/tmp}/bar-state"
+[[ -p $PIPE ]] || { rm -f "$PIPE"; mkfifo -m 600 "$PIPE"; }
+exec 3<>"$PIPE"
+trap 'kill $(jobs -p) 2>/dev/null' EXIT
+swaync-client -swb 2>/dev/null | while read -r _; do echo n >&3; done &
+gdbus monitor --system --dest net.hadess.PowerProfiles 2>/dev/null | while read -r l; do [[ $l == *ActiveProfile* ]] && echo p >&3; done &
+
+show() {
+  local text="" tip=()
+  if [[ $(swaync-client -D -sw 2>/dev/null) == true ]]; then text+="DND "; tip+=("Do not disturb is on"); fi
+  if systemctl --user is-active -q caffeinate.service; then text+="AWAKE "; tip+=("$("$HOME/.local/bin/caffeinate" status 2>/dev/null)"); fi
+  case $(powerprofilesctl get 2>/dev/null) in
+    power-saver) text+="SAVER "; tip+=("Power saver") ;;
+    performance) text+="PERF ";  tip+=("Performance mode") ;;
+  esac
+  text=${text% }
+  text=${text//DND/$'\ue05a'}; text=${text//AWAKE/$'\ue096'}; text=${text//SAVER/$'\ue2de'}; text=${text//PERF/$'\ue286'}
+  local tips; tips=$(printf '%s\n' "${tip[@]:-}" | sed 's/["\\]//g' | paste -sd'|' | sed 's/|/\\n/g')
+  [[ -n $text ]] && text="<span font_family='lucide'>$text</span>"
+  printf '{"text":"%s","tooltip":"%s"}\n' "$text" "$tips"
+}
+
+show
+while read -r _ <&3; do
+  while read -r -t 0.15 _ <&3; do :; done                    # several changes at once: one update
+  show
+done

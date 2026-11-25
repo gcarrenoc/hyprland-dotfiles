@@ -1,0 +1,7 @@
+#!/bin/sh
+# menu — rofi for this desktop: an XWayland window (normal-window) sized for the screen it opens on.
+# XWayland isn't scaled, so dpi = 96 × the scale of the focused screen; mm and pt sizes follow it.
+scale=$(hyprctl monitors -j 2>/dev/null | python3 -I -c 'import json,sys; print(next((m["scale"] for m in json.load(sys.stdin) if m["focused"]), 1.25))' 2>/dev/null)
+dpi=$(awk -v s="${scale:-1.25}" 'BEGIN { printf "%d", 96 * s + 0.5 }')
+unset WAYLAND_DISPLAY
+exec rofi -dpi "$dpi" "$@"

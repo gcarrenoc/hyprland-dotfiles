@@ -432,6 +432,16 @@ def picture(path, width=264, height=330):
     return pic
 
 
+def focused_screen():
+    """Logical size of the screen the panel will open on."""
+    try:
+        m = next(m for m in json.loads(run(["hyprctl", "monitors", "-j"])) if m["focused"])
+        w, h = (m["width"], m["height"]) if m["transform"] % 2 == 0 else (m["height"], m["width"])
+        return int(w / m["scale"]), int(h / m["scale"])
+    except Exception:
+        return 1536, 960
+
+
 # ---------- the window ----------
 class Spotlight(Gtk.ApplicationWindow):
     def __init__(self, app):
@@ -495,9 +505,7 @@ class Spotlight(Gtk.ApplicationWindow):
         self.was_active = False
         self.picks = load_picks()
         self.unfold(False, 0)
-        mons = Gdk.Display.get_default().get_monitors()    # where the unfolded panel would be centred
-        geo = mons.get_item(0).get_geometry() if mons.get_n_items() else None
-        width, height = (geo.width, geo.height) if geo else (1536, 960)
+        width, height = focused_screen()                   # where the unfolded panel would be centred
         self.card.set_margin_start(max(8, (width - WIDTH) // 2)); self.card.set_margin_end(max(8, (width - WIDTH) // 2))
         self.card.set_margin_top(max(16, (height - 37 - BODY - 90) // 2))
         self.hint.set_label(HINT)
@@ -934,9 +942,6 @@ class Spotlight(Gtk.ApplicationWindow):
             spawn("xdg-open", WEB.format(quote_plus(target)))
         elif kind == "action":
             detach(*target)
-            if item["key"] in ("action:awake", "action:night"):    # their tray icons (status-tray) refresh on a signal
-                time.sleep(0.3)
-                subprocess.run(["systemctl", "--user", "kill", "--kill-whom=main", "-s", "USR1", "status-tray.service"], capture_output=True)
         self.dismiss()
 
     def on_active(self, *_):

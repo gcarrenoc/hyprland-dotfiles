@@ -2,16 +2,17 @@
 # dotfiles — Git for your config files.
 # Bare repo in ~/.dotfiles, files stay where they are (work tree = your home).
 #
-#   dotfiles save ["message"]   copy system files, commit every tracked change, push
+#   dotfiles save ["message"]   copy system files and package lists, scan for secrets, commit, push
 #   dotfiles status | diff | log | add <file> | restore <file> | …   (any git command)
 #
-# System files (SDDM login screen, keyboard, reflector, zram swap) are copied into
-# ~/.config/system-config/ on every save so they are versioned too.
+# System files (SDDM login screen, keyboard, reflector, zram swap, firewall) and the lists of
+# installed packages are copied into ~/.config/system-config/ on every save so they are versioned
+# too. New machine: ~/.config/system-config/setup. Secrets: dotfiles-scan (pre-commit hook).
 set -euo pipefail
 GIT=(git --git-dir="$HOME/.dotfiles" --work-tree="$HOME")
 SYS="$HOME/.config/system-config"
 SYSTEM_FILES=(/etc/sddm.conf.d/10-hyprlock.conf /etc/X11/xorg.conf.d/00-keyboard.conf
-              /etc/xdg/reflector/reflector.conf /etc/systemd/zram-generator.conf)
+              /etc/xdg/reflector/reflector.conf /etc/systemd/zram-generator.conf /etc/nftables.conf)
 
 snapshot_system() {
   for f in "${SYSTEM_FILES[@]}"; do
@@ -20,9 +21,26 @@ snapshot_system() {
   done
 }
 
+package_lists() {          # what you installed on purpose (not its dependencies)
+  mkdir -p "$SYS/packages"
+  pacman -Qqen > "$SYS/packages/arch.txt"
+  pacman -Qqem > "$SYS/packages/aur.txt"
+  if command -v flatpak >/dev/null; then flatpak list --app --columns=application | sort > "$SYS/packages/flatpak.txt"; fi
+  if command -v code >/dev/null; then code --list-extensions 2>/dev/null | sort > "$SYS/packages/vscode.txt" || true; fi
+}
+
+hook() {                   # the scan runs before every commit, on any machine
+  local h="$HOME/.dotfiles/hooks/pre-commit"
+  [[ -x $h ]] && return
+  printf '#!/bin/sh\n# secrets never reach the public repo (see dotfiles-scan)\nexec "$HOME/.local/bin/dotfiles-scan"\n' > "$h"
+  chmod +x "$h"
+}
+
 case ${1:-status} in
   save)
+    hook
     snapshot_system
+    package_lists
     "${GIT[@]}" add -u
     "${GIT[@]}" add "$SYS"
     if "${GIT[@]}" diff --cached --quiet; then echo "Nothing changed."; exit 0; fi

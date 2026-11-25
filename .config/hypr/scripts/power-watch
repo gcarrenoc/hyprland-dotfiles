@@ -2,15 +2,15 @@
 # Power watcher (runs every minute via ~/.config/systemd/user/power-watch.timer)
 #   • battery 20%  → power saver plan (the previous plan comes back when you plug in)
 #   • battery 15%  → low-battery notification
-#   • battery 5%   → urgent notification
-#   • battery 3%   → suspend (so work isn't lost)
+#   • battery 8%   → urgent notification      (both also show in do not disturb)
+#   • battery 5%   → suspend, with enough left to survive asleep for hours (no hibernation here)
 #   • on battery   → lighter blur (1 pass) to save power; plugged in → 3 passes
 # Warnings fire once per discharge and reset when you plug in.
 set -u
 BAT=/sys/class/power_supply/BAT0 AC=/sys/class/power_supply/AC/online
 STATE="$HOME/.cache/power-watch"
 SAVER_STATE="$HOME/.cache/power-watch-saver"   # exists while we switched to power saver; holds the previous plan
-SAVER=20 LOW=15 CRIT=5 SUSPEND=3 BLUR_AC=3 BLUR_BAT=1
+SAVER=20 LOW=15 CRIT=8 SUSPEND=5 BLUR_AC=3 BLUR_BAT=1
 
 cap=$(<"$BAT/capacity") status=$(<"$BAT/status") ac=$(<"$AC")
 warned=0
@@ -26,7 +26,7 @@ if [[ $status == Discharging ]]; then
     notify -u critical -i battery-caution "Battery at ${cap}% — plug in now" "The laptop will suspend at ${SUSPEND}%."
     warned=2
   elif (( cap <= LOW && warned < 1 )); then
-    notify -u normal -i battery-low "Battery low: ${cap}%" "About time to plug in the charger."
+    notify -u critical -i battery-low "Battery low: ${cap}%" "About time to plug in the charger."
     warned=1
   fi
 else

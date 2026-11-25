@@ -22,6 +22,7 @@ G = {k: chr(v) for k, v in {
     "battery": 0xe053, "charging": 0xe054, "full": 0xe055, "low": 0xe056, "medium": 0xe057, "plug": 0xe37f,
     "btoff": 0xe1b9, "more": 0xe0b6, "keyboard": 0xe284, "mouse": 0xe28e, "gamepad": 0xe0df, "phone": 0xe163,
     "printer": 0xe141, "watch": 0xe1ad, "loudspeaker": 0xe166, "sun": 0xe178, "moon": 0xe11e, "warm": 0xe186,
+    "coffee": 0xe096, "auto": 0xe357,
     "leaf": 0xe2de, "scale": 0xe212, "rocket": 0xe286,
 }.items()}
 

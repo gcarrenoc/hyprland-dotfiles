@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# What hypridle does when nobody is at the laptop (~/.config/hypr/hypridle.conf).
+#   idle dim       half as bright as now, never brighter; remembers the level
+#   idle undim     back to that level
+#   idle suspend   sleep on battery; on the charger keep working (screen off and locked)
+set -u
+case ${1:-} in
+  dim)
+    now=$(brightnessctl get); low=$(( now / 4 ))            # a quarter of the light looks half as bright
+    (( low < 50 )) && low=50
+    brightnessctl -q -s                                      # remember
+    (( low < now )) && brightnessctl -q set "$low" ;;
+  undim)   brightnessctl -q -r ;;
+  suspend) grep -qs 1 /sys/class/power_supply/AC/online || systemctl suspend ;;
+esac
+exit 0

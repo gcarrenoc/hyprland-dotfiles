@@ -28,7 +28,7 @@ Hyprland 0.57. This is the only desktop now (GNOME was removed); the login scree
 |---|---|
 | `Ctrl + Shift + Space` | Quick Access |
 | `Super + Shift + P` | Show / hide 1Password |
-| `Super + Shift + L` | Lock 1Password |
+| `Super + Alt + P` | Lock 1Password |
 
 ### Windows
 
@@ -42,7 +42,7 @@ Hyprland 0.57. This is the only desktop now (GNOME was removed); the login scree
 | `Super + F` | Maximize (keeps the bar) |
 | `Super + Shift + F` | Real fullscreen |
 | `Super + X` | Swap split direction (side-by-side ↔ stacked) |
-| `Super + P` | Displays: Extend · Mirror · External only · Laptop only (also pops up when you plug in a monitor / projector) |
+| `Super + P` | Displays: Extend · Mirror · External only · Laptop only (also pops up when you plug in a monitor / projector; unplug the last one and the laptop's screen comes back) |
 | `Super + left-drag` | Move window with the mouse |
 | `Super + right-drag` | Resize window with the mouse |
 
@@ -51,7 +51,7 @@ Hyprland 0.57. This is the only desktop now (GNOME was removed); the login scree
 | Keys | Action |
 |---|---|
 | `Super + 1 … 9, 0` | Go to workspace 1 … 10 (past the last one: a new workspace at the end) |
-| `Super + Shift + 1 … 9, 0` | Send window to exactly workspace 1 … 10 (stay here) |
+| `Super + Shift + 1 … 9, 0` | Send window to workspace 1 … 10 (past the last one: one new workspace; stay here) |
 | `Super + Ctrl + H / L` | Previous / next workspace (next at the end = add a new one) |
 | `Super + Ctrl + Shift + H / L` | Take window to previous / next workspace |
 | `Super + Alt + H / L` | Move the whole current workspace left / right (reorder workspaces) |
@@ -76,6 +76,16 @@ Hyprland 0.57. This is the only desktop now (GNOME was removed); the login scree
 | `Super + Shift + E` | Power menu (lock, suspend, log out, restart, shut down) |
 | `Super + N` | Notification Center (open / close) |
 | `Super + Shift + N` | Clear all notifications |
+
+### Panels
+
+| Keys | Action |
+|---|---|
+| `Super + Ctrl + W` | Wi-Fi panel |
+| `Super + Ctrl + B` | Bluetooth panel |
+| `Super + Ctrl + S` | Sound panel |
+| `Super + Ctrl + D` | Brightness and night light panel |
+| `Super + Ctrl + P` | Battery, power mode and Caffeinate panel |
 
 ### Laptop keys
 
@@ -121,28 +131,31 @@ Icons: outline style — Octicons (`nf-oct-*`, in the Nerd Font) wherever one ex
 | Telescope | Spotlight (`Super + Space`) |
 | 1 · 2 · 3 … | Workspaces, each with icons of the apps running on it — the current one is highlighted; click to switch, scroll to move |
 | + | Add a new empty workspace at the end and go there |
-| Coffee cup (tray) | **Caffeinate**, in the app-indicator tray (the `<` drawer). Click: menu — keep awake until turned off, for 30 min … 5 h, system only, more options, turn off. Full steaming cup = on (time left in the menu), empty cup = off. |
+| Amber icons | Shown only when something isn't as usual: crossed-out bell = do not disturb, cup = Caffeinate, leaf = power saver, rocket = performance. Click: Battery panel |
 | Wi-Fi | **Wi-Fi panel:** on / off, networks (click to join; type the password if it is new), details, disconnect, forget, cable, VPN, network settings. Click again, click outside or Esc closes. Middle-click opens `nmtui` |
 | Bluetooth | **Bluetooth panel:** on / off, your devices (click to connect; `…` to disconnect or forget; battery when known), nearby devices (click to pair, codes are shown there), blueman. Muted = off |
 | Speaker | **Sound panel:** output and microphone (volume, mute, device), now playing, volume of each app. Click again, click outside or Esc closes · `m` mutes. Right-click mutes · scroll changes volume · middle-click opens the full mixer |
 | Sun | **Brightness panel:** screen brightness and **night light** (on / off, warmth). Night light **turns on at sunset and off at sunrise automatically** (Valparaíso times, recalculated daily); what you choose by hand stays until the next one. Scroll changes the brightness |
-| Battery | Always shows the percentage (the icon fills as it charges; bolt while charging, plug when plugged in but not charging). Click: **Battery panel** — time left, **power mode** (power saver · balanced · performance), power in use, health and cycles, charge limit. Click again, click outside or Esc closes |
+| Battery | Always shows the percentage (the icon fills as it charges; bolt while charging, plug when plugged in but not charging). Click: **Battery panel** — time left, **power mode** (power saver · balanced · performance), **Caffeinate** (keep awake: until turned off, 30 min … 5 h), power in use, health and cycles, charge limit. Click again, click outside or Esc closes |
 | Date | Today's date · hover for a calendar |
 | Time | The time · click: **Notification Center** — **do not disturb** on top, then your notifications as cards, one per notification or one stack per app (click a stack to expand it; ✕ dismisses; `Super + Shift + N` clears all). While do not disturb is on, notifications skip the pop-up and go silently to the Center, and they stay there when you turn it off; volume / brightness pop-ups and critical alerts (low battery) still show |
 | Power | Power menu |
 
-App indicators (1Password, Insync, ZapZap, Caffeinate…) are hidden behind the **‹** arrow on the right of the bar: click it to show or hide them.
+App indicators (1Password, Insync, ZapZap…) are hidden behind the **‹** arrow on the right of the bar: click it to show or hide them.
 
 ## Automatic behaviour
 
 - **Empty workspaces disappear:** as soon as you're not on an empty workspace it's removed and the ones after it shift down (like GNOME). The one you're on stays even when empty, so you can open something there.
-- **Idle:** screen dims at 4.5 min, locks at 5 min, turns off at 5.5 min, suspends at 15 min
+- **Idle:** screen dims (to half of what it is, never brighter) at 4.5 min, locks at 5 min, turns off at 5.5 min, suspends at 15 min **on battery only**: on the charger it keeps working
  . Videos and `caffeinate` prevent it.
 - **Lid / suspend:** the screen is locked before sleeping.
-- **Workspaces are a row** (like GNOME / macOS Spaces): workspaces 1 … N (up to 10) always exist, **empty ones stay** until you remove them (Super+Ctrl+Q), there are never gaps, and N is remembered across logins. Add one with **+** or by going past the end. Keys, Super+scroll, the 4-finger swipe and the bar all follow the same rule. Logic: `~/.config/hypr/workspaces.lua`.
+- **Workspaces are a row** (like GNOME / macOS Spaces): workspaces 1 … N (up to 10) always exist, **empty ones disappear** once you leave them, there are never gaps, and N is remembered across logins. Add one with **+** or by going past the end. Keys, Super+scroll, the 4-finger swipe and the bar all follow the same rule. Logic: `~/.config/hypr/workspaces.lua`. With several screens each workspace stays on its screen and nothing is renumbered.
 - **Night light:** on at sunset, off at sunrise (timer `nightlight-auto.timer`, checks every 5 min). Location for the sun times: `LAT/LON` in `~/.config/hypr/scripts/suntimes`.
-- **Battery:** power saver plan at 20 % (your previous plan comes back when you plug in, unless you changed it yourself), notification at 15 %, urgent one at 5 %, suspends at 3 % (`power-watch.timer`, every minute). On battery the blur is lighter (1 pass) to save power; on the charger it's back to 3.
+- **Battery:** power saver plan at 20 % (your previous plan comes back when you plug in, unless you changed it yourself), notification at 15 %, urgent one at 8 % (both also in do not disturb), suspends at 5 % (`power-watch.timer`, every minute). On battery the blur is lighter (1 pass) to save power; on the charger it's back to 3.
 - **App activation:** clicking a notification or link takes you to that app's window, switching workspace if needed.
+- **If something crashes:** the bar, Spotlight, the panels, wallpaper, idle/lock and clipboard history are systemd user services and restart by themselves (`systemctl --user status waybar`).
+- **Firewall:** nothing from the network gets in unless this laptop started it (`/etc/nftables.conf`; mDNS allowed so printers and TVs are found; for a hotspot see the notes in the file).
+- **App updates:** Claude Desktop and VS Code update by themselves; you're told only if that stops working (`~/.local/lib/apt_app.py`).
 - **Apps at login:** Everything in `~/.config/autostart` (1Password, Insync,
   ZapZap, Bluetooth, network applet).
 
@@ -178,11 +191,12 @@ way is picked up at the next login. Generator: `~/.config/hypr/scripts/theme`.
 
 ## Backup (dotfiles)
 
-Your config is versioned in Git (`~/.dotfiles`, files stay in place) and pushed to the private GitHub repo **gcarrenoc/hyprland-dotfiles**.
+Your config is versioned in Git (`~/.dotfiles`, files stay in place) and pushed to the **public** GitHub repo **gcarrenoc/hyprland-dotfiles**. New machine: `~/.config/system-config/setup`.
 
 | Command | What it does |
 |---|---|
-| `dotfiles save "message"` | Save every change (and copies of the login-screen files) and push to GitHub |
+| `dotfiles save "message"` | Save every change (with copies of system files and the package lists), **scan for secrets** and push to the public GitHub repo; stops if something looks private |
+| `dotfiles-scan --all` | Check every tracked file for secrets (your own private words: `~/.config/dotfiles-private`, never tracked) |
 | `dotfiles status` / `dotfiles diff` | What changed since the last save |
 | `dotfiles log` | History |
 | `dotfiles restore <file>` | Undo changes to a file |

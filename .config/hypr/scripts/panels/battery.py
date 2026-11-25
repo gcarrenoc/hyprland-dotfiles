@@ -1,15 +1,19 @@
 """Battery panel (under the bar's battery).
 
   Charge, time left and what the battery is doing · power mode (power saver, balanced, performance)
+  Keep awake (caffeinate): until turned off, or for a while
   Details: power in use, health and cycles, charge limit
 
 Power modes: power-profiles-daemon over D-Bus, so a change made elsewhere (Spotlight, power-watch at
 20 %) shows at once. Charge: UPower. Read only while open.
 """
+import subprocess
 from pathlib import Path
 from base import DropPanel, G, Gio, GLib, Gtk, box, button, lucide, text
 
 BAT = Path("/sys/class/power_supply/BAT0")
+CAFFEINATE = str(Path.home() / ".local/bin/caffeinate")
+AWAKE = (("inf", "∞", "Until turned off"), ("30m", "30m", "30 minutes"), ("1h", "1h", "1 hour"), ("2h", "2h", "2 hours"), ("5h", "5h", "5 hours"))
 SAVER_STATE = Path.home() / ".cache/power-watch-saver"        # power-watch switched to power saver by itself
 MODES = (("power-saver", "Power saver", "leaf"), ("balanced", "Balanced", "scale"), ("performance", "Performance", "rocket"))
 LIMITED = {"lap-detected": "Limited: the laptop is on your lap", "high-operating-temperature": "Limited: the laptop is hot"}
@@ -37,13 +41,14 @@ class BatteryPanel(DropPanel):
         self.power = proxy("net.hadess.PowerProfiles", "/net/hadess/PowerProfiles", "net.hadess.PowerProfiles")
         for p in (self.bat, self.power):
             p.connect("g-properties-changed", lambda *_: self.get_visible() and self.build())
-        self.shape, self.timer, self.error = None, 0, None
+        self.shape, self.timer, self.error, self.awake, self.asked = None, 0, None, "", 0
 
     def open(self):
         self.error, self.shape = None, None
+        self.read_awake()
         self.build()
         self.present()
-        self.timer = GLib.timeout_add_seconds(2, lambda: self.build() or True)
+        self.timer = GLib.timeout_add_seconds(2, lambda: (self.read_awake(), self.build()) and True)
 
     def dismiss(self):
         super().dismiss()
@@ -67,6 +72,26 @@ class BatteryPanel(DropPanel):
         self.power.call("org.freedesktop.DBus.Properties.Set",
                         GLib.Variant("(ssv)", ("net.hadess.PowerProfiles", "ActiveProfile", GLib.Variant("s", mode))),
                         Gio.DBusCallFlags.NONE, 5000, None, done)
+
+    def read_awake(self):
+        """Caffeinate's status line, "" when it's off."""
+        try:
+            r = subprocess.run([CAFFEINATE, "status"], capture_output=True, text=True, timeout=2)
+            line = r.stdout.strip().removeprefix("Caffeinate is on: ").rstrip(".") if r.returncode == 0 else ""
+            for long, short in (("screen + system awake", "On"), ("system awake", "Screen may sleep"), (", indefinitely", " until turned off")):
+                line = line.replace(long, short)
+            self.awake = line
+        except (OSError, subprocess.TimeoutExpired):
+            self.awake = ""
+
+    def set_awake(self, *args):
+        subprocess.Popen([CAFFEINATE, *args], start_new_session=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        for ms in (500, 1200):
+            GLib.timeout_add(ms, lambda: (self.read_awake(), self.build()) and False)
+
+    def switch_awake(self, _switch, on):
+        self.set_awake(*(["inf"] if on else ["stop"]))
+        return False
 
     def status(self):
         """(glyph, percent, what the battery is doing)"""
@@ -103,7 +128,7 @@ class BatteryPanel(DropPanel):
         start, end = number("charge_control_start_threshold"), number("charge_control_end_threshold")
         if end and end < 100:
             facts.append(("Charge limit", f"{end}%" + (f" (from {start}%)" if start else "")))
-        shape = repr((glyph, pct, doing, mode, degraded, modes, automatic, facts, self.error))
+        shape = repr((glyph, pct, doing, mode, degraded, modes, automatic, facts, self.awake, self.error))
         if shape == self.shape:
             return
         self.shape = shape
@@ -142,6 +167,20 @@ class BatteryPanel(DropPanel):
             card.append(text(LIMITED.get(degraded, f"Limited: {degraded}"), "note"))
         if self.error:
             card.append(text(self.error, "error"))
+
+        card = self.section("KEEP AWAKE")
+        row = box(False, 8)
+        row.append(lucide("coffee")); row.append(text("Caffeinate"))
+        switch = Gtk.Switch(active=bool(self.awake), valign=Gtk.Align.CENTER, tooltip_text="Keep the screen and the laptop awake")
+        switch.connect("state-set", self.switch_awake)
+        row.append(switch)
+        card.append(row)
+        row = box(False, 4, homogeneous=True)
+        for value, label, tip in AWAKE:
+            row.append(button(Gtk.Label(label=label), tip, lambda v=value: self.set_awake(v), "action"))
+        card.append(row)
+        if self.awake:
+            card.append(text(self.awake[:1].upper() + self.awake[1:], "note"))
 
         if facts:
             card = self.section("DETAILS")

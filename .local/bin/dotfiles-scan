@@ -1,0 +1,83 @@
+#!/usr/bin/env python3
+"""dotfiles-scan — stop secrets and personal data before they reach the public dotfiles repo.
+
+Runs by itself before every dotfiles commit (hook ~/.dotfiles/hooks/pre-commit, so also from
+`dotfiles save`). It reads only the lines being added. Exit 1 = something looks private: nothing
+is committed. Also by hand:  dotfiles-scan --all   checks every tracked file.
+
+Your own private words (emails, names, addresses), one regex per line, are in
+~/.config/dotfiles-private — a file that is never tracked.
+Sure it's harmless?  dotfiles commit --no-verify
+"""
+import re, subprocess, sys
+from pathlib import Path
+
+HOME = Path.home()
+GIT = ["git", f"--git-dir={HOME}/.dotfiles", f"--work-tree={HOME}"]
+PRIVATE = HOME / ".config/dotfiles-private"
+NEVER = re.compile(r"(^|/)(\.ssh|\.gnupg|\.pki)/|(^|/)(id_(rsa|ed25519|ecdsa)|\.netrc|\.pgpass|credentials(\.json)?|\.env|jupyter_server_config\.json)$"
+                   r"|\.(pem|key|p12|kdbx|jupyterlab-workspace)$|^\.config/dotfiles-private$")
+RULES = [
+    ("private key", r"-----BEGIN [A-Z ]*PRIVATE KEY"),
+    ("GitHub token", r"\b(gh[opsur]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{40,})"),
+    ("API key", r"\b(sk-[A-Za-z0-9_-]{24,}|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{30,}|xox[abprs]-[A-Za-z0-9-]{10,}|hf_[A-Za-z0-9]{30,})"),
+    ("password or token", r"(?i)\b(passw(or)?d|secret|api_?key|access_?token|auth_?token|psk)\b[\"']?\s*[:=]\s*[\"']?[A-Za-z0-9/+_.-]{8,}"),
+    ("email address", r"[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.(com|org|net|edu|cl|io|dev|me|co)\b"),
+    ("MAC address", r"\b([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}\b"),
+]
+# public on purpose: the theme's author, Microsoft's and Anthropic's contacts
+ALLOWED = re.compile(r"contact@toptensoftware\.com|@(microsoft|anthropic)\.com|noreply@|@users\.noreply\.github\.com|@example\.(com|org)|git@github\.com")
+
+
+def private_rules():
+    try:
+        lines = [l.strip() for l in PRIVATE.read_text().splitlines()]
+    except OSError:
+        return []
+    return [("private word", l) for l in lines if l and not l.startswith("#")]
+
+
+def check(path, number, line, rules):
+    return [(path, number, what) for what, rx in rules
+            for m in [re.search(rx, line)] if m and not ALLOWED.search(m.group(0))]
+
+
+def main():
+    rules = RULES + private_rules()
+    out = lambda *a: subprocess.run([*GIT, *a], capture_output=True, text=True, errors="replace").stdout
+    found = []
+    if "--all" in sys.argv:
+        names = out("ls-files").splitlines()
+        for n in names:
+            p = HOME / n
+            if p.is_symlink() or not p.is_file():
+                continue
+            data = p.read_bytes()
+            if b"\0" in data[:8000]:
+                continue
+            for i, line in enumerate(data.decode("utf-8", "replace").splitlines(), 1):
+                found += check(n, i, line, rules)
+    else:
+        names = out("diff", "--cached", "--name-only", "--diff-filter=ACMR").splitlines()
+        path, number = "", 0
+        for line in out("diff", "--cached", "-U0", "--no-color", "--no-ext-diff", "--diff-filter=ACMR").splitlines():
+            if line.startswith("+++ b/"):
+                path = line[6:]
+            elif m := re.match(r"@@ -\S+ \+(\d+)", line):
+                number = int(m.group(1))
+            elif line.startswith("+") and not line.startswith("+++"):
+                found += check(path, number, line[1:], rules)
+                number += 1
+    found += [(n, 0, "file that should stay private") for n in names if NEVER.search(n)]
+    if not found:
+        return 0
+    print("✗ dotfiles-scan: this looks private, nothing was committed:", file=sys.stderr)
+    for path, number, what in found[:20]:                      # where, never the text itself
+        print(f"    {path}{':' + str(number) if number else ''}  {what}", file=sys.stderr)
+    if len(found) > 20:
+        print(f"    … and {len(found) - 20} more", file=sys.stderr)
+    return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

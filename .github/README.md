@@ -29,8 +29,7 @@ Everything recolours itself from the wallpaper.
 | Command | What it does |
 |---|---|
 | `wallpaper <image>` | Sets the wallpaper and recolours the bar, borders, menus, terminal, lock screen and login screen from it |
-| `caffeinate [2h \| inf \| -s …]` | Keeps the laptop awake, macOS-style. It also lives in the tray. |
-| `status-tray` | Tray icon for caffeinate, with a menu |
+| `caffeinate [2h \| inf \| -s …]` | Keeps the laptop awake, macOS-style. Also in the battery panel. |
 | `nightlight` | hyprsunset night light that turns on at sunset and off at sunrise (local sun times). Controlled from the brightness panel. |
 | `claude-desktop-update` | Installs and updates [Claude Desktop](https://claude.ai/download) in `~/.local/opt` from Anthropic's signed apt repo. It verifies the key fingerprint, signature and checksums, needs no root, and runs silently. |
 | `vscode-update` | The same for [VS Code](https://code.visualstudio.com), from Microsoft's signed repo |
@@ -39,7 +38,7 @@ Everything recolours itself from the wallpaper.
 | `refind-theme` | Installs the rEFInd menu and theme to the EFI partition |
 | `dotfiles` | Manages this repo (see below) |
 
-Background jobs run as systemd user units in [`.config/systemd/user/`](../.config/systemd/user): night light, low-battery power saver, Claude Desktop and VS Code updates, the tray and JupyterLab.
+Background jobs run as systemd user units in [`.config/systemd/user/`](../.config/systemd/user): night light, the bar, Spotlight, the panels, wallpaper, idle/lock, clipboard history, night light, low-battery power saver, Claude Desktop and VS Code updates, and JupyterLab.
 
 ## How the repo works
 
@@ -49,7 +48,7 @@ It's a **bare git repo**: the files stay where they live in `$HOME`, and git's d
 ```bash
 dotfiles status            # any git command works
 dotfiles add ~/.config/foo # start tracking a file
-dotfiles save "message"    # copy the tracked /etc files, commit everything, push
+dotfiles save "message"    # copy /etc files and package lists, scan for secrets, commit, push
 ```
 
 A few system files (SDDM, keyboard layout, reflector, zram) are copied into
@@ -65,6 +64,8 @@ alias dotfiles='git --git-dir=$HOME/.dotfiles --work-tree=$HOME'
 dotfiles checkout          # stops if it would overwrite your files: move those away first
 dotfiles config status.showUntrackedFiles no
 ```
+
+Then [`.config/system-config/setup`](../.config/system-config/setup) asks before each step: paths, packages, services.
 
 Hyprland ≥ 0.57 with Lua config is required. The scripts expect Arch packages such as
 `waybar rofi swaync hyprlock hypridle hyprpaper hyprsunset uwsm alacritty tmux zathura-pdf-mupdf libqalculate python-gobject libayatana-appindicator gtk4-layer-shell libpulse playerctl networkmanager blueman power-profiles-daemon upower brightnessctl fish fzf zoxide`

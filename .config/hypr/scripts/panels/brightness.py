@@ -1,6 +1,6 @@
 """Brightness panel (under the bar's sun): screen brightness and night light.
 
-  Brightness    the same scale as the keys' pop-up (never fully dark)
+  Brightness    the same even scale as the keys and the scroll wheel (never fully dark)
   Night light   on / off, warmth (right = warmer) and today's sunset / sunrise
 
 Night light is scripts/nightlight (hyprsunset): on at sunset, off at sunrise; what you choose here
@@ -19,7 +19,8 @@ WARM, COOL, STEP = 2500, 6000, 250                            # kelvin, as in sc
 
 def brightness():
     try:
-        return round(int((LIGHT / "brightness").read_text()) * 100 / int((LIGHT / "max_brightness").read_text()))
+        raw, full = (int((LIGHT / f).read_text()) for f in ("brightness", "max_brightness"))
+        return round((raw / full) ** 0.5 * 100)               # perceived: the eye sees √ of the light (= brightnessctl -e2)
     except (OSError, ValueError, ZeroDivisionError):
         return None
 
@@ -39,7 +40,7 @@ class BrightnessPanel(DropPanel):
         card = self.section("BRIGHTNESS")
         line = box(False, 6)
         line.append(lucide("sun"))
-        self.light, self.light_num = self.slider(1, 100, 5, self.set_light, "Screen brightness")
+        self.light, self.light_num = self.slider(5, 100, 5, self.set_light, "Screen brightness")
         line.append(self.light); line.append(self.light_num)
         card.append(line)
 
@@ -106,10 +107,10 @@ class BrightnessPanel(DropPanel):
             self.warm_num.set_label(f"{kelvin}K")
 
     def set_light(self, value):
-        v = max(1, round(value))
+        v = max(5, round(value))
         self.touched["light"] = time.monotonic()
         self.light_num.set_label(f"{v}%")
-        self.cmd.send("light", "brightnessctl", "-q", "set", f"{v}%")
+        self.cmd.send("light", "brightnessctl", "-q", "-e2", "-n50", "set", f"{v}%")
 
     def set_warm(self, value):
         kelvin = COOL - round(value / 50) * 50

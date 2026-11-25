@@ -128,7 +128,7 @@ def main():
         by_label[label] = a
         rows.append(f"{label}\0icon\x1f{a['icon']}")
     r = subprocess.run(
-        ["env", "-u", "WAYLAND_DISPLAY", "rofi", "-dmenu", "-i", "-show-icons", "-no-custom", "-format", "s",
+        [str(Path.home() / ".config/hypr/scripts/menu"), "-dmenu", "-i", "-show-icons", "-no-custom", "-format", "s",
          "-p", "\U000f0349", "-mesg", "↵ go to app    ⇧↵ new window",
          "-theme-str", "textbox { text-color: @muted; horizontal-align: 0.5; }",
          "-kb-accept-custom", "", "-kb-accept-alt", "", "-kb-custom-1", "Shift+Return"],

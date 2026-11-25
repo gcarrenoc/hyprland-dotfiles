@@ -31,8 +31,8 @@ case "${1:-} ${2:-}" in
     if is_muted @DEFAULT_AUDIO_SOURCE@; then notify mic microphone-sensitivity-muted "Microphone muted"
     else notify mic microphone-sensitivity-high "Microphone on"; fi
     exit 0 ;;
-  "brightness up")   brightnessctl -q -e4 -n2 set 5%+ ;;
-  "brightness down") brightnessctl -q -e4 -n2 set 5%- ;;
+  "brightness up")   brightnessctl -q -e2 -n50 set 5%+ ;;
+  "brightness down") brightnessctl -q -e2 -n50 set 5%- ;;
   *) echo "usage: osd volume up|down|mute | mic mute | brightness up|down" >&2; exit 2 ;;
 esac
 
@@ -44,6 +44,6 @@ case $1 in
     elif (( v < 67 )); then notify volume audio-volume-medium "Volume  $v%" "$v"
     else notify volume audio-volume-high "Volume  $v%" "$v"; fi ;;
   brightness)
-    b=$(( $(brightnessctl get) * 100 / $(brightnessctl max) ))
+    b=$(awk -v r="$(brightnessctl get)" -v m="$(brightnessctl max)" 'BEGIN { printf "%d", sqrt(r / m) * 100 + 0.5 }')   # perceived, as in the brightness panel
     notify brightness gpm-brightness-lcd "Brightness  $b%" "$b" ;;
 esac

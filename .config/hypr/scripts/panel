@@ -1,6 +1,9 @@
 #!/bin/sh
-# panel wifi | bluetooth | sound | brightness | battery — show / hide a bar panel fast: tell the running bar-panels over D-Bus
-# (no Python start-up). If it isn't running (e.g. it crashed), start it — it then stays loaded.
-gdbus call --session --dest local.BarPanels --object-path /local/BarPanels \
-    --method org.freedesktop.Application.ActivateAction "$1" '[]' '{}' >/dev/null 2>&1 \
-    || exec "$(dirname "$0")/bar-panels" "$1"
+# panel wifi | bluetooth | sound | brightness | battery — show / hide a bar panel fast: tell the
+# running bar-panels over D-Bus (no Python start-up). If its service isn't running, start it and try again.
+show() { gdbus call --session --dest local.BarPanels --object-path /local/BarPanels \
+    --method org.freedesktop.Application.ActivateAction "$1" '[]' '{}' >/dev/null 2>&1; }
+pgrep -f '^python3 [^ ]*/scripts/bar-panels' >/dev/null && show "$1" && exit
+systemctl --user reset-failed bar-panels.service 2>/dev/null
+systemctl --user start bar-panels.service
+for _ in 1 2 3 4 5 6 7 8; do sleep 0.4; show "$1" && exit; done

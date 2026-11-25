@@ -1,11 +1,7 @@
 -- Hyprland — "Balcony" rice
 -- Look based on github.com/1amSimp1e/dots (balcony branch), rewritten for
 -- Hyprland 0.57 (Lua config). Started through uwsm ("Hyprland (uwsm-managed)"
--- in the login screen). GNOME stays available as the other session.
---
--- Palette (light mode; steel tones from the wallpaper):
---           surface #f2f5f7 / #ffffff  border #c5ced5  muted #7b8d96  steel #4f6672 / #8fa3b0
---           deep steel #3a4f5b  text #1c2228  alert #b24a4a
+-- in the login screen). Colours come from the wallpaper (scripts/theme → colors.lua).
 
 local HOME     = os.getenv("HOME")
 local app      = "uwsm app -- "                      -- launch as a proper systemd unit
@@ -32,18 +28,16 @@ hl.config({ xwayland = { force_zero_scaling = true } })
 -------------------
 -- Apps from ~/.config/autostart (1Password, Insync, ZapZap,
 -- Blueman, nm-applet) are started by uwsm automatically.
+-- The bar, Spotlight, the panels, wallpaper, idle/lock, night light and clipboard history are systemd
+-- user services (enabled for graphical-session.target): they start with the session and come back
+-- if they crash.  systemctl --user status waybar   ·   journalctl --user -u bar-panels
+local services = "waybar spotlight bar-panels hyprpaper hypridle hyprsunset clipboard-history@text clipboard-history@image"
 hl.on("hyprland.start", function()
-    hl.exec_cmd(app .. "waybar")
-    hl.exec_cmd(app .. scripts .. "spotlight --daemon")                -- Spotlight stays loaded, hidden: Super+Space opens it instantly
-    hl.exec_cmd(app .. scripts .. "bar-panels")                         -- the sound and Wi-Fi panels of the bar stay loaded too
-    hl.exec_cmd(scripts .. "theme; " .. app .. "hyprpaper")   -- whole theme follows the wallpaper
-    hl.exec_cmd(app .. "hypridle")
+    hl.exec_cmd(scripts .. "theme")                                   -- whole theme follows the wallpaper
     hl.exec_cmd("systemctl --user start swaync")                      -- notifications + Notification Center
-    hl.exec_cmd("sh -c '" .. app .. "hyprsunset -i & sleep 1; " .. scripts .. "nightlight restore; " .. scripts .. "nightlight auto'")   -- night light: last state, then follow the sun
     hl.exec_cmd("systemctl --user start hyprpolkitagent")             -- password prompts (pkexec, 1Password…)
     hl.exec_cmd("systemctl --user start localsearch-3.service")       -- file index for Super+Space (search inside documents)
-    hl.exec_cmd(app .. "wl-paste --type text  --watch cliphist store")  -- clipboard history
-    hl.exec_cmd(app .. "wl-paste --type image --watch cliphist store")
+    hl.exec_cmd("sh -c 'sleep 5; systemctl --user start " .. services .. "'")   -- safety net: no-op if they already run
     hl.exec_cmd("hyprctl setcursor Adwaita 24")
 end)
 
@@ -93,6 +87,7 @@ hl.config({
         mouse_move_enables_dpms  = true,
         key_press_enables_dpms   = true,
         focus_on_activate        = true,   -- notifications/links take you to their app (switches workspace)
+        allow_session_lock_restore = true, -- if the lock screen crashes, a new one can take over
         bell_sound               = "none", -- no system bell sound (rofi, terminal…); "default" brings it back
     },
 })
@@ -111,6 +106,18 @@ hl.animation({ leaf = "border",     enabled = true, speed = 10,  bezier = "defau
 hl.layer_rule({ name = "blur-waybar",        match = { namespace = "^waybar$" },        blur = true, ignore_alpha = 0.2 })
 -- Notifications (swaync) blur themselves: GTK asks for it via CSS backdrop-filter (layer rules are ignored for GTK 4.24 surfaces)
 
+
+-- Never left without a screen: "External only" turns the laptop's screen off, so when the last
+-- monitor is unplugged it comes back on
+local LAPTOP = { output = "eDP-1", mode = "1920x1200@60", position = "0x0", scale = 1.25 }
+hl.on("monitor.removed", function()
+    hl.timer(function()
+        for _, m in ipairs(hl.get_monitors() or {}) do
+            if m.name ~= "FALLBACK" then return end
+        end
+        hl.monitor({ output = LAPTOP.output, mode = LAPTOP.mode, position = LAPTOP.position, scale = LAPTOP.scale, mirror = "", disabled = false })
+    end, { timeout = 500, type = "oneshot" })
+end)
 
 -- Plugging in a monitor / projector opens the display menu
 hl.on("monitor.added", function() hl.exec_cmd(scripts .. "display --auto") end)
@@ -185,10 +192,10 @@ hl.bind(M .. " + period",             run(app .. "flatpak run it.mijorus.smile")
 hl.bind(M .. " + V",                  run(scripts .. "clipboard"))                  -- clipboard history
 hl.bind(M .. " + I",                  run(scripts .. "keybinds"))                   -- list of all shortcuts
 
--- 1Password (same keys as GNOME)
+-- 1Password
 hl.bind("CTRL + SHIFT + Space",       run("1password --quick-access"))
 hl.bind(M .. " + SHIFT + P",          run("1password --toggle"))
-hl.bind(M .. " + SHIFT + L",          run("1password --lock"))
+hl.bind(M .. " + ALT + P",            run("1password --lock"))            -- (Super+Shift+L moves a window right)
 
 -- Windows
 hl.bind(M .. " + Q",                  hl.dsp.window.close())
@@ -243,6 +250,13 @@ hl.bind(M .. " + SHIFT + E",  run(scripts .. "powermenu"))
 -- Notifications
 hl.bind(M .. " + N",          run("swaync-client -t -sw"))   -- Notification Center (open / close)
 hl.bind(M .. " + SHIFT + N",  run("swaync-client -C -sw"))   -- clear all notifications
+
+-- Panels of the bar (Esc closes)
+hl.bind(M .. " + CTRL + W",   run(scripts .. "panel wifi"))         -- Wi-Fi
+hl.bind(M .. " + CTRL + B",   run(scripts .. "panel bluetooth"))    -- Bluetooth
+hl.bind(M .. " + CTRL + S",   run(scripts .. "panel sound"))        -- sound
+hl.bind(M .. " + CTRL + D",   run(scripts .. "panel brightness"))   -- brightness and night light
+hl.bind(M .. " + CTRL + P",   run(scripts .. "panel battery"))      -- battery and power mode
 
 -- Media / brightness keys (with on-screen notification)
 hl.bind("XF86AudioRaiseVolume",  run(scripts .. "osd volume up"),     { locked = true, repeating = true })

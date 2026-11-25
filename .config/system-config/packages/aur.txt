@@ -1,0 +1,9 @@
+1password
+google-chrome
+insync
+neofetch
+spotify
+sublime-text-4
+yay-bin
+yay-bin-debug
+zoom

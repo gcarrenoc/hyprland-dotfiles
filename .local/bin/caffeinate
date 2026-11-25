@@ -1,16 +1,15 @@
 #!/usr/bin/env bash
-# caffeinate — keep the screen and/or computer awake (macOS-style) on GNOME.
+# caffeinate — keep the screen and/or computer awake (macOS-style).
 #
 #   caffeinate                 pick duration and mode with fzf
 #   caffeinate 2h              screen + system awake for 2 hours (also: 45m, 1h30m, inf)
 #   caffeinate -s 5h           system awake only (screen may still turn off and lock)
 #   caffeinate status          show what's active and time left
 #   caffeinate stop            stop it now
-#   (GNOME: gnome-session-inhibit · Hyprland: systemd-inhibit, honoured by hypridle)
+#   (also in the Battery panel of the bar)
 #
 # Runs in the background as the systemd user unit "caffeinate", so it keeps
-# working after you close the terminal. Uses GNOME's own inhibitor
-# (gnome-session-inhibit), the same mechanism GNOME apps use.
+# working after you close the terminal. A systemd inhibitor, honoured by hypridle.
 set -euo pipefail
 
 UNIT=caffeinate
@@ -67,24 +66,16 @@ start() { # $1 = seconds|inf, $2 = full|system
   else
     end=$(($(date +%s) + secs)); until_txt="until $(date -d "@$end" +%H:%M)"
   fi
-  if [[ ${XDG_CURRENT_DESKTOP:-} == *GNOME* ]]; then
-    # GNOME: its own session inhibitor
-    if [[ $secs == inf ]]; then
-      cmd=(gnome-session-inhibit --app-id=caffeinate --reason="$reason" "${what[@]}" --inhibit-only)
-    else
-      cmd=(gnome-session-inhibit --app-id=caffeinate --reason="$reason" "${what[@]}" sleep "$secs")
-    fi
-  else
-    # Hyprland & others: systemd inhibitor (hypridle honours "idle")
-    [[ $mode == system ]] && sd_what=sleep || sd_what=idle:sleep
-    [[ $secs == inf ]] && hold=(sleep infinity) || hold=(sleep "$secs")
-    cmd=(systemd-inhibit --what="$sd_what" --who=caffeinate --why="$reason" --mode=block "${hold[@]}")
-  fi
+  # a systemd inhibitor (hypridle honours "idle")
+  local sd_what hold cmd
+  [[ $mode == system ]] && sd_what=sleep || sd_what=idle:sleep
+  [[ $secs == inf ]] && hold=(sleep infinity) || hold=(sleep "$secs")
+  cmd=(systemd-inhibit --what="$sd_what" --who=caffeinate --why="$reason" --mode=block "${hold[@]}")
   systemd-run --user --quiet --collect --unit="$UNIT" \
     --description="Caffeinate ($until_txt)" \
     --setenv=CAFFEINATE_END="$end" --setenv=CAFFEINATE_MODE="$mode" \
     --property=ExecStopPost="-notify-send -a Caffeinate -i weather-clear 'Caffeinate ended' 'Normal screen and sleep settings are back.'" \
-    --property=ExecStopPost="-systemctl --user kill --kill-whom=main -s USR1 status-tray.service" \
+    --property=ExecStopPost="-/bin/sh -c 'timeout 0.3 sh -c \"echo c > %t/bar-state\"'" \
     "${cmd[@]}"
   refresh_bar
   command -v notify-send >/dev/null && notify-send -a Caffeinate -i weather-clear "Caffeinate on" "$reason $until_txt." || true
@@ -96,14 +87,14 @@ stop() {
   refresh_bar
 }
 
-refresh_bar() { systemctl --user kill --kill-whom=main -s USR1 status-tray.service 2>/dev/null || true; }   # its icon lives in the tray (status-tray)
+refresh_bar() { local p="${XDG_RUNTIME_DIR:-/tmp}/bar-state"; [[ -p $p ]] && timeout 0.3 sh -c "echo c > $p" 2>/dev/null || true; }   # its icon on the bar (scripts/bar-state)
 
 toggle() { # Waybar left-click: off → awake indefinitely, on → off
   if is_active; then stop >/dev/null; else start inf full >/dev/null; fi
 }
 
 pick() { # Waybar right-click: choose duration and mode with rofi
-  local r=(env -u WAYLAND_DISPLAY rofi -dmenu -i -no-custom -theme-str "window { width: 100.54mm; } listview { lines: 7; fixed-height: false; } textbox { horizontal-align: 0.5; }")
+  local r=(~/.config/hypr/scripts/menu -dmenu -i -no-custom -theme-str "window { width: 100.54mm; } listview { lines: 7; fixed-height: false; } textbox { horizontal-align: 0.5; }")
   local options=("30 minutes" "1 hour" "2 hours" "5 hours" "∞ Indefinitely" "Custom…")
   is_active && options+=("■ Stop caffeinate")
   local choice dur mode
@@ -112,7 +103,7 @@ pick() { # Waybar right-click: choose duration and mode with rofi
     "30 minutes") dur=1800 ;; "1 hour") dur=3600 ;; "2 hours") dur=7200 ;; "5 hours") dur=18000 ;;
     "∞ Indefinitely") dur=inf ;;
     "Custom…")
-      dur=$(env -u WAYLAND_DISPLAY rofi -dmenu -p "☕" -mesg "Duration, e.g. 45m, 3h, 1h30m" -theme-str "window { width: 100.54mm; } listview { lines: 0; }" </dev/null) || return 0
+      dur=$(~/.config/hypr/scripts/menu -dmenu -p "☕" -mesg "Duration, e.g. 45m, 3h, 1h30m" -theme-str "window { width: 100.54mm; } listview { lines: 0; }" </dev/null) || return 0
       dur=$(parse_duration "$dur" 2>/dev/null) || { notify-send -a Caffeinate "Invalid duration" "Use e.g. 45m, 3h, 1h30m"; return 0; } ;;
     "■ Stop caffeinate") stop >/dev/null; return 0 ;;
     *) return 0 ;;

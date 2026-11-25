@@ -1,0 +1,13 @@
+[Unit]
+Description=The bar's panels: Wi-Fi, Bluetooth, sound, brightness, battery
+PartOf=graphical-session.target
+After=graphical-session.target
+ConditionEnvironment=WAYLAND_DISPLAY
+
+[Service]
+ExecStart=%h/.config/hypr/scripts/bar-panels
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=graphical-session.target

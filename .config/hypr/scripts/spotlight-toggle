@@ -1,6 +1,9 @@
 #!/bin/sh
 # Show / hide Spotlight fast: tell the running Spotlight over D-Bus (no Python start-up).
-# If it isn't running (e.g. it crashed), start it — it then stays loaded.
-gdbus call --session --dest local.Spotlight --object-path /local/Spotlight \
-    --method org.freedesktop.Application.Activate '{}' >/dev/null 2>&1 \
-    || exec "$(dirname "$0")/spotlight"
+# If its service isn't running, start it and try again.
+show() { gdbus call --session --dest local.Spotlight --object-path /local/Spotlight \
+    --method org.freedesktop.Application.Activate '{}' >/dev/null 2>&1; }
+pgrep -f '^python3 [^ ]*/scripts/spotlight' >/dev/null && show && exit
+systemctl --user reset-failed spotlight.service 2>/dev/null
+systemctl --user start spotlight.service
+for _ in 1 2 3 4 5 6 7 8; do sleep 0.4; show && exit; done

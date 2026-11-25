@@ -5,7 +5,7 @@
     foreground: #161b2d;
     selected: #3e528e;
     active: #c6cbdd;
-    urgent: #be3742;
+    urgent: #9d252f;
     glow: #c6cbdd;
     muted: #343b51;
     on-selected: #ffffff;
