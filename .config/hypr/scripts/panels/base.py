@@ -12,19 +12,20 @@ from gi.repository import Gdk, Gio, GLib, Gtk, Gtk4LayerShell as Layer, Pango
 
 COLORS = Path.home() / ".config/rofi/colors.rasi"
 WIDTH = 340
-# Lucide glyphs (codepoints: ~/.local/share/fonts/Lucide/codepoints.json)
+# Font Awesome 7 glyphs (Arch package otf-font-awesome)
 G = {k: chr(v) for k, v in {
-    "vol0": 0xe1a9, "vol1": 0xe1aa, "vol2": 0xe1ab, "muted": 0xe1ac, "mic": 0xe118, "micoff": 0xe119,
-    "headphones": 0xe0f1, "speaker": 0xe1cd, "screen": 0xe11d, "bluetooth": 0xe05c, "usb": 0xe356,
-    "check": 0xe06c, "play": 0xe13c, "pause": 0xe12e, "prev": 0xe15f, "next": 0xe160, "sliders": 0xe29a,
-    "wifi0": 0xe5f9, "wifi1": 0xe5f8, "wifi2": 0xe5f7, "wifi3": 0xe1ae, "wifioff": 0xe1af, "lock": 0xe10b,
-    "cable": 0xe620, "shield": 0xe158, "globe": 0xe0e8,
-    "battery": 0xe053, "charging": 0xe054, "full": 0xe055, "low": 0xe056, "medium": 0xe057, "plug": 0xe37f,
-    "btoff": 0xe1b9, "more": 0xe0b6, "keyboard": 0xe284, "mouse": 0xe28e, "gamepad": 0xe0df, "phone": 0xe163,
-    "printer": 0xe141, "watch": 0xe1ad, "loudspeaker": 0xe166, "sun": 0xe178, "moon": 0xe11e, "warm": 0xe186,
-    "coffee": 0xe096, "auto": 0xe357,
-    "leaf": 0xe2de, "scale": 0xe212, "rocket": 0xe286,
+    "vol0": 0xf026, "vol1": 0xf027, "vol2": 0xf028, "muted": 0xf6a9, "mic": 0xf130, "micoff": 0xf131,
+    "headphones": 0xf025, "speaker": 0xf109, "screen": 0xf390, "bluetooth": 0xf294, "usb": 0xf287,
+    "check": 0xf00c, "play": 0xf04b, "pause": 0xf04c, "prev": 0xf048, "next": 0xf051, "sliders": 0xf1de,
+    "wifi0": 0xf1eb, "wifi1": 0xf1eb, "wifi2": 0xf1eb, "wifi3": 0xf1eb, "wifioff": 0xf1eb, "lock": 0xf023,
+    "cable": 0xf796, "shield": 0xf3ed, "globe": 0xf0ac,
+    "battery": 0xf244, "charging": 0xe55b, "full": 0xf240, "low": 0xf243, "medium": 0xf242, "plug": 0xf1e6,
+    "btoff": 0xf294, "more": 0xf141, "keyboard": 0xf11c, "mouse": 0xf8cc, "gamepad": 0xf11b, "phone": 0xf3cf,
+    "printer": 0xf02f, "watch": 0xf017, "loudspeaker": 0xf8d7, "sun": 0xf185, "moon": 0xf186, "warm": 0xf2c9,
+    "coffee": 0xf7b6, "auto": 0xe2ca, "leaf": 0xf06c, "scale": 0xf24e, "rocket": 0xf135,
 }.items()}
+# one Wi-Fi glyph exists: the signal is shown by how strong it looks; dim = off
+FAINT = {"wifi0": 0.4, "wifi1": 0.6, "wifi2": 0.8, "wifioff": 0.4, "btoff": 0.4}
 
 
 def out(*cmd):
@@ -55,7 +56,7 @@ def theme_css():
     window.barpanel * {{ font-family: "PaperMono Nerd Font"; font-size: 11pt; }}
     .panel {{ background-color: {bg}; backdrop-filter: blur(20px); color: {fg};
               border: 1px solid {border}; border-radius: 19px; padding: 12px; }}
-    .panel label.lucide {{ font-family: lucide; font-size: 14pt; }}
+    .panel label.icon {{ font-family: "Font Awesome 7 Free Solid", "Font Awesome 7 Brands"; font-size: 11.5pt; }}
     .card {{ background-color: {card}; border-radius: 13px; padding: 8px 10px; }}
     .head {{ color: {muted}; font-size: 9pt; font-weight: bold; padding: 0 2px; }}
     .note, .value {{ color: {muted}; font-size: 9.5pt; }}
@@ -104,8 +105,11 @@ def box(vertical=True, spacing=6, **kw):
                    spacing=spacing, **kw)
 
 
-def lucide(name):
-    return Gtk.Label(label=G[name], css_classes=["lucide"], width_chars=2)
+def fa(name):
+    w = Gtk.Label(label=G[name], css_classes=["icon"])
+    w.set_size_request(24, -1)                              # one column, whatever the icon's width
+    w.set_opacity(FAINT.get(name, 1.0))
+    return w
 
 
 def text(s, cls=None, expand=True):

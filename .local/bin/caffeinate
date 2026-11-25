@@ -98,18 +98,18 @@ pick() { # Waybar right-click: choose duration and mode with rofi
   local options=("30 minutes" "1 hour" "2 hours" "5 hours" "∞ Indefinitely" "Custom…")
   is_active && options+=("■ Stop caffeinate")
   local choice dur mode
-  choice=$(printf '%s\n' "${options[@]}" | "${r[@]}" -p "☕" -mesg "$(status_line || true)") || return 0
+  choice=$(printf '%s\n' "${options[@]}" | "${r[@]}" -p "" -mesg "$(status_line || true)") || return 0
   case $choice in
     "30 minutes") dur=1800 ;; "1 hour") dur=3600 ;; "2 hours") dur=7200 ;; "5 hours") dur=18000 ;;
     "∞ Indefinitely") dur=inf ;;
     "Custom…")
-      dur=$(~/.config/hypr/scripts/menu -dmenu -p "☕" -mesg "Duration, e.g. 45m, 3h, 1h30m" -theme-str "window { width: 100.54mm; } listview { lines: 0; }" </dev/null) || return 0
+      dur=$(~/.config/hypr/scripts/menu -dmenu -p "" -mesg "Duration, e.g. 45m, 3h, 1h30m" -theme-str "window { width: 100.54mm; } listview { lines: 0; }" </dev/null) || return 0
       dur=$(parse_duration "$dur" 2>/dev/null) || { notify-send -a Caffeinate "Invalid duration" "Use e.g. 45m, 3h, 1h30m"; return 0; } ;;
     "■ Stop caffeinate") stop >/dev/null; return 0 ;;
     *) return 0 ;;
   esac
   choice=$(printf '%s\n' "Screen + system awake" "System only (screen may turn off and lock)" |
-    "${r[@]}" -p "☕" -mesg "What should stay awake?") || return 0
+    "${r[@]}" -p "" -mesg "What should stay awake?") || return 0
   [[ $choice == System* ]] && mode=system || mode=full
   start "$dur" "$mode" >/dev/null
 }
@@ -151,13 +151,13 @@ tmux_segment() { # status-bar segment for tmux; prints nothing when off
 
 waybar_segment() { # JSON for Waybar (always shown: dim cup when off)
   if ! is_active; then
-    printf '{"text":"<span font_family=\x27lucide\x27>\ue096</span>","class":"off","tooltip":"Caffeinate is off\\nClick: keep awake indefinitely\\nRight-click: choose time and mode"}\n'
+    printf '{"text":"","class":"off","tooltip":"Caffeinate is off\\nClick: keep awake indefinitely\\nRight-click: choose time and mode"}\n'
     return 0
   fi
   local end mode left
   end=$(unit_env CAFFEINATE_END); mode=$(unit_env CAFFEINATE_MODE)
   if [[ $end == inf ]]; then left="∞"; else left=$(human $((end - $(date +%s)))); fi
-  printf '{"text":"<span font_family=\x27lucide\x27>\ue096</span> %s","tooltip":"%s\\nClick: turn off\\nRight-click: change","class":"%s"}\n' "$left" "$(status_line)" "$mode"
+  printf '{"text":" %s","tooltip":"%s\\nClick: turn off\\nRight-click: change","class":"%s"}\n' "$left" "$(status_line)" "$mode"
 }
 
 case ${1:-} in

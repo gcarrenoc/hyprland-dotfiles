@@ -1,6 +1,7 @@
 /* Waybar — Balcony layout; colours follow the wallpaper (colors.css) */
 
 @import url("colors.css");   /* generated from the wallpaper by ~/.config/hypr/scripts/theme */
+@define-color status shade(@text, 0.86);   /* wifi … battery: a bluish, slightly dark white */
 
 * {
   font-family: "PaperMono Nerd Font", "Noto Color Emoji";
@@ -74,18 +75,16 @@ tooltip label {
   margin-left: 0;
   margin-right: 0;
   border-radius: 0;
-  padding: 0 8px;
+  padding: 0 7px;
 }
-#network { color: @steel; border-radius: 8px 0 0 8px; padding-left: 12px; margin-left: 4px; }
+#network { color: @status; border-radius: 8px 0 0 8px; padding-left: 12px; margin-left: 4px; }
 #network.disconnected { color: @alert; }
-/* Lucide glyphs are narrower than the Octicons next to them: less padding, even gaps (measured) */
-#network { padding-right: 2px; }
-#bluetooth { color: @steel; padding: 0 0 0 3px; }
-#bluetooth.off, #bluetooth.disabled { color: @muted; }
-#pulseaudio { color: @light; padding-left: 6px; }
+#bluetooth { color: @status; }
+#bluetooth.off, #bluetooth.disabled { color: alpha(@status, 0.45); }   /* off: dim */
+#pulseaudio { color: @status; }
 #pulseaudio.muted { color: @alert; }
-#backlight { color: @muted; }
-#battery { color: @light; border-radius: 0 8px 8px 0; padding-right: 12px; margin-right: 4px; }
+#backlight { color: @status; }
+#battery { color: @status; border-radius: 0 8px 8px 0; padding-right: 12px; margin-right: 4px; }
 #battery.warning:not(.charging)  { color: @accent; }   /* 30 %: amber · 15 %: red */
 #battery.critical:not(.charging) { color: @alert; }
 
@@ -96,7 +95,7 @@ tooltip label {
   font-weight: bold;
 }
 
-#custom-state { color: @accent; padding: 0 12px 0 10px; }
+#custom-state { color: @accent; padding: 0 12px; }
 
 #clock.date { font-weight: normal; color: @light; }
 
@@ -107,16 +106,8 @@ tooltip label {
 }
 #custom-power:hover { color: @alert; }
 
-/* Icon pills: proportional Nerd Font so each icon gets its real width (centred) */
-#custom-launcher, #custom-tray-toggle, #custom-power,
-#network, #bluetooth, #pulseaudio, #backlight, #battery {
-  font-family: "PaperMono Nerd Font";
-}
-
-/* --- Optical centring (measured): Nerd Font icons draw a few px wider than their
-       advance, so icon-only pills get a little less padding on the left --- */
-#custom-launcher { padding: 0 17px 0 11px; }
-#custom-power { padding: 0 14px 0 10px; }
-#battery { padding-right: 12px; }
-#workspaces button:not(.empty) { padding: 0 12px 0 8px; }
+/* Icons: Font Awesome 7 at 17 px inside 18 px text. Their centre is 0.375 of their size, Paper Mono's
+   digits 0.355 of theirs: 18 × 0.355 = 17 × 0.375, so both share one centre without any nudging.
+   Icon-only formats end in an invisible U+200B in Paper Mono, so their line is as tall as a text line. */
+#workspaces button:not(.empty) { padding: 0 9px; }
 #custom-newws { padding: 0 6px 3px 6px; }

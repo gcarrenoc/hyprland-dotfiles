@@ -1,6 +1,15 @@
 #!/bin/sh
 # menu — rofi for this desktop: an XWayland window (normal-window) sized for the screen it opens on.
 # XWayland isn't scaled, so dpi = 96 × the scale of the focused screen; mm and pt sizes follow it.
+# menu --icon f011 Text  → prints the row "<icon>  Text" (Font Awesome; use with -markup-rows)
+if [ "${1:-}" = --icon ]; then
+    case $2 in                                              # width of the glyph, hundredths of its size
+        f023) w=64 ;; f186|f2f5|f2f1|f011|f2dc|f017|f24d|f108) w=100 ;; f2d2) w=112 ;; f109) w=125 ;; *) w=100 ;;
+    esac
+    gap=$(( (125 - w) * 107 ))                              # fill up to 1.25 so the text starts in one column (1/1024 pt)
+    printf '<span font_family="Font Awesome 7 Free Solid" size="95%%" letter_spacing="%s">&#x%s;</span>  %s\n' "$gap" "$2" "$3"
+    exit
+fi
 scale=$(hyprctl monitors -j 2>/dev/null | python3 -I -c 'import json,sys; print(next((m["scale"] for m in json.load(sys.stdin) if m["focused"]), 1.25))' 2>/dev/null)
 dpi=$(awk -v s="${scale:-1.25}" 'BEGIN { printf "%d", 96 * s + 0.5 }')
 unset WAYLAND_DISPLAY

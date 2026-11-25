@@ -124,7 +124,7 @@ Inside Zathura (`~/.config/zathura/zathurarc`).
 ## The bar (Waybar)
 
 
-Icons: outline style — Octicons (`nf-oct-*`, in the Nerd Font) wherever one exists; coffee cup, battery, Wi-Fi, leaf and power from Lucide (`~/.local/share/fonts/Lucide`, official `lucide-static` font, ISC licence). App icons next to the workspace numbers are Lucide too (e.g. compass = Chrome, globe = Firefox, book with text = PDF viewer, notebook with pen = Obsidian; rules in `waybar/config.jsonc` → `window-rewrite`).
+Icons: [Font Awesome 7](https://fontawesome.com) (Arch package `otf-font-awesome`), also in the panels, menus, Spotlight and lock screen. Icon size = 94.7 % of the text size (17 px in 18 px text), so icons and digits share one centre. App icons next to the workspace numbers are the apps' own logos where a font has one (Font Awesome Brands, else the Nerd Font).
 
 | Item | Click |
 |---|---|

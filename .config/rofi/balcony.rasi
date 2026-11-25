@@ -30,7 +30,7 @@ inputbar {
     background-color: @background-alt;
     children:         [ "prompt", "entry" ];
 }
-prompt { text-color: @selected; }
+prompt { text-color: @selected; font: "Font Awesome 7 Free Solid 10.4"; vertical-align: 0.5; }
 entry {
     placeholder:       "Search…";
     placeholder-color: @muted;

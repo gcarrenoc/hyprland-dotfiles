@@ -10,7 +10,7 @@ aren't saved yet open the full settings. Scans only while open.
 """
 import subprocess, time
 import gi
-from base import DropPanel, G, Gdk, GLib, Gtk, Pango, box, button, launch, lucide, text
+from base import DropPanel, G, Gdk, GLib, Gtk, Pango, box, button, launch, fa, text
 gi.require_version("NM", "1.0")
 from gi.repository import NM
 
@@ -300,7 +300,7 @@ class WifiPanel(DropPanel):
         self.clear()
 
         head = box(False, 8, css_classes=["card"])
-        head.append(lucide("wifi3" if on else "wifioff"))
+        head.append(fa("wifi3" if on else "wifioff"))
         head.append(text("Wi-Fi", "title"))
         switch = Gtk.Switch(active=on, valign=Gtk.Align.CENTER, tooltip_text="Wi-Fi on / off")
         switch.connect("state-set", self.set_wifi)
@@ -309,12 +309,12 @@ class WifiPanel(DropPanel):
 
         if portal:
             row = box(False, 8)
-            row.append(lucide("globe")); row.append(text("Log in to this network…"))
+            row.append(fa("globe")); row.append(text("Log in to this network…"))
             self.panel.append(button(row, "Open the network's login page", self.portal, "row", "on"))
         for d in wired:
             card = self.section("CABLE")
             row = box(False, 8)
-            row.append(lucide("cable")); row.append(text("Connected")); row.append(text(self.address(d), "note", False))
+            row.append(fa("cable")); row.append(text("Connected")); row.append(text(self.address(d), "note", False))
             card.append(row)
 
         inuse = [n for n in nets if n["inuse"]]
@@ -349,13 +349,13 @@ class WifiPanel(DropPanel):
             card = self.section("VPN")
             for c, ac in vpns:
                 row = box(False, 8)
-                row.append(lucide("shield")); row.append(text(c.get_id()))
+                row.append(fa("shield")); row.append(text(c.get_id()))
                 if ac:
-                    row.append(lucide("check"))
+                    row.append(fa("check"))
                 card.append(button(row, "Disconnect" if ac else "Connect", lambda c=c, ac=ac: self.set_vpn(c, ac),
                                    "row", *(["on"] if ac else [])))
         row = box(False, 8)
-        row.append(lucide("sliders")); row.append(text("Network settings…"))
+        row.append(fa("sliders")); row.append(text("Network settings…"))
         self.panel.append(button(row, "Saved networks, VPN, hidden networks…", self.settings, "row"))
         return True
 
@@ -368,14 +368,14 @@ class WifiPanel(DropPanel):
     def network(self, card, n):
         joining = self.joining and self.joining["ssid"] == n["ssid"]
         row = box(False, 8)
-        row.append(lucide(signal_glyph(n["strength"])))
+        row.append(fa(signal_glyph(n["strength"])))
         row.append(text(n["name"]))
         if joining:
             row.append(Gtk.Spinner(spinning=True))
         elif n["inuse"]:
-            row.append(lucide("check"))
+            row.append(fa("check"))
         elif n["sec"] not in ("open", "owe") and not n["saved"]:
-            row.append(lucide("lock"))
+            row.append(fa("lock"))
         tip = f"{n['strength']}%  ·  {band(n['ap'].get_frequency())}" + ("" if n["sec"] not in ("open", "owe") else "  ·  no password")
         card.append(button(row, tip, lambda: self.choose(n), "row", *(["on"] if n["inuse"] else [])))
 

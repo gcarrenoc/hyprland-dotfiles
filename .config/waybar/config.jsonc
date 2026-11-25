@@ -1,4 +1,4 @@
-// Waybar — Balcony (layout from github.com/1amSimp1e/dots, icons updated to Nerd Fonts v3)
+// Waybar — Balcony (layout from github.com/1amSimp1e/dots, icons: Font Awesome 7)
 {
   "layer": "top",
   "position": "top",
@@ -9,7 +9,7 @@
   "modules-right": ["group/indicators", "custom/state", "network", "bluetooth", "pulseaudio", "backlight", "battery", "clock#date", "clock", "custom/power"],
 
   "custom/launcher": {
-    "format": "",
+    "format": "<span font_family='Font Awesome 7 Free Solid' size='13087'></span>​",
     "tooltip": false,
     "on-click": "~/.config/hypr/scripts/spotlight-toggle"
   },
@@ -20,34 +20,36 @@
   "hyprland/workspaces": {
     "format": "{icon}{windows}",
     "format-window-separator": "",
-    "window-rewrite-default": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",
+    "window-rewrite-default": "<span alpha='85%'> <span font_family='Font Awesome 7 Free Solid' size='13087'></span></span>",
+    // real logos where a font has one: Font Awesome Brands, else the Nerd Font (scaled to match); centred on the digits
     "window-rewrite": {
-      "class<google-chrome|chromium>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",
-      "class<firefox>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",
-      "class<Alacritty|fly-term|kitty>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",
-      "class<obsidian|md.obsidian.Obsidian>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",
-      "class<texstudio>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",
-      "class<com.microsoft.VSCode|code>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",
-      "class<org.gnome.Nautilus>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",
-      "class<org.pwmt.zathura|org.gnome.Papers>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",
-      "class<discord|vesktop>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",
-      "class<com.rtosta.zapzap>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",
-      "class<com.stremio.Stremio|stremio|mpv|showtime|org.gnome.Showtime>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",
-      "class<spotify|Spotify>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",
-      "class<com.anthropic.Claude>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",
-      "class<calibre-.*>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",
-      "class<chrome-127\\.0\\.0\\.1__.*>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",   // Jupyter windows
-      "class<zoom>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",
-      "class<com.obsproject.Studio>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",
-      "class<org.inkscape.Inkscape>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",
-      "class<gimp.*>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",
-      "class<libreoffice.*|soffice>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",
-      "class<sublime_text>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",
-      "class<org.gnome.Calculator>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",
-      "class<1Password>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",
-      "class<it.mijorus.smile>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",
-      "class<org.pulseaudio.pavucontrol>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>",
-      "class<org.gnome.Loupe>": "<span alpha='80%'> <span font_family='lucide' rise='-2900'></span></span>"
+      "class<google-chrome|chromium>": "<span alpha='85%'> <span font_family='Font Awesome 7 Brands' size='13087'></span></span>",
+      "class<firefox>": "<span alpha='85%'> <span font_family='Font Awesome 7 Brands' size='13087'></span></span>",
+      "class<Alacritty|fly-term|kitty>": "<span alpha='85%'> <span font_family='Font Awesome 7 Free Solid' size='13087'></span></span>",
+      "class<obsidian|md.obsidian.Obsidian>": "<span alpha='85%'> <span font_family='Font Awesome 7 Brands' size='13087'></span></span>",
+      "class<texstudio>": "<span alpha='85%'> <span font_family='Font Awesome 7 Brands' size='13087'></span></span>",
+      "class<com.microsoft.VSCode|code>": "<span alpha='85%'> <span font_family='PaperMono Nerd Font' size='15920' rise='-744' letter_spacing='3088' weight='normal'></span></span>",
+      "class<org.gnome.Nautilus>": "<span alpha='85%'> <span font_family='Font Awesome 7 Free Solid' size='13087' rise='-409'></span></span>",
+      "class<org.pwmt.zathura|org.gnome.Papers>": "<span alpha='85%'> <span font_family='Font Awesome 7 Free Solid' size='13087' rise='460'></span></span>",
+      "class<discord|vesktop>": "<span alpha='85%'> <span font_family='Font Awesome 7 Brands' size='13087'></span></span>",
+      "class<com.rtosta.zapzap>": "<span alpha='85%'> <span font_family='Font Awesome 7 Brands' size='13087'></span></span>",
+      "class<mpv>": "<span alpha='85%'> <span font_family='PaperMono Nerd Font' size='12672' rise='409' letter_spacing='4993' weight='normal'></span></span>",
+      "class<com.stremio.Stremio|stremio|showtime|org.gnome.Showtime>": "<span alpha='85%'> <span font_family='Font Awesome 7 Free Solid' size='13087'></span></span>",
+      "class<spotify|Spotify>": "<span alpha='85%'> <span font_family='Font Awesome 7 Brands' size='13087'></span></span>",
+      "class<com.anthropic.Claude>": "<span alpha='85%'> <span font_family='Font Awesome 7 Brands' size='13087'></span></span>",
+      "class<calibre-.*>": "<span alpha='85%'> <span font_family='Font Awesome 7 Free Solid' size='13087' rise='476'></span></span>",
+      "class<chrome-127\\.0\\.0\\.1__.*>": "<span alpha='85%'> <span font_family='PaperMono Nerd Font' size='15840' rise='-716' weight='normal'></span></span>",
+      "class<zoom>": "<span alpha='85%'> <span font_family='Font Awesome 7 Free Solid' size='13087'></span></span>",
+      "class<com.obsproject.Studio>": "<span alpha='85%'> <span font_family='Font Awesome 7 Brands' size='13087'></span></span>",
+      "class<org.inkscape.Inkscape>": "<span alpha='85%'> <span font_family='PaperMono Nerd Font' size='12829' rise='351' letter_spacing='5071' weight='normal'></span></span>",
+      "class<gimp.*>": "<span alpha='85%'> <span font_family='PaperMono Nerd Font' size='13384' letter_spacing='5246' weight='normal'></span></span>",
+      "class<libreoffice.*|soffice>": "<span alpha='85%'> <span font_family='PaperMono Nerd Font' size='12672' rise='409' letter_spacing='2610' weight='normal'></span></span>",
+      "class<sublime_text>": "<span alpha='85%'> <span font_family='PaperMono Nerd Font' size='16896' rise='-1091' letter_spacing='895' weight='normal'></span></span>",
+      "class<org.gnome.Calculator>": "<span alpha='85%'> <span font_family='Font Awesome 7 Free Solid' size='13087'></span></span>",
+      "class<1Password>": "<span alpha='85%'> <span font_family='PaperMono Nerd Font' size='13804' letter_spacing='4307' weight='normal'>󰢁</span></span>",
+      "class<it.mijorus.smile>": "<span alpha='85%'> <span font_family='Font Awesome 7 Free Solid' size='13087'></span></span>",
+      "class<org.pulseaudio.pavucontrol>": "<span alpha='85%'> <span font_family='Font Awesome 7 Free Solid' size='13087'></span></span>",
+      "class<org.gnome.Loupe>": "<span alpha='85%'> <span font_family='Font Awesome 7 Free Solid' size='13087'></span></span>"
     },
     "on-click": "activate",
     "on-scroll-up": "hyprctl dispatch 'function() WS.step(-1) end'",
@@ -73,7 +75,7 @@
   },
 
   "custom/tray-toggle": {
-    "format": "",
+    "format": "<span font_family='Font Awesome 7 Free Solid' size='13087'></span>​",
     "tooltip-format": "App indicators (click to show / hide)"
   },
 
@@ -92,10 +94,10 @@
   },
 
   "network": {
-    "format-wifi": "{icon}",
-    "format-ethernet": "<span font_family='lucide'></span>",
-    "format-disconnected": "<span font_family='lucide'></span>",
-    "format-icons": ["<span font_family='lucide'></span>", "<span font_family='lucide'></span>", "<span font_family='lucide'></span>", "<span font_family='lucide'></span>"],
+    "format-wifi": "{icon}​",
+    "format-ethernet": "<span font_family='Font Awesome 7 Free Solid' size='13087'></span>​",
+    "format-disconnected": "<span font_family='Font Awesome 7 Free Solid' size='13087' alpha='45%'></span>​",
+    "format-icons": ["<span font_family='Font Awesome 7 Free Solid' size='13087' alpha='45%'></span>", "<span font_family='Font Awesome 7 Free Solid' size='13087' alpha='65%'></span>", "<span font_family='Font Awesome 7 Free Solid' size='13087' alpha='85%'></span>", "<span font_family='Font Awesome 7 Free Solid' size='13087'></span>"],
     "tooltip-format-wifi": "{essid}  ·  {signalStrength}%\n{ipaddr}",
     "tooltip-format-ethernet": "{ifname}  ·  {ipaddr}",
     "tooltip-format-disconnected": "Disconnected",
@@ -111,12 +113,12 @@
     "on-click": "~/.config/hypr/scripts/panel battery"
   },
 
-  // Lucide: Bluetooth off / on / connected
+  // Bluetooth: dim = off (style.css)
   "bluetooth": {
-    "format": "<span font_family='lucide'></span>",
-    "format-off": "<span font_family='lucide'></span>",
-    "format-disabled": "<span font_family='lucide'></span>",
-    "format-connected": "<span font_family='lucide'></span>",
+    "format": "<span font_family='Font Awesome 7 Brands' size='13087'></span>​",
+    "format-off": "<span font_family='Font Awesome 7 Brands' size='13087'></span>​",
+    "format-disabled": "<span font_family='Font Awesome 7 Brands' size='13087'></span>​",
+    "format-connected": "<span font_family='Font Awesome 7 Brands' size='13087'></span>​",
     "format-no-controller": "",
     "tooltip-format": "Bluetooth on  ·  nothing connected",
     "tooltip-format-off": "Bluetooth off",
@@ -128,9 +130,9 @@
   },
 
   "pulseaudio": {
-    "format": "{icon}",
-    "format-muted": "",
-    "format-icons": { "default": "" },
+    "format": "{icon}​",
+    "format-muted": "<span font_family='Font Awesome 7 Free Solid' size='13087'></span>​",
+    "format-icons": { "default": ["<span font_family='Font Awesome 7 Free Solid' size='13087'></span>", "<span font_family='Font Awesome 7 Free Solid' size='13087'></span>", "<span font_family='Font Awesome 7 Free Solid' size='13087'></span>"] },
     "tooltip-format": "{desc}  ·  {volume}%",
     "on-click": "~/.config/hypr/scripts/panel sound",
     "on-click-right": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
@@ -140,9 +142,9 @@
 
   "backlight": {
     "device": "intel_backlight",
-    "format": "{icon}",
+    "format": "{icon}​",
     "tooltip-format": "Brightness and night light",
-    "format-icons": [""],
+    "format-icons": ["<span font_family='Font Awesome 7 Free Solid' size='13087'></span>"],
     "on-click": "~/.config/hypr/scripts/panel brightness",
     "on-scroll-up": "brightnessctl -q -e2 -n50 set 5%+",
     "on-scroll-down": "brightnessctl -q -e2 -n50 set 5%-"
@@ -152,14 +154,13 @@
     "bat": "BAT0",
     "interval": 60,
     "states": { "warning": 30, "critical": 15 },
-    // the Lucide icon sits ~3.5 px higher than the digits: lowered to line up with them
-    "format": "<span rise='-2150'>{icon}</span> {capacity}%",
+    "format": "{icon} {capacity}%",
     "on-click": "~/.config/hypr/scripts/panel battery",
-    // Lucide outline battery: empty → low → medium → full; charging; plugged (not charging)
+    // Font Awesome: empty → quarter → half → three quarters → full; charging; plugged (not charging)
     "format-icons": {
-      "default":  ["<span font_family='lucide'></span>", "<span font_family='lucide'></span>", "<span font_family='lucide'></span>", "<span font_family='lucide'></span>"],
-      "charging": ["<span font_family='lucide'></span>"],
-      "plugged":  ["<span font_family='lucide'></span>"]
+      "default":  ["<span font_family='Font Awesome 7 Free Solid' size='13087'></span>", "<span font_family='Font Awesome 7 Free Solid' size='13087'></span>", "<span font_family='Font Awesome 7 Free Solid' size='13087'></span>", "<span font_family='Font Awesome 7 Free Solid' size='13087'></span>", "<span font_family='Font Awesome 7 Free Solid' size='13087'></span>"],
+      "charging": ["<span font_family='Font Awesome 7 Free Solid' size='13087'></span>"],
+      "plugged":  ["<span font_family='Font Awesome 7 Free Solid' size='13087'></span>"]
     },
     "tooltip-format": "{capacity}%  ·  {timeTo}"
   },
@@ -187,7 +188,7 @@
   },
 
   "custom/power": {
-    "format": "<span font_family='lucide'></span>",
+    "format": "<span font_family='Font Awesome 7 Free Solid' size='13087'></span>​",
     "tooltip-format": "Power menu",
     "on-click": "~/.config/hypr/scripts/powermenu"
   }

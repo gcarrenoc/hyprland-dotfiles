@@ -97,6 +97,7 @@ nwg-look
 obs-studio
 opencv
 otf-fira-sans
+otf-font-awesome
 pacman-contrib
 papers
 papirus-icon-theme

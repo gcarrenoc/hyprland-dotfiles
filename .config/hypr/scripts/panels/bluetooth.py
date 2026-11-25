@@ -7,7 +7,7 @@ Talks to BlueZ over D-Bus. Looks for devices only while open. Pairing started he
 and only for that device; requests coming from other devices go to blueman-applet as before.
 """
 import subprocess
-from base import DropPanel, G, Gio, GLib, Gtk, box, button, launch, lucide, text
+from base import DropPanel, G, Gio, GLib, Gtk, box, button, launch, fa, text
 
 DEV, ADAPTER, BATTERY, PROPS = "org.bluez.Device1", "org.bluez.Adapter1", "org.bluez.Battery1", "org.freedesktop.DBus.Properties"
 AGENT_PATH = "/local/BarPanels/agent"
@@ -301,7 +301,7 @@ class BluetoothPanel(DropPanel):
         self.entry = self.scroller = None
 
         head = box(False, 8, css_classes=["card"])
-        head.append(lucide("bluetooth" if on else "btoff"))
+        head.append(fa("bluetooth" if on else "btoff"))
         head.append(text("Bluetooth", "title"))
         if a:
             switch = Gtk.Switch(active=on, valign=Gtk.Align.CENTER, tooltip_text="Bluetooth on / off")
@@ -336,26 +336,26 @@ class BluetoothPanel(DropPanel):
             if scroll:
                 GLib.idle_add(lambda s=self.scroller: s.get_vadjustment().set_value(scroll) and False)
         row = box(False, 8)
-        row.append(lucide("sliders")); row.append(text("Bluetooth settings…"))
+        row.append(fa("sliders")); row.append(text("Bluetooth settings…"))
         self.panel.append(button(row, "Open blueman", self.settings, "row"))
 
     def device(self, card, d, typed):
         path, row = d["path"], box(False, 8)
-        row.append(lucide(d["icon"]))
+        row.append(fa(d["icon"]))
         row.append(text(d["name"]))
         if d["battery"] is not None:
             row.append(text(f"{d['battery']}%", "note", False))
         if path in self.busy:
             row.append(Gtk.Spinner(spinning=True))
         elif d["connected"]:
-            row.append(lucide("check"))
+            row.append(fa("check"))
         tip = "Connected" if d["connected"] else "Connect" if d["paired"] else "Pair"
         main = button(row, tip, lambda: self.choose(d), "row", *(["on"] if d["connected"] else []))
         main.set_hexpand(True)
         line = box(False, 2)
         line.append(main)
         if d["paired"]:
-            line.append(button(lucide("more"), "Disconnect, forget", lambda: self.unfold(d)))
+            line.append(button(fa("more"), "Disconnect, forget", lambda: self.unfold(d)))
         card.append(line)
         if path in self.busy and not (self.prompt and path == self.pairing):
             card.append(text(self.busy[path], "note"))

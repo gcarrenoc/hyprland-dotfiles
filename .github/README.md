@@ -12,7 +12,7 @@ Everything recolours itself from the wallpaper.
 | Part | Tool | Config |
 |---|---|---|
 | Compositor | Hyprland 0.57 (Lua), started with uwsm | [`.config/hypr/hyprland.lua`](../.config/hypr/hyprland.lua), [`workspaces.lua`](../.config/hypr/workspaces.lua) |
-| Bar | Waybar, frosted, one 18 px size for text and icons ([Octicons](https://primer.style/octicons) + [Lucide](https://lucide.dev)) | [`.config/waybar/`](../.config/waybar) |
+| Bar | Waybar, frosted, 18 px text with [Font Awesome 7](https://fontawesome.com) icons on the same centre line | [`.config/waybar/`](../.config/waybar) |
 | Bar panels | Frosted GTK4 panels that drop down from the bar: **Wi-Fi, Bluetooth, sound, brightness + night light, battery + power mode**. One resident program, opens in about 0.1 s | [`bar-panels`](../.config/hypr/scripts/bar-panels), [`panels/`](../.config/hypr/scripts/panels) |
 | Notifications | swaync: floating cards, Do Not Disturb that keeps muted notifications | [`.config/swaync/`](../.config/swaync) |
 | Launcher | **Spotlight** (Super + Space): resident GTK4 app with apps, files, live calculator, web search, system actions and Quick Look | [`.config/hypr/scripts/spotlight`](../.config/hypr/scripts/spotlight) |
@@ -69,7 +69,7 @@ Then [`.config/system-config/setup`](../.config/system-config/setup) asks before
 
 Hyprland ≥ 0.57 with Lua config is required. The scripts expect Arch packages such as
 `waybar rofi swaync hyprlock hypridle hyprpaper hyprsunset uwsm alacritty tmux zathura-pdf-mupdf libqalculate python-gobject libayatana-appindicator gtk4-layer-shell libpulse playerctl networkmanager blueman power-profiles-daemon upower brightnessctl fish fzf zoxide`
-and a Nerd Font (PaperMono Nerd Font).
+`otf-font-awesome` and a Nerd Font (PaperMono Nerd Font).
 
 ## Credits and licences
 
@@ -77,6 +77,6 @@ My own work here is under the [MIT licence](LICENSE). It doesn't cover the third
 
 - Look based on [1amSimp1e/dots](https://github.com/1amSimp1e/dots) (GPL-3.0). The [Waybar](../.config/waybar) and [Rofi](../.config/rofi) files started from it and from [adi1090x/rofi](https://github.com/adi1090x/rofi) (GPL-3.0), so they are not under MIT.
 - Current wallpaper: photo by Arnaud Mariat on [Unsplash](https://unsplash.com/photos/45Z6hW1dQMI). The repo only holds a link to the local file, not the photo.
-- [Lucide](https://lucide.dev) icon font: ISC, see [`LICENSE`](../.local/share/fonts/Lucide/LICENSE).
+- Icons: [Font Awesome Free](https://fontawesome.com) (Arch package `otf-font-awesome`, not included here).
 - [Brad's rEFInd theme](https://github.com/toptensoftware/brads-refind-theme) by Topten Software: Apache 2.0, see its [`readme.md`](../.config/refind/themes/brads-refind-theme/readme.md).
 - Third-party apps and fonts belong to their authors.

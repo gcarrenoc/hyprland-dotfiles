@@ -58,7 +58,7 @@ for c in clients:
 
 r = subprocess.run(
     [str(Path.home() / ".config/hypr/scripts/menu"), "-dmenu", "-i", "-markup-rows", "-show-icons", "-no-custom", "-format", "s",
-     "-p", "\U000f05b6",
+     "-p", "\uf2d2",
      "-mesg", "↵ go to window",
      "-selected-row", "1" if len(rows) > 1 else "0",
      "-theme-str", "window { width: 169.33mm; } listview { lines: 8; fixed-height: false; } "

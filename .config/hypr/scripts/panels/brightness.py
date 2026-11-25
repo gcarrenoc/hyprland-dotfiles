@@ -8,7 +8,7 @@ stays until the next one. Reads the screen and the night light only while open.
 """
 import subprocess, threading, time
 from pathlib import Path
-from base import Commands, DropPanel, G, GLib, Gtk, box, lucide, text
+from base import Commands, DropPanel, G, GLib, Gtk, box, fa, text
 
 LIGHT = Path("/sys/class/backlight/intel_backlight")
 SCRIPTS = Path(__file__).resolve().parent.parent
@@ -39,20 +39,20 @@ class BrightnessPanel(DropPanel):
         self.cmd, self.touched, self.timer, self.own = Commands(), {"light": 0.0, "warm": 0.0, "night": 0.0}, 0, False
         card = self.section("BRIGHTNESS")
         line = box(False, 6)
-        line.append(lucide("sun"))
+        line.append(fa("sun"))
         self.light, self.light_num = self.slider(5, 100, 5, self.set_light, "Screen brightness")
         line.append(self.light); line.append(self.light_num)
         card.append(line)
 
         card = self.section("NIGHT LIGHT")
         line = box(False, 8)
-        line.append(lucide("moon")); line.append(text("Night light", "title"))
+        line.append(fa("moon")); line.append(text("Night light", "title"))
         self.switch = Gtk.Switch(valign=Gtk.Align.CENTER, tooltip_text="Night light on / off")
         self.switch.connect("state-set", self.set_night)
         line.append(self.switch)
         card.append(line)
         line = box(False, 6)
-        line.append(lucide("warm"))
+        line.append(fa("warm"))
         self.warm, self.warm_num = self.slider(0, COOL - WARM, STEP, self.set_warm, "Warmth (right = warmer)")
         line.append(self.warm); line.append(self.warm_num)
         card.append(line)

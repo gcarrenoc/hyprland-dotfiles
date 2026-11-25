@@ -9,7 +9,7 @@ Power modes: power-profiles-daemon over D-Bus, so a change made elsewhere (Spotl
 """
 import subprocess
 from pathlib import Path
-from base import DropPanel, G, Gio, GLib, Gtk, box, button, lucide, text
+from base import DropPanel, G, Gio, GLib, Gtk, box, button, fa, text
 
 BAT = Path("/sys/class/power_supply/BAT0")
 CAFFEINATE = str(Path.home() / ".local/bin/caffeinate")
@@ -77,7 +77,7 @@ class BatteryPanel(DropPanel):
         """Caffeinate's status line, "" when it's off."""
         try:
             r = subprocess.run([CAFFEINATE, "status"], capture_output=True, text=True, timeout=2)
-            line = r.stdout.strip().removeprefix("Caffeinate is on: ").rstrip(".") if r.returncode == 0 else ""
+            line = r.stdout.strip().removeprefix("Caffeinate is on: ").rstrip(".") if r.stdout.startswith("Caffeinate is on") else ""
             for long, short in (("screen + system awake", "On"), ("system awake", "Screen may sleep"), (", indefinitely", " until turned off")):
                 line = line.replace(long, short)
             self.awake = line
@@ -138,7 +138,7 @@ class BatteryPanel(DropPanel):
 
         card = box(spacing=6, css_classes=["card"])
         row = box(False, 8)
-        row.append(lucide(glyph)); row.append(text("Battery", "title")); row.append(text(f"{pct}%", "title", False))
+        row.append(fa(glyph)); row.append(text("Battery", "title")); row.append(text(f"{pct}%", "title", False))
         card.append(row)
         bar = Gtk.ProgressBar(fraction=pct / 100)
         bar.add_css_class("low" if glyph in ("battery", "low") and pct <= 20 else "level")
@@ -151,9 +151,9 @@ class BatteryPanel(DropPanel):
             if key not in modes:
                 continue
             row = box(False, 8)
-            row.append(lucide(icon)); row.append(text(name))
+            row.append(fa(icon)); row.append(text(name))
             if key == mode:
-                row.append(lucide("check"))
+                row.append(fa("check"))
             b = button(row, name, lambda k=key: self.set_mode(k), "row", *(["on"] if key == mode else []))
             b.set_name(key)
             card.append(b)
@@ -170,7 +170,7 @@ class BatteryPanel(DropPanel):
 
         card = self.section("KEEP AWAKE")
         row = box(False, 8)
-        row.append(lucide("coffee")); row.append(text("Caffeinate"))
+        row.append(fa("coffee")); row.append(text("Caffeinate"))
         switch = Gtk.Switch(active=bool(self.awake), valign=Gtk.Align.CENTER, tooltip_text="Keep the screen and the laptop awake")
         switch.connect("state-set", self.switch_awake)
         row.append(switch)

@@ -9,7 +9,7 @@
 m = mute. Talks to PipeWire through pactl, and only while open. Volume stops at 100 %, like the keys.
 """
 import json, re, subprocess, threading, time
-from base import Commands, DropPanel, G, Gdk, GLib, Gtk, box, button, launch, lucide, out, text
+from base import Commands, DropPanel, G, Gdk, GLib, Gtk, box, button, launch, fa, out, text
 
 LISTENERS_IGNORED = {"PulseAudio Volume Control", "pavucontrol"}     # level meters, not recordings
 
@@ -95,7 +95,7 @@ class Level(Gtk.Box):
         super().__init__(spacing=6)
         self.panel, self.kind, self.ident, self.glyph = panel, kind, ident, glyph
         self.mute, self.touched = False, 0.0
-        self.icon = Gtk.Label(css_classes=["lucide"], width_chars=2)
+        self.icon = Gtk.Label(css_classes=["icon"])
         self.btn = button(self.icon, f"Mute / unmute {what}", self.toggle)
         self.scale = Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL, 0, 100, 5)
         self.scale.set_draw_value(False); self.scale.set_hexpand(True)
@@ -234,15 +234,15 @@ class SoundPanel(DropPanel):
                 card.append(text(x["name"], "note"))
         for x in items if len(items) > 1 else []:
             row = box(False, 8)
-            row.append(lucide(x["icon"] if kind == "sink" or x["icon"] != "speaker" else "mic"))
+            row.append(fa(x["icon"] if kind == "sink" or x["icon"] != "speaker" else "mic"))
             row.append(text(x["name"]))
             if x["default"]:
-                row.append(lucide("check"))
+                row.append(fa("check"))
             card.append(button(row, x["name"], lambda i=x["id"]: self.run("pactl", f"set-default-{kind}", i),
                                "device", *(["on"] if x["default"] else [])))
         if pinned:                                              # you chose one: it stays, even if headphones come
             row = box(False, 8)
-            row.append(lucide("auto")); row.append(text("Choose automatically"))
+            row.append(fa("auto")); row.append(text("Choose automatically"))
             card.append(button(row, "Follow what is plugged in (headphones take over)",
                                lambda: self.run("wpctl", "clear-default", "0" if kind == "sink" else "1"), "device"))
 
@@ -278,7 +278,7 @@ class SoundPanel(DropPanel):
                 for glyph, tip, action in (("prev", "Previous", "previous"),
                                            ("pause" if p["playing"] else "play", "Play / pause", "play-pause"),
                                            ("next", "Next", "next")):
-                    row.append(button(lucide(glyph), tip, lambda i=p["id"], a=action: self.run("playerctl", "-p", i, a)))
+                    row.append(button(fa(glyph), tip, lambda i=p["id"], a=action: self.run("playerctl", "-p", i, a)))
                 card.append(row)
 
         if d["apps"]:
@@ -297,7 +297,7 @@ class SoundPanel(DropPanel):
                                            propagate_natural_height=True, max_content_height=250))
 
         row = box(False, 8)
-        row.append(lucide("sliders"))
+        row.append(fa("sliders"))
         row.append(text("Sound settings…"))
         self.panel.append(button(row, "Open the full mixer (pavucontrol)", self.mixer, "device"))
 

@@ -20,9 +20,9 @@ show() {
     performance) text+="PERF ";  tip+=("Performance mode") ;;
   esac
   text=${text% }
-  text=${text//DND/$'\ue05a'}; text=${text//AWAKE/$'\ue096'}; text=${text//SAVER/$'\ue2de'}; text=${text//PERF/$'\ue286'}
+  text=${text//DND/$'\uf1f6'}; text=${text//AWAKE/$'\uf7b6'}; text=${text//SAVER/$'\uf06c'}; text=${text//PERF/$'\uf135'}
   local tips; tips=$(printf '%s\n' "${tip[@]:-}" | sed 's/["\\]//g' | paste -sd'|' | sed 's/|/\\n/g')
-  [[ -n $text ]] && text="<span font_family='lucide'>$text</span>"
+  [[ -n $text ]] && text="<span font_family='Font Awesome 7 Free Solid' size='13087'>$text</span>"$'\u200b'
   printf '{"text":"%s","tooltip":"%s"}\n' "$text" "$tips"
 }
 

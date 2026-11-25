@@ -403,7 +403,7 @@ def theme_css():
     .spot {{ background-color: {bg}; backdrop-filter: blur(20px); color: {fg};
              border: 1px solid {border}; border-radius: 19px; padding: 14px; }}
     .inputbar {{ background-color: {alt}; border-radius: 12px; padding: 10px 14px; }}
-    .inputbar .prompt {{ color: {sel}; }}
+    .inputbar .prompt {{ color: {sel}; font-family: "Font Awesome 7 Free Solid"; font-size: 10.4pt; }}
     .inputbar text, .inputbar entry {{ background: none; border: none; box-shadow: none; outline: none;
                                       color: {fg}; padding: 0; min-height: 0; }}
     .inputbar entry text placeholder {{ color: {muted}; }}
@@ -467,7 +467,7 @@ class Spotlight(Gtk.ApplicationWindow):
                             valign=Gtk.Align.START)       # exact width: side margins set in prepare()
         left = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10, hexpand=True)
         bar = Gtk.Box(spacing=10, css_classes=["inputbar"])
-        bar.append(Gtk.Label(label="\U000f0349", css_classes=["prompt"]))
+        bar.append(Gtk.Label(label="\uf002", css_classes=["prompt"]))
         self.entry = Gtk.Entry(placeholder_text="Search…", hexpand=True, has_frame=False)
         bar.append(self.entry)
         self.hint = Gtk.Label(label=HINT, css_classes=["hint"], ellipsize=Pango.EllipsizeMode.END)

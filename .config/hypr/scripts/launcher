@@ -129,7 +129,7 @@ def main():
         rows.append(f"{label}\0icon\x1f{a['icon']}")
     r = subprocess.run(
         [str(Path.home() / ".config/hypr/scripts/menu"), "-dmenu", "-i", "-show-icons", "-no-custom", "-format", "s",
-         "-p", "\U000f0349", "-mesg", "↵ go to app    ⇧↵ new window",
+         "-p", "\uf002", "-mesg", "↵ go to app    ⇧↵ new window",
          "-theme-str", "textbox { text-color: @muted; horizontal-align: 0.5; }",
          "-kb-accept-custom", "", "-kb-accept-alt", "", "-kb-custom-1", "Shift+Return"],
         input="\n".join(rows), capture_output=True, text=True)
