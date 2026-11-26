@@ -105,12 +105,12 @@
     "on-click-middle": "uwsm app -- alacritty --config-file ~/.config/alacritty/balcony.toml --class fly-term -e nmtui"
   },
 
-  // Only when something isn't as usual: do not disturb, keep awake, power saver / performance
+  // Only when something isn't as usual: recording, do not disturb, keep awake, power saver / performance
   "custom/state": {
     "exec": "~/.config/hypr/scripts/bar-state",
     "return-type": "json",
     "restart-interval": 5,
-    "on-click": "~/.config/hypr/scripts/panel battery"
+    "on-click": "pgrep -x wf-recorder >/dev/null && pkill -INT -x wf-recorder || ~/.config/hypr/scripts/panel battery"
   },
 
   // Bluetooth: dim = off (style.css)

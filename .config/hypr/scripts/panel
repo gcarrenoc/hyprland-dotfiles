@@ -1,5 +1,5 @@
 #!/bin/sh
-# panel wifi | bluetooth | sound | brightness | battery — show / hide a bar panel fast: tell the
+# panel wifi | bluetooth | sound | brightness | battery | screenshot — show / hide a bar panel fast: tell the
 # running bar-panels over D-Bus (no Python start-up). If its service isn't running, start it and try again.
 show() { gdbus call --session --dest local.BarPanels --object-path /local/BarPanels \
     --method org.freedesktop.Application.ActivateAction "$1" '[]' '{}' >/dev/null 2>&1; }

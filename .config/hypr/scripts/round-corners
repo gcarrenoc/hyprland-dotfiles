@@ -1,0 +1,45 @@
+#!/usr/bin/env python3
+"""round-corners FILE.png [scale] — give a window screenshot the same rounded corners it has on screen.
+
+Reads Hyprland's corner radius and roundness (decoration:rounding, rounding_power: 2 = circle,
+higher = squircle like macOS) and makes the corners transparent, with smooth edges.
+scale: the screen's scale (radius is in logical px; the image is in real pixels). Default 1.25.
+"""
+import json, subprocess, sys
+from PIL import Image, ImageChops
+
+def option(name, default):
+    try:
+        out = json.loads(subprocess.run(["hyprctl", "getoption", name, "-j"], capture_output=True, text=True).stdout)
+        return float(out.get("float", out.get("int", default)) or default)
+    except (ValueError, OSError):
+        return default
+
+def corner(r, power, ss=4):
+    """Alpha of one top-left corner, r×r pixels: inside the curve |x|^p + |y|^p ≤ 1 (measured from the far corner)."""
+    big = Image.new("L", (r * ss, r * ss))
+    px = big.load()
+    n = r * ss
+    for y in range(n):
+        dy = (n - y - 0.5) / n
+        for x in range(n):
+            dx = (n - x - 0.5) / n
+            px[x, y] = 255 if dx ** power + dy ** power <= 1 else 0
+    return big.resize((r, r), Image.LANCZOS)
+
+path = sys.argv[1]
+scale = float(sys.argv[2]) if len(sys.argv) > 2 else 1.25
+radius = round(option("decoration:rounding", 19) * scale)
+power = option("decoration:rounding_power", 2)
+im = Image.open(path).convert("RGBA")
+w, h = im.size
+r = min(radius, w // 2, h // 2)
+if r >= 2:
+    alpha = im.getchannel("A")
+    c = corner(r, power)
+    for box, piece in (((0, 0), c), ((w - r, 0), c.transpose(Image.FLIP_LEFT_RIGHT)),
+                       ((0, h - r), c.transpose(Image.FLIP_TOP_BOTTOM)), ((w - r, h - r), c.transpose(Image.ROTATE_180))):
+        region = alpha.crop((box[0], box[1], box[0] + r, box[1] + r))
+        alpha.paste(ImageChops.darker(region, piece), box)
+    im.putalpha(alpha)
+    im.save(path)

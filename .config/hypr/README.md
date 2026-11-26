@@ -64,7 +64,9 @@ Hyprland 0.57. This is the only desktop now (GNOME was removed); the login scree
 
 | Keys | Action |
 |---|---|
-| `Print` | Whole screen → saved to `~/Pictures/Screenshots` and copied |
+| `Print` | **Screenshot tool** (like GNOME): the screen freezes; choose **Selection** (drag; move or resize it; remembered), **Screen** or **Window** (click one; saved with its rounded corners), **photo or video**, pointer on/off; the round button, Enter or Space captures, Esc closes. Keys inside: S · C · W · V (video) · P (pointer). No coloured window borders in the pictures. Recording: red dot on the bar, click it or press Print to stop (`~/Videos/Screencasts`) |
+| `Shift + Print` | Whole screen at once (saved and copied) |
+| `Alt + Print` | The active window at once, with its rounded corners |
 | `Super + Shift + A` | Select an area → annotate / save in Swappy (`Esc` cancels) |
 | `Super + Shift + C` | Colour picker (copies the hex code) |
 

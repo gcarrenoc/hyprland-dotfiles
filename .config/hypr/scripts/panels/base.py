@@ -96,6 +96,27 @@ def theme_css():
     .panel spinner {{ color: {sel}; min-width: 16px; min-height: 16px; }}
     .panel scrolledwindow {{ border-radius: 13px; }}
     .panel scrollbar {{ background: none; border: none; }}
+    window.shotwin {{ background: none; }}
+    window.shotwin * {{ font-family: "PaperMono Nerd Font"; }}
+    window.shotwin label.icon {{ font-family: "Font Awesome 7 Free Solid"; font-size: 12.5pt; }}
+    .shotbar {{ background-color: {bg}; backdrop-filter: blur(20px); border: 1px solid {border};
+                border-radius: 24px; padding: 10px 14px; color: {fg}; }}
+    .shotgroup {{ background-color: alpha({fg}, 0.08); border-radius: 15px; padding: 3px; }}
+    window.shotwin button {{ background: none; border: none; box-shadow: none; outline: none; color: {fg}; }}
+    window.shotwin button.shotmode {{ padding: 6px 14px; border-radius: 12px; min-height: 0; }}
+    window.shotwin button.shotmode:hover {{ background-color: alpha({sel}, 0.14); }}
+    window.shotwin button.shotmode.on, window.shotwin button.shotmode:checked {{ background-color: {sel}; color: {on_sel}; }}
+    window.shotwin button.shotmode.on label, window.shotwin button.shotmode:checked label {{ color: {on_sel}; }}
+    .shotlabel {{ font-size: 8.5pt; }}
+    window.shotwin button.shutter {{ min-width: 50px; min-height: 50px; padding: 0; border-radius: 30px;
+                                     border: 4px solid {fg}; margin: 0 6px; }}
+    .shutterdot {{ min-width: 40px; min-height: 40px; border-radius: 20px; background-color: {fg}; }}
+    window.shotwin button.shutter:hover .shutterdot {{ background-color: {sel}; }}
+    window.shotwin button.shutter.video .shutterdot {{ background-color: {urgent}; }}
+    .shotsize {{ background-color: rgba(0, 0, 0, 0.62); color: #ffffff; border-radius: 8px; padding: 3px 9px; font-size: 10pt; }}
+    window.shotwin button.shotclose {{ background-color: rgba(0, 0, 0, 0.5); color: #ffffff; border-radius: 22px;
+                                       min-width: 38px; min-height: 38px; padding: 0; }}
+    window.shotwin button.shotclose label {{ color: #ffffff; }}
     scrolledwindow, viewport {{ background: none; }}
     """
 

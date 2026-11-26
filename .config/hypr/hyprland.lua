@@ -102,6 +102,19 @@ hl.animation({ leaf = "layers",     enabled = true, speed = 3,   bezier = "smoot
 hl.animation({ leaf = "workspaces", enabled = false })   -- instant workspace switch (no bouncy slide)
 hl.animation({ leaf = "border",     enabled = true, speed = 10,  bezier = "default" })
 
+-- Screenshots without the coloured borders: scripts/screenshot and the Print tool hide them (transparent,
+-- so nothing moves) for the instant a frame is taken:  hyprctl dispatch 'function() Borders(false) end'
+function Borders(show)
+    hl.animation({ leaf = "border", enabled = false })      -- switch at once, no fade
+    if show then
+        hl.config({ general = { col = { active_border = { colors = C.active, angle = 45 }, inactive_border = C.inactive } } })
+        hl.timer(function() hl.animation({ leaf = "border", enabled = true, speed = 10, bezier = "default" }) end,
+                 { timeout = 100, type = "oneshot" })
+    else
+        hl.config({ general = { col = { active_border = "rgba(00000000)", inactive_border = "rgba(00000000)" } } })
+    end
+end
+
 -- Frosted glass behind the bar (rofi menus are normal windows: window blur frosts them)
 hl.layer_rule({ name = "blur-waybar",        match = { namespace = "^waybar$" },        blur = true, ignore_alpha = 0.2 })
 -- Notifications (swaync) blur themselves: GTK asks for it via CSS backdrop-filter (layer rules are ignored for GTK 4.24 surfaces)
@@ -239,7 +252,9 @@ hl.bind(M .. " + CTRL + ALT + L",    function() WS.insert(1) end)               
 hl.bind(M .. " + CTRL + Q",           function() WS.remove() end)                         -- remove this workspace (windows → previous)
 
 -- Screenshots, colour picker
-hl.bind("Print",              run(scripts .. "screenshot full"))
+hl.bind("Print",              run(scripts .. "panel screenshot"))   -- GNOME-style: selection / screen / window, photo or video
+hl.bind("SHIFT + Print",      run(scripts .. "screenshot full"))    -- whole screen at once
+hl.bind("ALT + Print",        run(scripts .. "screenshot window"))  -- the active window at once
 hl.bind(M .. " + SHIFT + A",  run(scripts .. "screenshot area"))   -- area → annotate in swappy
 hl.bind(M .. " + SHIFT + C",  run("hyprpicker -a"))
 

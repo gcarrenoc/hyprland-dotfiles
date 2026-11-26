@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # bar-state — small icons on the bar only while something isn't as usual (nothing otherwise):
-#   do not disturb · keep awake (caffeinate) · power saver / performance
+#   recording (red dot: click it to stop) · do not disturb · keep awake (caffeinate) · power saver / performance
 # Waybar runs it and reads one JSON line per change. It sleeps until something happens:
 # swaync and power-profiles-daemon tell it, caffeinate writes to the pipe $XDG_RUNTIME_DIR/bar-state.
 set -u
@@ -13,6 +13,7 @@ gdbus monitor --system --dest net.hadess.PowerProfiles 2>/dev/null | while read 
 
 show() {
   local text="" tip=()
+  if pgrep -x wf-recorder >/dev/null; then text+="REC "; tip+=("Recording the screen · click to stop"); fi
   if [[ $(swaync-client -D -sw 2>/dev/null) == true ]]; then text+="DND "; tip+=("Do not disturb is on"); fi
   if systemctl --user is-active -q caffeinate.service; then text+="AWAKE "; tip+=("$("$HOME/.local/bin/caffeinate" status 2>/dev/null)"); fi
   case $(powerprofilesctl get 2>/dev/null) in
@@ -21,6 +22,8 @@ show() {
   esac
   text=${text% }
   text=${text//DND/$'\uf1f6'}; text=${text//AWAKE/$'\uf7b6'}; text=${text//SAVER/$'\uf06c'}; text=${text//PERF/$'\uf135'}
+  red=$(sed -n 's/^@define-color alert *\(#[0-9a-fA-F]\{6\}\);.*/\1/p' ~/.config/waybar/colors.css)
+  text=${text//REC/<span color=\'${red:-#f47b85}\'>$'\uf111'</span>}
   local tips; tips=$(printf '%s\n' "${tip[@]:-}" | sed 's/["\\]//g' | paste -sd'|' | sed 's/|/\\n/g')
   [[ -n $text ]] && text="<span font_family='Font Awesome 7 Free Solid' size='13087'>$text</span>"$'\u200b'
   printf '{"text":"%s","tooltip":"%s"}\n' "$text" "$tips"

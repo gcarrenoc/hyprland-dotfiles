@@ -170,6 +170,7 @@ vpl-gpu-rt
 vulkan-intel
 vulkan-tools
 waybar
+wf-recorder
 wget
 wireplumber
 wl-clipboard
