@@ -44,7 +44,7 @@ change), `--no-packages`, `--no-services`. Parts and their files: [`.config/dotf
 ### After installing
 1. Log in to **Hyprland (uwsm-managed)**.
 2. Set a wallpaper; the whole theme follows it: `wallpaper ~/Pictures/image.jpg`
-3. Put your screen, keyboard layout and own shortcuts in **`~/.config/hypr/local.lua`**. The
+3. Put your screen, keyboard layout and own shortcuts in **`~/.config/hypr/local.lua`**. If you had a `hyprland.conf`, Hyprland now ignores it (it reads `hyprland.lua`), so move what you need from it into `local.lua`. The
    installer writes a starting version with your keyboard layout.
 4. Optional: for the night light's sunset times, put `latitude longitude` in `~/.config/hypr/location`.
 5. **Super + I** lists every shortcut. The full guide is [`.config/hypr/README.md`](../.config/hypr/README.md) ([PDF](../.config/hypr/README.pdf)).

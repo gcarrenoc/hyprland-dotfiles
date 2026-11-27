@@ -24,7 +24,11 @@ BACKUP="$HOME/.local/state/dotfiles-backup/$(date +%Y-%m-%d_%H%M%S)"
 DRY=0 PKGS=1 SVC=1 MODE=ask ONLY=""
 say()  { printf '\033[1m%s\033[0m\n' "$*"; }
 note() { printf '  %s\n' "$*"; }
-ask()  { local a; read -rp "$1 [y/N] " a </dev/tty; [[ ${a,,} == y* ]]; }
+ask()  {                                                  # no terminal to ask in: the answer is no
+  local a=""
+  { read -rp "$1 [y/N] " a </dev/tty; } 2>/dev/null || { echo "$1 no (nobody to ask; use --only or --all)"; return 1; }
+  [[ ${a,,} == y* ]]
+}
 run()  { if (( DRY )); then note "would run: $*"; else "$@"; fi; }
 
 while (( $# )); do
@@ -118,6 +122,13 @@ KB_LAYOUT = "${layout:-us}"
 LUA
     note "made ~/.config/hypr/local.lua (keyboard: ${layout:-us}) — edit it for your screen and shortcuts"
   fi
+fi
+
+# ---- an older classic config: Hyprland now reads hyprland.lua and ignores it
+if [[ " ${CHOSEN[*]} " == *" core "* && -f $HOME/.config/hypr/hyprland.conf ]]; then
+  say "Note: you have ~/.config/hypr/hyprland.conf"
+  note "Hyprland uses hyprland.lua when both exist, so that file is now ignored (it's kept, nothing is deleted)."
+  note "Move what you need from it (monitor, keyboard, your own shortcuts) into ~/.config/hypr/local.lua."
 fi
 
 # ---- packages
