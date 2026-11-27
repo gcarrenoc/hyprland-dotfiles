@@ -1,0 +1,18 @@
+# Copy of /usr/lib/systemd/user/hyprpaper.service with Requisite= instead of Requires=: it only runs inside
+# the desktop and never starts the graphical session by itself (then uwsm refuses to start Hyprland).
+[Unit]
+Description=Fast, IPC-controlled wallpaper utility for Hyprland.
+Documentation=https://wiki.hyprland.org/Hypr-Ecosystem/hyprpaper/
+PartOf=graphical-session.target
+Requisite=graphical-session.target
+After=graphical-session.target
+ConditionEnvironment=WAYLAND_DISPLAY
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/hyprpaper
+Slice=session.slice
+Restart=on-failure
+
+[Install]
+WantedBy=graphical-session.target

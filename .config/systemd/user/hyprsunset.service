@@ -1,0 +1,18 @@
+# Copy of /usr/lib/systemd/user/hyprsunset.service with Requisite= instead of Requires=: it only runs inside
+# the desktop and never starts the graphical session by itself (then uwsm refuses to start Hyprland).
+[Unit]
+Description=An application to enable a blue-light filter on Hyprland.
+Documentation=https://wiki.hyprland.org/Hypr-Ecosystem/hyprsunset/
+PartOf=graphical-session.target
+Requisite=graphical-session.target
+After=graphical-session.target
+ConditionEnvironment=WAYLAND_DISPLAY
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/hyprsunset -i
+Slice=session.slice
+Restart=on-failure
+
+[Install]
+WantedBy=graphical-session.target

@@ -16,8 +16,9 @@ on=0 temp=$DEFAULT period=""
 [[ -f $STATE ]] && read -r on temp period < "$STATE"
 save() { mkdir -p "${STATE%/*}"; echo "$on $temp $period" > "$STATE"; }
 SUN="$(dirname "$(readlink -f "$0")")/suntimes"
+hyprland() { pgrep -x Hyprland >/dev/null; }             # outside the desktop (login screen, console): only remember
 ensure() { pgrep -x hyprsunset >/dev/null || { systemctl --user start --no-block hyprsunset.service; sleep 0.8; }; }
-apply() { ensure; if (( on )); then hyprctl hyprsunset temperature "$temp" >/dev/null; else hyprctl hyprsunset identity >/dev/null; fi; }
+apply() { hyprland || return 0; ensure; if (( on )); then hyprctl hyprsunset temperature "$temp" >/dev/null; else hyprctl hyprsunset identity >/dev/null; fi; }
 
 case ${1:-} in
   toggle) on=$(( 1 - on )); apply; save ;;

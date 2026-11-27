@@ -3,5 +3,7 @@ Description=Night light: follow sunset/sunrise
 After=graphical-session.target
 
 [Service]
+# only inside the desktop (it starts hyprsunset); at login hyprsunset catches up by itself
+ExecCondition=/usr/bin/pgrep -x Hyprland
 Type=oneshot
 ExecStart=%h/.config/hypr/scripts/nightlight auto

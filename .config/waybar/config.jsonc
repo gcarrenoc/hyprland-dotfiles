@@ -39,6 +39,7 @@
       "class<com.anthropic.Claude>": "<span alpha='85%'> <span font_family='Font Awesome 7 Brands' size='13087'></span></span>",
       "class<calibre-.*>": "<span alpha='85%'> <span font_family='Font Awesome 7 Free Solid' size='13087' rise='476'></span></span>",
       "class<chrome-127\\.0\\.0\\.1__.*>": "<span alpha='85%'> <span font_family='PaperMono Nerd Font' size='15840' rise='-716' weight='normal'></span></span>",
+      "class<TickTick|ticktick>": "<span alpha='85%'> <span font_family='Font Awesome 7 Free Solid' size='13087'></span></span>",
       "class<zoom>": "<span alpha='85%'> <span font_family='Font Awesome 7 Free Solid' size='13087'></span></span>",
       "class<com.obsproject.Studio>": "<span alpha='85%'> <span font_family='Font Awesome 7 Brands' size='13087'></span></span>",
       "class<org.inkscape.Inkscape>": "<span alpha='85%'> <span font_family='PaperMono Nerd Font' size='12829' rise='351' letter_spacing='5071' weight='normal'></span></span>",

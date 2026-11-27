@@ -13,7 +13,8 @@ GIT=(git --git-dir="$HOME/.dotfiles" --work-tree="$HOME")
 SYS="$HOME/.config/system-config"
 SYSTEM_FILES=(/etc/sddm.conf.d/10-hyprlock.conf /etc/X11/xorg.conf.d/00-keyboard.conf
               /etc/xdg/reflector/reflector.conf /etc/systemd/zram-generator.conf /etc/nftables.conf
-              /etc/mkinitcpio.conf /usr/lib/systemd/system-sleep/boot-esp)
+              /etc/mkinitcpio.conf /usr/lib/systemd/system-sleep/boot-esp
+              /etc/systemd/journald.conf.d/sync.conf)
 
 snapshot_system() {
   for f in "${SYSTEM_FILES[@]}"; do
