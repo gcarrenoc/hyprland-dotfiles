@@ -1,12 +1,17 @@
 #!/usr/bin/env bash
 # wallpaper — set a wallpaper and make the whole theme follow its colours.
-#   wallpaper <image>          set it (desktop + lock screen), recolour bar, borders,
-#                              menus, notifications, lock screen and terminal
-#   wallpaper <image> --login  also update the login screen (SDDM: wallpaper + colours; asks for your password)
+#   wallpaper <image>          set it (desktop, lock and login screen), recolour bar, borders,
+#                              menus, notifications, lock screen, login screen and terminal
+#   wallpaper --setup-login    once: let the login screen (SDDM) follow the wallpaper (asks for your password)
 #   wallpaper                  show the current wallpaper
 set -euo pipefail
 DIR="$HOME/.local/share/backgrounds"
+LOOK=/var/lib/login-screen
 if [[ $# -eq 0 ]]; then readlink -f "$HOME/.config/hypr/wallpapers/current.jpg"; exit 0; fi
+if [[ $1 == --setup-login || ${2:-} == --login ]] && [[ ! -w $LOOK ]]; then
+  pkexec "$HOME/.config/hypr/scripts/sddm-sync" "$USER" "$HOME/.config/hypr/sddm-theme"
+  [[ $1 == --setup-login ]] && set -- "$(readlink -f "$HOME/.config/hypr/wallpapers/current.jpg")"
+fi
 src=$(readlink -f "$1") || { echo "wallpaper: '$1' not found" >&2; exit 1; }
 [[ -f $src ]] || { echo "wallpaper: '$1' is not a file" >&2; exit 1; }
 file --mime-type -b "$src" | grep -q '^image/' || { echo "wallpaper: '$1' is not an image" >&2; exit 1; }
@@ -19,8 +24,17 @@ gsettings set org.gnome.desktop.background picture-uri-dark "file://$dest"
 
 "$HOME/.config/hypr/scripts/theme" --force           # link, restart hyprpaper, recolour everything
 
-if [[ ${2:-} == --login ]]; then
-  pkexec "$HOME/.config/hypr/scripts/sddm-sync" "$dest" "$HOME/.config/hypr/hyprlock-colors.conf" "$HOME/.config/hypr/sddm-theme" \
-    && echo "Login screen (SDDM) updated: wallpaper + colours."
+# login screen: written into the folder the SDDM theme reads (set up once with --setup-login)
+if [[ -w $LOOK ]]; then
+  COLORS="$HOME/.config/hypr/hyprlock-colors.conf"
+  col() { local v; v=$(sed -n "s/^\$$1 = rgba(\([0-9a-fA-F]\{8\}\)).*/\1/p" "$COLORS"); echo "#${v:6:2}${v:0:6}"; }   # rgba(RRGGBBAA) → Qt #AARRGGBB
+  # a 2560 px copy is plenty for a blurred background and keeps the greeter quick
+  magick "$dest" -auto-orient -resize '2560x2560>' -quality 90 "$LOOK/background.new.jpg" 2>/dev/null || cp -f "$dest" "$LOOK/background.new.jpg"
+  chmod 644 "$LOOK/background.new.jpg" && mv -f "$LOOK/background.new.jpg" "$LOOK/background.jpg"
+  { echo "[General]"; echo "background=background.jpg"
+    for k in clock date user box boxText ring1 ring2 fail1 fail2; do
+      v=$k; [[ $k == boxText ]] && v=box_text; echo "$k=$(col lock_$v)"; done; } > "$LOOK/theme.conf.new"
+  chmod 644 "$LOOK/theme.conf.new" && mv -f "$LOOK/theme.conf.new" "$LOOK/theme.conf"
+  echo "Login screen updated."
 fi
 notify-send -a Wallpaper -i "$dest" "Wallpaper set" "Theme updated from $(basename "$dest")" 2>/dev/null || true

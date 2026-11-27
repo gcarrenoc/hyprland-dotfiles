@@ -64,7 +64,7 @@ about = SDDM login screen that matches the lock screen (wallpaper and colours)
 files = .config/hypr/sddm-theme .config/hypr/scripts/sddm-sync
 packages = sddm qt6-declarative
 root = .config/system-config/etc/sddm.conf.d/10-hyprlock.conf
-notes = Then: wallpaper <image> --login   (copies the theme, asks for the password)
+notes = Then, once: wallpaper --setup-login   (asks for the password once; from then on every wallpaper change updates the login screen too)
 
 [firewall]
 about = nftables firewall: nothing from the network gets in unless you started it (mDNS allowed)

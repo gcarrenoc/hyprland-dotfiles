@@ -1,25 +1,20 @@
 #!/usr/bin/env bash
-# Copy the wallpaper + lock-screen colours into the SDDM login theme.
-# Runs as root (pkexec):  sddm-sync <wallpaper> <hyprlock-colors.conf> [theme-source-dir]
+# sddm-sync — set up the SDDM login theme so it follows the wallpaper. Runs as root (pkexec), once:
+#   sddm-sync <user> <theme-source-dir>
+# The theme (/usr/share/sddm/themes/hyprlock-match) stays root-owned; only its picture and colours are links
+# into /var/lib/login-screen, a folder owned by <user>. From then on `wallpaper` updates the login screen
+# without a password. No root process ever reads files from the user's home after this setup.
 set -euo pipefail
-WALL=$1 COLORS=$2 SRC=${3:-}
+USER_=$1 SRC=$2
 DEST=/usr/share/sddm/themes/hyprlock-match
+LOOK=/var/lib/login-screen
+id "$USER_" >/dev/null
 install -d -m755 "$DEST"
-[[ -n $SRC ]] && install -m644 "$SRC"/Main.qml "$SRC"/metadata.desktop "$DEST"/
-install -m644 "$WALL" "$DEST/background.jpg"
-# hyprlock rgba(RRGGBBAA) → Qt #AARRGGBB
-col() { local v; v=$(sed -n "s/^\$$1 = rgba(\([0-9a-fA-F]\{8\}\)).*/\1/p" "$COLORS"); echo "#${v:6:2}${v:0:6}"; }
-cat > "$DEST/theme.conf" <<CONF
-[General]
-background=background.jpg
-clock=$(col lock_clock)
-date=$(col lock_date)
-user=$(col lock_user)
-box=$(col lock_box)
-boxText=$(col lock_box_text)
-ring1=$(col lock_ring1)
-ring2=$(col lock_ring2)
-fail1=$(col lock_fail1)
-fail2=$(col lock_fail2)
-CONF
-echo "SDDM theme updated: $DEST"
+install -m644 "$SRC"/Main.qml "$SRC"/metadata.desktop "$DEST"/
+install -d -m755 -o "$USER_" -g "$USER_" "$LOOK"
+# keep what's there now until the first `wallpaper` run fills the folder
+for f in background.jpg theme.conf; do
+  if [[ -f $DEST/$f && ! -L $DEST/$f && ! -e $LOOK/$f ]]; then install -m644 -o "$USER_" -g "$USER_" "$DEST/$f" "$LOOK/$f"; fi
+  ln -sfn "$LOOK/$f" "$DEST/$f"
+done
+echo "Login screen now follows the wallpaper (files in $LOOK)."

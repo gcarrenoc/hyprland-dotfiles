@@ -183,9 +183,9 @@ notifications, lock screen, password dialog, PDF viewer and terminal.
 
 | Command | What it does |
 |---|---|
-| `wallpaper ~/path/image.jpg` | Set the wallpaper and recolour the whole theme from it |
+| `wallpaper ~/path/image.jpg` | Set the wallpaper and recolour the whole theme from it, login screen included |
 | `~/.config/hypr/scripts/theme --show` | See the colours taken from the wallpaper (swatches in the terminal), without changing anything |
-| `wallpaper ~/path/image.jpg --login` | Same, and also update the login screen — wallpaper and colours (asks for your password) |
+| `wallpaper --setup-login` | Once: let the login screen follow the wallpaper too (asks for your password once; afterwards every `wallpaper` updates it) |
 | `wallpaper` | Show the current wallpaper |
 
 How the colours are picked: the image's most vivid colour sets the **main hue** (dark tinted
