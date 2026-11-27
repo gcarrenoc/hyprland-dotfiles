@@ -5,7 +5,8 @@
 #        display --auto     menu only if an external display is connected (used on plug-in)
 #        display extend|mirror|external|laptop   apply directly
 set -u
-LAPTOP=eDP-1
+LAPTOP=$(hyprctl monitors all -j | python3 -I -c 'import sys,json
+print(next((m["name"] for m in json.load(sys.stdin) if m["name"].startswith(("eDP", "LVDS", "DSI"))), "eDP-1"))')   # the built-in screen
 ext=$(hyprctl monitors all -j | python3 -I -c 'import sys,json
 for m in json.load(sys.stdin):
     if m["name"]!="'"$LAPTOP"'": print(m["name"]); break')
@@ -24,7 +25,8 @@ apply() {
     laptop)   ext_spec="{ output = \"$ext\", disabled = true }" ;;
     *) return 1 ;;
   esac
-  local lap_spec="{ output = \"$LAPTOP\", mode = \"1920x1200@60\", position = \"0x0\", scale = 1.25, mirror = \"\", disabled = false }"
+  # the laptop's own settings (LAPTOP in local.lua / hyprland.lua)
+  local lap_spec="{ output = LAPTOP.output, mode = LAPTOP.mode, position = LAPTOP.position, scale = LAPTOP.scale, mirror = \"\", disabled = false }"
   [[ $lap_on == false ]] && lap_spec="{ output = \"$LAPTOP\", disabled = true }"
   # turn the external on first, so there is never a moment with no screen
   hyprctl dispatch "function() hl.monitor($ext_spec) end" >/dev/null

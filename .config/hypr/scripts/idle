@@ -11,6 +11,6 @@ case ${1:-} in
     brightnessctl -q -s                                      # remember
     (( low < now )) && brightnessctl -q set "$low" ;;
   undim)   brightnessctl -q -r ;;
-  suspend) grep -qs 1 /sys/class/power_supply/AC/online || systemctl suspend ;;
+  suspend) cat /sys/class/power_supply/{AC,ADP}*/online 2>/dev/null | grep -q 1 || systemctl suspend ;;
 esac
 exit 0

@@ -7,7 +7,8 @@
 #   • on battery   → lighter blur (1 pass) to save power; plugged in → 3 passes
 # Warnings fire once per discharge and reset when you plug in.
 set -u
-BAT=/sys/class/power_supply/BAT0 AC=/sys/class/power_supply/AC/online
+BAT=$(ls -d /sys/class/power_supply/BAT* 2>/dev/null | head -1) AC=$(ls -d /sys/class/power_supply/{AC,ADP}*/online 2>/dev/null | head -1)
+[[ -n $BAT ]] || exit 0                        # no battery (desktop PC)
 STATE="$HOME/.cache/power-watch"
 SAVER_STATE="$HOME/.cache/power-watch-saver"   # exists while we switched to power saver; holds the previous plan
 SAVER=20 LOW=15 CRIT=8 SUSPEND=5 BLUR_AC=3 BLUR_BAT=1

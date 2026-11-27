@@ -1,49 +1,71 @@
 # hyprland-dotfiles
 
-My Arch Linux desktop: **Hyprland 0.57** (Lua config) on a ThinkPad X13 Gen 3, with fractional scaling at 1.25.
-The look started from [1amSimp1e/dots](https://github.com/1amSimp1e/dots) (balcony branch) and was rebuilt for Hyprland 0.57.
-Everything recolours itself from the wallpaper.
+An Arch Linux desktop on **Hyprland 0.57** (Lua config): a frosted bar with drop-down panels, a
+Spotlight launcher, a GNOME-style screenshot tool, and colours that follow the wallpaper.
+Made on a ThinkPad X13 Gen 3; the look started from [1amSimp1e/dots](https://github.com/1amSimp1e/dots) (balcony branch).
 
-> **Full guide and every shortcut:** [`.config/hypr/README.md`](../.config/hypr/README.md) ([PDF](../.config/hypr/README.pdf)).
-> On the desktop, **Super + I** shows the same list, searchable.
+**Take only what you want:** the installer asks for each part, so you can have the desktop without
+my apps. Nothing personal to me (shell config, default apps, boot menu, screen and keyboard) is
+copied.
 
-## What's inside
+## Install
 
-| Part | Tool | Config |
-|---|---|---|
-| Compositor | Hyprland 0.57 (Lua), started with uwsm | [`.config/hypr/hyprland.lua`](../.config/hypr/hyprland.lua), [`workspaces.lua`](../.config/hypr/workspaces.lua) |
-| Bar | Waybar, frosted, 18 px text with [Font Awesome 7](https://fontawesome.com) icons on the same centre line | [`.config/waybar/`](../.config/waybar) |
-| Bar panels | Frosted GTK4 panels that drop down from the bar: **Wi-Fi, Bluetooth, sound, brightness + night light, battery + power mode**. One resident program, opens in about 0.1 s | [`bar-panels`](../.config/hypr/scripts/bar-panels), [`panels/`](../.config/hypr/scripts/panels) |
-| Notifications | swaync: floating cards, Do Not Disturb that keeps muted notifications | [`.config/swaync/`](../.config/swaync) |
-| Launcher | **Spotlight** (Super + Space): resident GTK4 app with apps, files, live calculator, web search, system actions and Quick Look | [`.config/hypr/scripts/spotlight`](../.config/hypr/scripts/spotlight) |
-| Menus | Rofi, frosted (power menu, clipboard, windows) | [`.config/rofi/`](../.config/rofi) |
-| Lock / idle | hyprlock + hypridle (locks before sleep without flashing the apps) | [`hyprlock.conf`](../.config/hypr/hyprlock.conf), [`hypridle.conf`](../.config/hypr/hypridle.conf) |
-| Login | SDDM with a theme that matches the lock screen | [`.config/hypr/sddm-theme/`](../.config/hypr/sddm-theme) |
-| Boot menu | rEFInd with [Brad's theme](https://github.com/toptensoftware/brads-refind-theme) (Arch + Windows 11) | [`.config/refind/`](../.config/refind) |
-| Terminal | Alacritty + tmux, colours from the wallpaper | [`.config/alacritty/`](../.config/alacritty), [`.config/tmux/`](../.config/tmux) |
-| Shell | Fish inside tmux; Bash stays the login shell and runs the scripts | [`.config/fish/`](../.config/fish), [`.bashrc`](../.bashrc) |
-| PDF / books | Zathura (dark reading mode, Ctrl+C copies) | [`.config/zathura/`](../.config/zathura) |
+Needs Arch Linux with Hyprland ≥ 0.57 and uwsm.
 
-## Small tools
+```bash
+git clone https://github.com/gcarrenoc/hyprland-dotfiles.git ~/hyprland-dotfiles
+~/hyprland-dotfiles/.config/dotfiles/install            # asks for each part below
+```
 
-| Command | What it does |
+| Part | What you get |
 |---|---|
-| `wallpaper <image>` | Sets the wallpaper and recolours the bar, borders, menus, terminal, lock screen and login screen from it |
-| `caffeinate [2h \| inf \| -s …]` | Keeps the laptop awake, macOS-style. Also in the battery panel. |
-| `nightlight` | hyprsunset night light that turns on at sunset and off at sunrise (local sun times). Controlled from the brightness panel. |
-| `claude-desktop-update` | Installs and updates [Claude Desktop](https://claude.ai/download) in `~/.local/opt` from Anthropic's signed apt repo. It verifies the key fingerprint, signature and checksums, needs no root, and runs silently. |
-| `vscode-update` | The same for [VS Code](https://code.visualstudio.com), from Microsoft's signed repo |
-| `cnew` / `cpick` / `cpurge` | Start, resume and delete Claude Code conversations (Fish and Bash) |
-| `jupyter-app` / `jupyter-tray` | JupyterLab as a desktop app with a tray icon to stop it |
-| `refind-theme` | Installs the rEFInd menu and theme to the EFI partition |
-| `dotfiles` | Manages this repo (see below) |
+| **core** (always) | Hyprland config, Waybar, the panels (Wi-Fi, Bluetooth, sound, brightness + night light, battery + power mode + keep awake), Spotlight (Super + Space), notifications with do not disturb, lock and idle, the screenshot tool (Print), the wallpaper theme, the shortcut list (Super + I) |
+| terminal | Alacritty + tmux + Fish, colours from the wallpaper |
+| pdf | Zathura with the theme's colours |
+| claude-code | `cnew` / `cpick` / `cpurge` for Claude Code conversations |
+| claude-desktop | Claude Desktop from Anthropic's signed repository, updated silently |
+| vscode | VS Code from Microsoft's signed repository, updated silently |
+| jupyter | JupyterLab as a desktop app with a tray icon (needs Anaconda) |
+| ticktick | TickTick launcher (you install the app) |
+| login-screen | SDDM theme that matches the lock screen |
+| firewall | nftables: nothing gets in unless you started it |
+| zram | Compressed swap in RAM |
 
-Background jobs run as systemd user units in [`.config/systemd/user/`](../.config/systemd/user): night light, the bar, Spotlight, the panels, wallpaper, idle/lock, clipboard history, night light, low-battery power saver, Claude Desktop and VS Code updates, and JupyterLab.
+What the installer does:
+- **Files are copied, not linked**, so you can change them. If you already have one, it goes to
+  `~/.local/state/dotfiles-backup/<date>/` first, and my home path is replaced by yours.
+- **Missing packages** are listed and installed with pacman if you say yes. Files in `/etc` and
+  services are each asked or listed too.
+- **Updating:** run it again. Your `~/.config/hypr/local.lua` is never touched.
 
-## How the repo works
+Other options: `install --list`, `--only core,terminal`, `--all`, `--dry-run` (shows what would
+change), `--no-packages`, `--no-services`. Parts and their files: [`.config/dotfiles/components`](../.config/dotfiles/components).
 
-It's a **bare git repo**: the files stay where they live in `$HOME`, and git's data lives in `~/.dotfiles`.
-[`dotfiles`](../.local/bin/dotfiles) is a small wrapper around git:
+### After installing
+1. Log in to **Hyprland (uwsm-managed)**.
+2. Set a wallpaper; the whole theme follows it: `wallpaper ~/Pictures/image.jpg`
+3. Put your screen, keyboard layout and own shortcuts in **`~/.config/hypr/local.lua`**. The
+   installer writes a starting version with your keyboard layout.
+4. Optional: for the night light's sunset times, put `latitude longitude` in `~/.config/hypr/location`.
+5. **Super + I** lists every shortcut. The full guide is [`.config/hypr/README.md`](../.config/hypr/README.md) ([PDF](../.config/hypr/README.pdf)).
+
+## Where things are
+
+| Path | What |
+|---|---|
+| [`.config/hypr/`](../.config/hypr) | `hyprland.lua` (shared), `local.lua` (each person's own), `workspaces.lua`, lock and idle, the guide |
+| [`.config/hypr/scripts/`](../.config/hypr/scripts) | Spotlight, theme, screenshot, night light, menus · [`panels/`](../.config/hypr/scripts/panels): the bar's panels and the screenshot tool (Python + GTK4) |
+| [`.config/waybar/`](../.config/waybar), [`.config/rofi/`](../.config/rofi), [`.config/swaync/`](../.config/swaync) | Bar, menus, notifications (`colors.*` are generated from the wallpaper) |
+| [`.config/systemd/user/`](../.config/systemd/user) | Services: bar, Spotlight, panels, wallpaper, idle, night light, battery watch, updaters |
+| [`.config/dotfiles/`](../.config/dotfiles) | The installer and its list of parts |
+| [`.local/bin/`](../.local/bin) | `wallpaper`, `caffeinate`, the updaters, launchers |
+| [`.config/system-config/`](../.config/system-config) | Copies of files in `/etc` (firewall, zram, login screen) and my package lists |
+| `.config/refind/`, `.bashrc`, `.config/mimeapps.list`, `.config/autostart/` | Mine only: the installer never copies them |
+
+## How I use it (the owner)
+
+This repo is a **bare git repo**: the files stay where they live in my `$HOME`, and git's data lives in
+`~/.dotfiles`. [`dotfiles`](../.local/bin/dotfiles) is a small wrapper around git:
 
 ```bash
 dotfiles status            # any git command works
@@ -51,32 +73,16 @@ dotfiles add ~/.config/foo # start tracking a file
 dotfiles save "message"    # copy /etc files and package lists, scan for secrets, commit, push
 ```
 
-A few system files (SDDM, keyboard layout, reflector, zram) are copied into
-[`.config/system-config/etc/`](../.config/system-config/etc) on each save, so they're versioned too.
-
-### Using it on another machine
-
-These are personal configs for one laptop, so read before you copy. To try them:
-
-```bash
-git clone --bare https://github.com/gcarrenoc/hyprland-dotfiles.git ~/.dotfiles
-alias dotfiles='git --git-dir=$HOME/.dotfiles --work-tree=$HOME'
-dotfiles checkout          # stops if it would overwrite your files: move those away first
-dotfiles config status.showUntrackedFiles no
-```
-
-Then [`.config/system-config/setup`](../.config/system-config/setup) asks before each step: paths, packages, services.
-
-Hyprland ≥ 0.57 with Lua config is required. The scripts expect Arch packages such as
-`waybar rofi swaync hyprlock hypridle hyprpaper hyprsunset uwsm alacritty tmux zathura-pdf-mupdf libqalculate python-gobject libayatana-appindicator gtk4-layer-shell libpulse playerctl networkmanager blueman power-profiles-daemon upower brightnessctl fish fzf zoxide`
-`otf-font-awesome` and a Nerd Font (PaperMono Nerd Font).
+Every commit is checked for secrets first ([`dotfiles-scan`](../.local/bin/dotfiles-scan)). My own
+fresh install uses a bare checkout plus [`.config/system-config/setup`](../.config/system-config/setup).
 
 ## Credits and licences
 
 My own work here is under the [MIT licence](LICENSE). It doesn't cover the third-party parts below:
 
 - Look based on [1amSimp1e/dots](https://github.com/1amSimp1e/dots) (GPL-3.0). The [Waybar](../.config/waybar) and [Rofi](../.config/rofi) files started from it and from [adi1090x/rofi](https://github.com/adi1090x/rofi) (GPL-3.0), so they are not under MIT.
-- Current wallpaper: photo by Arnaud Mariat on [Unsplash](https://unsplash.com/photos/45Z6hW1dQMI). The repo only holds a link to the local file, not the photo.
+- Font: Paper Mono by the [Paper Mono project](https://github.com/paper-design/paper-mono), with [Nerd Fonts](https://www.nerdfonts.com) icons added: SIL Open Font License 1.1, see [`OFL.txt`](../.local/share/fonts/PaperMono-Nerd/OFL.txt).
 - Icons: [Font Awesome Free](https://fontawesome.com) (Arch package `otf-font-awesome`, not included here).
+- My wallpaper: photo by Arnaud Mariat on [Unsplash](https://unsplash.com/photos/45Z6hW1dQMI). The repo only holds a link to my local file, not the photo.
 - [Brad's rEFInd theme](https://github.com/toptensoftware/brads-refind-theme) by Topten Software: Apache 2.0, see its [`readme.md`](../.config/refind/themes/brads-refind-theme/readme.md).
-- Third-party apps and fonts belong to their authors.
+- Third-party apps belong to their authors.

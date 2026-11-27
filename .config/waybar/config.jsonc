@@ -142,7 +142,6 @@
   },
 
   "backlight": {
-    "device": "intel_backlight",
     "format": "{icon}​",
     "tooltip-format": "Brightness and night light",
     "format-icons": ["<span font_family='Font Awesome 7 Free Solid' size='13087'></span>"],
@@ -152,7 +151,6 @@
   },
 
   "battery": {
-    "bat": "BAT0",
     "interval": 60,
     "states": { "warning": 30, "critical": 15 },
     "format": "{icon} {capacity}%",

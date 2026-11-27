@@ -10,7 +10,7 @@ import subprocess, threading, time
 from pathlib import Path
 from base import Commands, DropPanel, G, GLib, Gtk, box, fa, text
 
-LIGHT = Path("/sys/class/backlight/intel_backlight")
+LIGHT = next(iter(sorted(Path("/sys/class/backlight").glob("*"))), Path("/sys/class/backlight/none"))   # intel_backlight, amdgpu_bl0…
 SCRIPTS = Path(__file__).resolve().parent.parent
 NIGHT = str(SCRIPTS / "nightlight")
 STATE = Path.home() / ".cache/nightlight"

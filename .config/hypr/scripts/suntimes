@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
 """Print today's sunrise and sunset (local time) and whether it's day or night now.
 Output: "<day|night> <sunrise HH:MM> <sunset HH:MM>"
-Location: Valparaíso, Chile (change LAT/LON below). NOAA solar algorithm, official zenith 90.833°."""
+Location: ~/.config/hypr/location ("latitude longitude", e.g. "-33.05 -71.61"), else Valparaíso, Chile. NOAA solar algorithm, official zenith 90.833°."""
 import math, datetime as dt
 
 LAT, LON = -33.047, -71.612        # Valparaíso / Viña del Mar, Chile
+try:
+    LAT, LON = map(float, (__import__("pathlib").Path.home() / ".config/hypr/location").read_text().split()[:2])
+except (OSError, ValueError):
+    pass
 
 
 def sun_time(date, rising):

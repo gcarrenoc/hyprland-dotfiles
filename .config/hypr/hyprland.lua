@@ -9,6 +9,12 @@ local terminal = app .. "alacritty --config-file " .. HOME .. "/.config/alacritt
 local scripts  = HOME .. "/.config/hypr/scripts/"
 
 -- colours generated from the wallpaper (scripts/theme); fallback if missing
+-- What belongs to this person / laptop (screen, keyboard, own shortcuts) is in local.lua, which the
+-- installer never copies (it makes a template). It may set LAPTOP and KB_LAYOUT and add its own binds.
+LAPTOP, KB_LAYOUT = { output = "eDP-1", mode = "preferred", position = "0x0", scale = "auto" }, "us"
+local okl, err = pcall(dofile, HOME .. "/.config/hypr/local.lua")
+if not okl and not tostring(err):find("No such file") then hl.notification({ text = "local.lua: " .. tostring(err), timeout = 10000 }) end
+
 local okc, C = pcall(dofile, HOME .. "/.config/hypr/colors.lua")
 if not okc or type(C) ~= "table" then
     C = { active = { "rgba(f8ab59ff)", "rgba(ed7626ff)" }, inactive = "rgba(01185988)" }
@@ -17,7 +23,7 @@ end
 --------------------
 ---- MONITORS ----
 --------------------
-hl.monitor({ output = "eDP-1", mode = "1920x1200@60", position = "0x0", scale = 1.25 })   -- fractional scaling: 1536x960 logical
+hl.monitor(LAPTOP)                                                                    -- the built-in screen (local.lua)
 hl.monitor({ output = "",      mode = "preferred",    position = "auto", scale = "auto" }) -- anything plugged in
 -- XWayland apps are not upscaled (that blurs them): they draw at full resolution and scale
 -- themselves — rofi menus via dpi in ~/.config/rofi/config.rasi (96 × scale).
@@ -26,8 +32,7 @@ hl.config({ xwayland = { force_zero_scaling = true } })
 -------------------
 ---- AUTOSTART ----
 -------------------
--- Apps from ~/.config/autostart (1Password, Insync, ZapZap,
--- Blueman, nm-applet) are started by uwsm automatically.
+-- Apps in ~/.config/autostart (and /etc/xdg/autostart: Blueman, nm-applet) are started by uwsm automatically.
 -- The bar, Spotlight, the panels, wallpaper, idle/lock, night light and clipboard history are systemd
 -- user services (enabled for graphical-session.target): they start with the session and come back
 -- if they crash.  systemctl --user status waybar   ·   journalctl --user -u bar-panels
@@ -122,13 +127,12 @@ hl.layer_rule({ name = "blur-waybar",        match = { namespace = "^waybar$" },
 
 -- Never left without a screen: "External only" turns the laptop's screen off, so when the last
 -- monitor is unplugged it comes back on
-local LAPTOP = { output = "eDP-1", mode = "1920x1200@60", position = "0x0", scale = 1.25 }
 hl.on("monitor.removed", function()
     hl.timer(function()
         for _, m in ipairs(hl.get_monitors() or {}) do
             if m.name ~= "FALLBACK" then return end
         end
-        hl.monitor({ output = LAPTOP.output, mode = LAPTOP.mode, position = LAPTOP.position, scale = LAPTOP.scale, mirror = "", disabled = false })
+        hl.monitor({ output = LAPTOP.output, mode = LAPTOP.mode, position = LAPTOP.position, scale = LAPTOP.scale, mirror = "", disabled = false })   -- LAPTOP: local.lua
     end, { timeout = 500, type = "oneshot" })
 end)
 
@@ -140,7 +144,7 @@ hl.on("monitor.added", function() hl.exec_cmd(scripts .. "display --auto") end)
 ---------------
 hl.config({
     input = {
-        kb_layout    = "latam",
+        kb_layout    = KB_LAYOUT,   -- local.lua
         follow_mouse = 1,
         sensitivity  = 0,
         touchpad = {
@@ -199,16 +203,8 @@ hl.bind("ALT + Return",               run(terminal .. " --class fly-term"))     
 hl.bind(M .. " + Tab",                run(scripts .. "windows"))                    -- window switcher (recent first)
 hl.bind(M .. " + Space",              run(scripts .. "spotlight-toggle"))                  -- Spotlight: apps + files (↵ open / go to app, ⇧↵ new window / show in folder, ⌃↵ inside documents)
 hl.bind(M .. " + E",                  run(app .. "nautilus --new-window"))
-hl.bind("CTRL + ALT + P",             run(app .. "google-chrome-stable --profile-directory='Profile 1'"))  -- Chrome: personal
-hl.bind("CTRL + ALT + W",             run(app .. "google-chrome-stable --profile-directory=Default"))    -- University
-hl.bind(M .. " + period",             run(app .. "flatpak run it.mijorus.smile"))   -- emoji picker
 hl.bind(M .. " + V",                  run(scripts .. "clipboard"))                  -- clipboard history
 hl.bind(M .. " + I",                  run(scripts .. "keybinds"))                   -- list of all shortcuts
-
--- 1Password
-hl.bind("CTRL + SHIFT + Space",       run("1password --quick-access"))
-hl.bind(M .. " + SHIFT + P",          run("1password --toggle"))
-hl.bind(M .. " + ALT + P",            run("1password --lock"))            -- (Super+Shift+L moves a window right)
 
 -- Windows
 hl.bind(M .. " + Q",                  hl.dsp.window.close())

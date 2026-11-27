@@ -207,6 +207,8 @@ Your config is versioned in Git (`~/.dotfiles`, files stay in place) and pushed 
 
 ## Files
 
+`~/.config/hypr/local.lua`: this laptop and my own shortcuts (screen, keyboard layout, Chrome profiles, 1Password, emoji picker). `hyprland.lua` loads it; the installer for other people (`~/.config/dotfiles/install`) never copies it.
+
 | What | Where |
 |---|---|
 | Hyprland (keys, look, rules) | `~/.config/hypr/hyprland.lua` — saved changes apply instantly; no-gap workspace logic in `~/.config/hypr/workspaces.lua` |

@@ -1,0 +1,159 @@
+#!/usr/bin/env bash
+# install — put this Hyprland desktop (or parts of it) into your home folder.
+#
+#   git clone https://github.com/gcarrenoc/hyprland-dotfiles.git ~/hyprland-dotfiles
+#   ~/hyprland-dotfiles/.config/dotfiles/install            choose the parts, one question each
+#
+#   install --list                 show the parts
+#   install --only core,terminal   these parts, no questions about which
+#   install --all                  every part
+#   install --dry-run …            show what would happen, change nothing
+#   install --no-packages …        don't install packages (only list the missing ones)
+#   install --no-services …        don't enable or start services
+#
+# Files are copied (not linked), so they are yours to change. A file you already have is kept in
+# ~/.local/state/dotfiles-backup/<date>/ before it's replaced. The owner's paths (/home/gcarreno)
+# become yours. Packages: pacman, with your confirmation. Parts: ~/.config/dotfiles/components.
+# Run it again later to update; your own ~/.config/hypr/local.lua is never touched.
+set -euo pipefail
+
+SRC=$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../.." && pwd)
+LIST="$SRC/.config/dotfiles/components"
+OWNER=/home/gcarreno
+BACKUP="$HOME/.local/state/dotfiles-backup/$(date +%Y-%m-%d_%H%M%S)"
+DRY=0 PKGS=1 SVC=1 MODE=ask ONLY=""
+say()  { printf '\033[1m%s\033[0m\n' "$*"; }
+note() { printf '  %s\n' "$*"; }
+ask()  { local a; read -rp "$1 [y/N] " a </dev/tty; [[ ${a,,} == y* ]]; }
+run()  { if (( DRY )); then note "would run: $*"; else "$@"; fi; }
+
+while (( $# )); do
+  case $1 in
+    --list) MODE=list ;; --all) MODE=all ;; --only) MODE=only; ONLY=${2:?--only needs names}; shift ;;
+    --dry-run) DRY=1 ;; --no-packages) PKGS=0 ;; --no-services) SVC=0 ;;
+    -h|--help) sed -n '2,18p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    *) echo "install: unknown option $1 (see --help)" >&2; exit 2 ;;
+  esac
+  shift
+done
+[[ -f $LIST ]] || { echo "install: $LIST is missing" >&2; exit 1; }
+if [[ $SRC == "$HOME" ]]; then
+  echo "install: this is the owner's own checkout (the files are already in place)." >&2
+  echo "         Clone the repo somewhere else and run its install from there." >&2
+  exit 1
+fi
+git -C "$SRC" rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "install: $SRC is not a git checkout" >&2; exit 1; }
+
+# ---- read the parts
+declare -A ABOUT REQUIRED FILES SKIP PACKAGES SERVICES TIMERS ROOT NOTES
+ORDER=() name=""
+while IFS= read -r line || [[ -n $line ]]; do
+  line=${line%%$'\r'}
+  [[ $line =~ ^[[:space:]]*(#|$) ]] && continue
+  if [[ $line =~ ^\[([a-z0-9-]+)\]$ ]]; then name=${BASH_REMATCH[1]}; ORDER+=("$name"); continue; fi
+  [[ -n $name && $line == *=* ]] || continue
+  key=${line%%=*}; key=${key// /}; value=${line#*=}; value=${value# }
+  case $key in
+    about) ABOUT[$name]=$value ;; required) REQUIRED[$name]=$value ;; files) FILES[$name]=$value ;;
+    skip) SKIP[$name]=$value ;; packages) PACKAGES[$name]=$value ;; services) SERVICES[$name]=$value ;;
+    timers) TIMERS[$name]=$value ;; root) ROOT[$name]=$value ;; notes) NOTES[$name]=$value ;;
+  esac
+done < "$LIST"
+
+if [[ $MODE == list ]]; then
+  for c in "${ORDER[@]}"; do printf '%-15s %s%s\n' "$c" "${ABOUT[$c]}" "$([[ ${REQUIRED[$c]:-} == yes ]] && echo '  (always)')"; done
+  exit 0
+fi
+
+# ---- choose
+CHOSEN=()
+for c in "${ORDER[@]}"; do
+  if [[ ${REQUIRED[$c]:-} == yes || $MODE == all ]]; then CHOSEN+=("$c"); continue; fi
+  if [[ $MODE == only ]]; then [[ ,$ONLY, == *,"$c",* ]] && CHOSEN+=("$c"); continue; fi
+  say "$c"; note "${ABOUT[$c]}"
+  ask "  Install it?" && CHOSEN+=("$c")
+done
+if [[ $MODE == only ]]; then
+  for c in ${ONLY//,/ }; do [[ -n ${ABOUT[$c]:-} ]] || { echo "install: no part called '$c' (see --list)" >&2; exit 2; }; done
+fi
+echo; say "Installing: ${CHOSEN[*]}"; (( DRY )) && note "(dry run: nothing is changed)"
+
+# ---- files
+copied=0 kept=0
+copy_file() {   # $1 = path in the repo
+  local rel=$1 src="$SRC/$1" dst="$HOME/$1"
+  [[ -e $src || -L $src ]] || return 0
+  if [[ -L $src ]]; then return 0; fi                                  # links point into the owner's home
+  if [[ -e $dst ]] && cmp -s <(sed "s|$OWNER|$HOME|g" "$src") "$dst"; then kept=$((kept + 1)); return 0; fi
+  if (( DRY )); then note "would copy  ~/$rel"; copied=$((copied + 1)); return 0; fi
+  if [[ -e $dst ]]; then mkdir -p "$BACKUP/$(dirname "$rel")"; cp -a "$dst" "$BACKUP/$rel"; fi
+  mkdir -p "$(dirname "$dst")"
+  if grep -Iq . "$src" 2>/dev/null; then sed "s|$OWNER|$HOME|g" "$src" > "$dst"; chmod --reference="$src" "$dst"
+  else cp -a "$src" "$dst"; fi
+  copied=$((copied + 1))
+}
+for c in "${CHOSEN[@]}"; do
+  for path in ${FILES[$c]:-}; do
+    while IFS= read -r f; do
+      skip=0; for s in ${SKIP[$c]:-}; do [[ $f == "$s" || $f == "$s"/* ]] && skip=1; done
+      (( skip )) || copy_file "$f"
+    done < <(git -C "$SRC" ls-files -- "$path")
+  done
+done
+note "$copied files copied, $kept already the same$([[ -d $BACKUP ]] && echo ", your old ones in ${BACKUP/#$HOME/~}")"
+
+# ---- this laptop's own settings: a template, never overwritten
+if [[ " ${CHOSEN[*]} " == *" core "* && ! -e $HOME/.config/hypr/local.lua ]]; then
+  layout=$(localectl status 2>/dev/null | sed -n 's/.*X11 Layout: *//p' | cut -d, -f1)
+  if (( DRY )); then note "would write ~/.config/hypr/local.lua (keyboard: ${layout:-us})"
+  else cat > "$HOME/.config/hypr/local.lua" <<LUA
+-- local.lua — your screen, keyboard and own shortcuts (hyprland.lua loads it; the installer never touches it)
+
+-- the built-in screen; e.g. mode = "1920x1200@60", scale = 1.25   (hyprctl monitors)
+LAPTOP = { output = "eDP-1", mode = "preferred", position = "0x0", scale = "auto" }
+KB_LAYOUT = "${layout:-us}"
+
+-- your own shortcuts, for example:
+-- hl.bind("SUPER + B", hl.dsp.exec_cmd("uwsm app -- firefox"))
+LUA
+    note "made ~/.config/hypr/local.lua (keyboard: ${layout:-us}) — edit it for your screen and shortcuts"
+  fi
+fi
+
+# ---- packages
+want=()
+for c in "${CHOSEN[@]}"; do for p in ${PACKAGES[$c]:-}; do want+=("$p"); done; done
+if (( ${#want[@]} )); then
+  mapfile -t missing < <(printf '%s\n' "${want[@]}" | sort -u | xargs pacman -T 2>/dev/null || true)
+  if (( ${#missing[@]} )); then
+    say "Packages missing (${#missing[@]}): ${missing[*]}"
+    if (( PKGS && ! DRY )) && ask "  Install them now (sudo pacman -S)?"; then sudo pacman -S --needed "${missing[@]}"; fi
+  else
+    note "all the packages are installed"
+  fi
+fi
+
+# ---- system files (each asked)
+for c in "${CHOSEN[@]}"; do
+  for rel in ${ROOT[$c]:-}; do
+    dest=/${rel#.config/system-config/}
+    if (( DRY )); then note "would ask to copy $dest (sudo)"; continue; fi
+    ask "  Copy $dest (needs sudo; the old one is kept as $dest.before-dotfiles)?" || continue
+    sudo sh -c "[ -e '$dest' ] && cp -n '$dest' '$dest.before-dotfiles'; install -Dm644 '$SRC/$rel' '$dest'"
+  done
+done
+
+# ---- services
+svc=() tim=()
+for c in "${CHOSEN[@]}"; do svc+=(${SERVICES[$c]:-}); tim+=(${TIMERS[$c]:-}); done
+if (( SVC && ${#svc[@]} + ${#tim[@]} )); then
+  run systemctl --user daemon-reload
+  (( ${#svc[@]} )) && run systemctl --user enable "${svc[@]}"
+  (( ${#tim[@]} )) && run systemctl --user enable --now "${tim[@]/%/.timer}"
+fi
+(( DRY )) || fc-cache -f >/dev/null 2>&1 || true
+
+# ---- next steps
+echo; say "Done. Next:"
+for c in "${CHOSEN[@]}"; do [[ -n ${NOTES[$c]:-} ]] && note "• $c: ${NOTES[$c]//' · '/$'\n    '}"; done
+exit 0

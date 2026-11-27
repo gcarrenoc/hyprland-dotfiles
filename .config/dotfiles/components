@@ -1,0 +1,79 @@
+# Parts of this desktop for ~/.config/dotfiles/install. One section per component:
+#   about     what it is (one line)        required  yes = always installed
+#   files     paths in the repo (folders = everything tracked in them)
+#   skip      paths inside those folders to leave out
+#   packages  Arch packages (pacman)       notes     shown at the end
+#   services  user services to enable      timers    user timers to enable
+#   root      files copied to / with sudo (asked each time)
+# Never offered (they belong to the owner's laptop): .bashrc, mimeapps.list, autostart, local.lua,
+# boot menu (refind), hibernation, keyboard, mirrors, package lists, the dotfiles tools.
+
+[core]
+about = Hyprland desktop: bar, panels (Wi-Fi, Bluetooth, sound, brightness, battery), Spotlight, notifications, lock screen, screenshot tool, night light, theme from the wallpaper
+required = yes
+files = .config/hypr/hyprland.lua .config/hypr/workspaces.lua .config/hypr/hypridle.conf .config/hypr/hyprlock.conf .config/hypr/hyprpaper.conf .config/hypr/hyprtoolkit.conf .config/hypr/colors.lua .config/hypr/hyprlock-colors.conf .config/hypr/README.md .config/hypr/README.pdf .config/hypr/scripts .config/waybar .config/rofi .config/swaync .config/uwsm .config/environment.d .config/fontconfig .local/share/fonts/PaperMono-Nerd .local/bin/wallpaper .local/bin/caffeinate .config/systemd/user/spotlight.service .config/systemd/user/bar-panels.service .config/systemd/user/clipboard-history@.service .config/systemd/user/hyprpaper.service .config/systemd/user/hyprsunset.service .config/systemd/user/hyprsunset.service.d .config/systemd/user/nightlight-auto.service .config/systemd/user/nightlight-auto.timer .config/systemd/user/power-watch.service .config/systemd/user/power-watch.timer
+skip = .config/hypr/scripts/sddm-sync
+packages = hyprland uwsm xdg-desktop-portal-hyprland xdg-desktop-portal-gtk hyprpolkitagent hyprlock hypridle hyprpaper hyprsunset hyprpicker waybar rofi swaync libnotify python python-gobject gtk3 gtk4 gtk4-layer-shell libayatana-appindicator python-pillow imagemagick grim slurp swappy wl-clipboard cliphist wf-recorder brightnessctl playerctl pipewire pipewire-pulse wireplumber pavucontrol networkmanager network-manager-applet bluez bluez-utils blueman power-profiles-daemon upower fd fzf libqalculate localsearch tinysparql nautilus loupe otf-font-awesome papirus-icon-theme noto-fonts noto-fonts-emoji
+services = waybar spotlight bar-panels hyprpaper hypridle hyprsunset clipboard-history@text clipboard-history@image
+timers = nightlight-auto power-watch
+notes = Log in to "Hyprland (uwsm-managed)". Then set a wallpaper (the colours follow it): wallpaper ~/Pictures/some-image.jpg · Shortcuts: Super + I · Your screen, keyboard and own shortcuts: ~/.config/hypr/local.lua · Sunset times: put "latitude longitude" in ~/.config/hypr/location
+
+[terminal]
+about = Alacritty + tmux (tabs, kept running in the background) + Fish shell, colours from the wallpaper
+files = .config/alacritty .config/tmux .config/fish/config.fish .config/fish/functions/open.fish .local/bin/alacritty-tmux .config/xdg-terminals.list
+packages = alacritty tmux fish zoxide fzf
+notes = Fish starts inside tmux (tmux.conf: default-shell); your login shell stays as it is
+
+[pdf]
+about = Zathura PDF viewer with the theme's colours (Ctrl+R: dark reading)
+files = .config/zathura
+packages = zathura zathura-pdf-mupdf
+
+[claude-code]
+about = cnew / cpick / cpurge: start, resume and delete Claude Code conversations (Fish and Bash)
+files = .local/bin/claude-sessions .config/fish/functions/cnew.fish .config/fish/functions/cpick.fish .config/fish/functions/cpurge.fish .config/fish/functions/__csessions_fzf.fish .config/fish/functions/__csessions_in.fish .config/fish/completions .config/bash/sessions.sh
+packages = fzf
+notes = Bash: add  [[ -f ~/.config/bash/sessions.sh ]] && . ~/.config/bash/sessions.sh  to ~/.bashrc (Fish needs nothing)
+
+[claude-desktop]
+about = Claude Desktop from Anthropic's signed repository, kept up to date silently (verified, no password)
+files = .local/bin/claude-desktop .local/bin/claude-desktop-update .local/lib/apt_app.py .local/src/claude-desktop .config/systemd/user/claude-desktop-update.service .config/systemd/user/claude-desktop-update.timer
+packages = gnupg libarchive pacman-contrib
+timers = claude-desktop-update
+notes = First install: run  claude-desktop-update
+
+[vscode]
+about = Visual Studio Code from Microsoft's signed repository, kept up to date silently (verified, no password)
+files = .local/bin/code .local/bin/vscode-update .local/lib/apt_app.py .local/src/vscode .local/share/applications/com.microsoft.VSCode.desktop .local/share/applications/com.microsoft.VSCode.UrlHandler.desktop .config/systemd/user/vscode-update.service .config/systemd/user/vscode-update.timer
+packages = gnupg libarchive pacman-contrib
+timers = vscode-update
+notes = First install: run  vscode-update
+
+[jupyter]
+about = JupyterLab as a desktop app with a tray icon; fonts at 20 px, opens with tabs
+files = .local/bin/jupyter-app .local/bin/jupyter-tray .local/share/applications/jupyterlab.desktop .local/share/applications/jupyter-notebook.desktop .config/systemd/user/jupyterlab.service .config/systemd/user/jupyterlab-tray.service .jupyter/lab/user-settings
+notes = Needs Anaconda in ~/anaconda3 (jupyterlab.service) and Google Chrome for the app window
+
+[ticktick]
+about = TickTick launcher (zoom 1.4, sandbox on); the app itself is installed by hand
+files = .local/share/applications/ticktick.desktop .local/share/icons/hicolor/256x256/apps/ticktick.png
+notes = Unpack TickTick's AppImage (ticktick.com/download) into ~/.local/opt/ticktick
+
+[login-screen]
+about = SDDM login screen that matches the lock screen (wallpaper and colours)
+files = .config/hypr/sddm-theme .config/hypr/scripts/sddm-sync
+packages = sddm qt6-declarative
+root = .config/system-config/etc/sddm.conf.d/10-hyprlock.conf
+notes = Then: wallpaper <image> --login   (copies the theme, asks for the password)
+
+[firewall]
+about = nftables firewall: nothing from the network gets in unless you started it (mDNS allowed)
+packages = nftables
+root = .config/system-config/etc/nftables.conf
+notes = sudo systemctl enable --now nftables
+
+[zram]
+about = Compressed swap in RAM (zram, up to 8 GB): faster than disk swap
+packages = zram-generator
+root = .config/system-config/etc/systemd/zram-generator.conf
+notes = Active after a restart

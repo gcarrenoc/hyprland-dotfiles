@@ -11,7 +11,7 @@ import subprocess
 from pathlib import Path
 from base import DropPanel, G, Gio, GLib, Gtk, box, button, fa, text
 
-BAT = Path("/sys/class/power_supply/BAT0")
+BAT = next(iter(sorted(Path("/sys/class/power_supply").glob("BAT*"))), Path("/sys/class/power_supply/BAT0"))
 CAFFEINATE = str(Path.home() / ".local/bin/caffeinate")
 AWAKE = (("inf", "∞", "Until turned off"), ("30m", "30m", "30 minutes"), ("1h", "1h", "1 hour"), ("2h", "2h", "2 hours"), ("5h", "5h", "5 hours"))
 SAVER_STATE = Path.home() / ".cache/power-watch-saver"        # power-watch switched to power saver by itself
@@ -37,7 +37,7 @@ class BatteryPanel(DropPanel):
         super().__init__(app, "battery")
         def proxy(name, path, iface):
             return Gio.DBusProxy.new_for_bus_sync(Gio.BusType.SYSTEM, Gio.DBusProxyFlags.NONE, None, name, path, iface, None)
-        self.bat = proxy("org.freedesktop.UPower", "/org/freedesktop/UPower/devices/battery_BAT0", "org.freedesktop.UPower.Device")
+        self.bat = proxy("org.freedesktop.UPower", f"/org/freedesktop/UPower/devices/battery_{BAT.name}", "org.freedesktop.UPower.Device")
         self.power = proxy("net.hadess.PowerProfiles", "/net/hadess/PowerProfiles", "net.hadess.PowerProfiles")
         for p in (self.bat, self.power):
             p.connect("g-properties-changed", lambda *_: self.get_visible() and self.build())
