@@ -47,9 +47,9 @@ class App(Gtk.Application):
             self.edges = DragEdges(self)
         except Exception:
             traceback.print_exc()
-        for name, method in (("drag-start", "show"), ("drag-end", "hide")):
-            action = Gio.SimpleAction.new(name, None)
-            action.connect("activate", lambda _a, _p, m=method: self.edges and getattr(self.edges, m)())
+        for name, method in (("drag-start", "start"), ("drag-end", "end")):
+            action = Gio.SimpleAction.new(name, GLib.VariantType.new("i"))       # the click's id
+            action.connect("activate", lambda _a, p, m=method: self.edges and getattr(self.edges, m)(p.get_int32()))
             self.add_action(action)
 
     def load(self, name):

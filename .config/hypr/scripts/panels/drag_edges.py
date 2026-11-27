@@ -21,6 +21,7 @@ HOLD = 450          # ms hovering at the edge before the first switch
 AGAIN = 900         # ms for each further switch while still there
 
 SPRING = 500        # ms hovering a workspace button on the bar before going there
+LIMIT = 60          # s: the strips never stay up longer (a lost "button up" can't leave them in the way)
 
 # alpha 1/255: invisible, but not "nothing" — a window that draws nothing at all is never shown
 CSS = ("window.dragedge { background: rgba(0, 0, 0, 0.004); box-shadow: none; border: none; }"
@@ -189,6 +190,7 @@ class Strip(Gtk.Window):
 class DragEdges:
     def __init__(self, app):
         self.app, self.strips, self.layout = app, [], None
+        self.ended, self.limit = [], 0                       # ids of clicks already released; safety timer
         css = Gtk.CssProvider()
         css.load_from_string(CSS)
         Gtk.StyleContext.add_provider_for_display(Gdk.Display.get_default(), css,
@@ -223,11 +225,27 @@ class DragEdges:
             if tops.get(m.get_connector(), 0) > 0:
                 self.strips.append(BarStrip(self.app, m, int(tops[m.get_connector()])))
 
+    def start(self, click):
+        """Button down. A tap can deliver its release first: then this press is already over."""
+        if click in self.ended:
+            return
+        self.show()
+
+    def end(self, click):
+        self.ended = (self.ended + [click])[-16:]
+        self.hide()
+
     def show(self):
         self.build()
         for s in self.strips:
             s.set_visible(True)
+        if self.limit:
+            GLib.source_remove(self.limit)
+        self.limit = GLib.timeout_add_seconds(LIMIT, lambda: self.hide() or False)
 
     def hide(self):
+        if self.limit:
+            GLib.source_remove(self.limit)
+            self.limit = 0
         for s in self.strips:
             s.hide()

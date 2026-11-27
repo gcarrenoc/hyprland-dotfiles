@@ -8,9 +8,9 @@ set -euo pipefail
 DIR="$HOME/.local/share/backgrounds"
 LOOK=/var/lib/login-screen
 if [[ $# -eq 0 ]]; then readlink -f "$HOME/.config/hypr/wallpapers/current.jpg"; exit 0; fi
-if [[ $1 == --setup-login || ${2:-} == --login ]] && [[ ! -w $LOOK ]]; then
-  pkexec "$HOME/.config/hypr/scripts/sddm-sync" "$USER" "$HOME/.config/hypr/sddm-theme"
-  [[ $1 == --setup-login ]] && set -- "$(readlink -f "$HOME/.config/hypr/wallpapers/current.jpg")"
+if [[ $1 == --setup-login || ${2:-} == --login ]]; then
+  [[ -w $LOOK ]] || pkexec "$HOME/.config/hypr/scripts/sddm-sync" "$USER" "$HOME/.config/hypr/sddm-theme"
+  [[ $1 == --setup-login ]] && set -- "$(readlink -f "$HOME/.config/hypr/wallpapers/current.jpg")"   # then apply the current one
 fi
 src=$(readlink -f "$1") || { echo "wallpaper: '$1' not found" >&2; exit 1; }
 [[ -f $src ]] || { echo "wallpaper: '$1' is not a file" >&2; exit 1; }

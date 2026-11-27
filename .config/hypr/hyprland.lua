@@ -235,10 +235,12 @@ WS = dofile(HOME .. "/.config/hypr/workspaces.lua")   -- global, so Waybar can c
 -- only (scripts/panels/drag_edges.py in bar-panels). The click itself always goes through untouched.
 -- Also over the bar: hover a workspace button with it and that workspace comes up.
 -- A click that starts on the bar itself shows nothing, so the bar's own clicks are never in the way.
-local dragging = false
+-- Each click gets an id: press and release are sent as two separate messages, and a quick touchpad
+-- tap can deliver them out of order, so the panels app ignores a press whose release it already saw.
+local dragging, click = false, math.random(1, 1000000)
 local function drag_edges(action)
     hl.exec_cmd("gdbus call --session --dest local.BarPanels --object-path /local/BarPanels "
-        .. "--method org.freedesktop.Application.ActivateAction " .. action .. " '[]' '{}'")
+        .. "--method org.freedesktop.Application.ActivateAction " .. action .. " '[<int32 " .. click .. ">]' '{}'")
 end
 local function on_bar()
     local p, m = hl.get_cursor_pos(), hl.get_monitor_at_cursor()
@@ -247,7 +249,7 @@ local function on_bar()
 end
 hl.bind("mouse:272", function()
     if on_bar() then return end
-    dragging = true
+    dragging, click = true, click % 2000000000 + 1
     drag_edges("drag-start")
 end, { ignore_mods = true, non_consuming = true, transparent = true })
 hl.bind("mouse:272", function()

@@ -37,6 +37,8 @@ if "--focus" in sys.argv:
 
 def render(titles):
     for title in titles.values():
+        if title.rstrip().endswith("- TickTick"):        # a list or task named "10:00 - standup", not a timer
+            continue
         m = TIMER.match(title)
         if not m:
             continue
