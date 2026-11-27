@@ -133,6 +133,7 @@ Icons: [Font Awesome 7](https://fontawesome.com) (Arch package `otf-font-awesome
 | Telescope | Spotlight (`Super + Space`) |
 | 1 · 2 · 3 … | Workspaces, each with icons of the apps running on it — the current one is highlighted; click to switch, scroll to move |
 | + | Add a new empty workspace at the end and go there |
+| Stopwatch + time | Only while a **TickTick** pomodoro or stopwatch runs: the time left (accent colour while focusing, cup while on a break, pause icon when paused). Click: TickTick. Needs TickTick → Settings → Focus → **Focus Time in Tab Title** on, and the TickTick window open (closing it to the tray hides the timer) |
 | Amber icons | Shown only when something isn't as usual: crossed-out bell = do not disturb, cup = Caffeinate, leaf = power saver, rocket = performance. Click: Battery panel |
 | Wi-Fi | **Wi-Fi panel:** on / off, networks (click to join; type the password if it is new), details, disconnect, forget, cable, VPN, network settings. Click again, click outside or Esc closes. Middle-click opens `nmtui` |
 | Bluetooth | **Bluetooth panel:** on / off, your devices (click to connect; `…` to disconnect or forget; battery when known), nearby devices (click to pair, codes are shown there), blueman. Muted = off |

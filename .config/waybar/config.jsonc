@@ -6,7 +6,7 @@
   "spacing": 0,
 
   "modules-left":  ["custom/launcher", "hyprland/workspaces", "custom/newws"],
-  "modules-right": ["group/indicators", "custom/state", "network", "bluetooth", "pulseaudio", "backlight", "battery", "clock#date", "clock", "custom/power"],
+  "modules-right": ["custom/focus", "group/indicators", "custom/state", "network", "bluetooth", "pulseaudio", "backlight", "battery", "clock#date", "clock", "custom/power"],
 
   "custom/launcher": {
     "format": "<span font_family='Font Awesome 7 Brands' size='13087'></span>​",
@@ -107,6 +107,12 @@
   },
 
   // Only when something isn't as usual: recording, do not disturb, keep awake, power saver / performance
+  "custom/focus": {
+    "exec": "~/.config/hypr/scripts/focus-timer",
+    "return-type": "json",
+    "restart-interval": 5,
+    "on-click": "~/.config/hypr/scripts/focus-timer --focus"
+  },
   "custom/state": {
     "exec": "~/.config/hypr/scripts/bar-state",
     "return-type": "json",

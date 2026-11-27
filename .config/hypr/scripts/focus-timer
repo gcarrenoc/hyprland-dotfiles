@@ -1,0 +1,95 @@
+#!/usr/bin/env python3
+"""focus-timer — TickTick's pomodoro / stopwatch on the bar, only while one is running.
+
+TickTick (with Settings → Focus → "Focus Time in Tab Title" on) puts the countdown in its window title,
+e.g. "24:13 - Focusing", "04:59 - Relaxing", "12:00 - Paused". This listens to Hyprland's window events
+(no polling) and prints one JSON line for Waybar whenever that title changes; nothing when no timer runs.
+
+  focus-timer           run for Waybar (custom/focus)
+  focus-timer --focus   bring the TickTick window to the front (click on the timer)
+"""
+import json, os, re, socket, subprocess, sys
+
+CLASS = "ticktick"
+TIMER = re.compile(r"^\s*((?:\d{1,2}:)?\d{1,2}:\d{2})\s+-\s+(.+?)\s*$")    # "24:13 - Focusing"
+FA = "<span font_family='Font Awesome 7 Free Solid' size='13087'>{}</span>"
+ICON = {"focus": "", "relax": "", "paused": ""}            # stopwatch · cup · pause
+
+
+def hyprctl(*args):
+    return subprocess.run(["hyprctl", *args], capture_output=True, text=True).stdout
+
+
+def ticktick_windows():
+    try:
+        return {c["address"]: c["title"] for c in json.loads(hyprctl("clients", "-j") or "[]")
+                if c.get("class", "").lower() == CLASS}
+    except json.JSONDecodeError:
+        return {}
+
+
+if "--focus" in sys.argv:
+    for addr in ticktick_windows():
+        hyprctl("dispatch", f'hl.dsp.focus({{ window = "address:{addr}" }})')
+        break
+    sys.exit(0)
+
+
+def render(titles):
+    for title in titles.values():
+        m = TIMER.match(title)
+        if not m:
+            continue
+        time, word = m.groups()
+        w = word.lower()
+        state = "paused" if "pause" in w else "relax" if ("relax" in w or "break" in w) else "focus"
+        return {"text": FA.format(ICON[state]) + " " + time, "class": state,
+                "tooltip": f"TickTick: {word} · {time}\\nClick to open TickTick", "alt": state}
+    return {"text": "", "class": "idle", "tooltip": ""}
+
+
+last = None
+
+
+def emit(titles):
+    global last
+    out = json.dumps(render(titles), ensure_ascii=False).replace("\\\\n", "\\n")
+    if out != last:
+        print(out, flush=True)
+        last = out
+
+
+sig = os.environ.get("HYPRLAND_INSTANCE_SIGNATURE")
+path = f"{os.environ.get('XDG_RUNTIME_DIR', '/run/user/%d' % os.getuid())}/hypr/{sig}/.socket2.sock"
+titles = ticktick_windows()
+emit(titles)
+s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+s.connect(path)
+buf = b""
+while True:
+    chunk = s.recv(65536)
+    if not chunk:
+        sys.exit(1)                                   # Hyprland went away; Waybar restarts us
+    buf += chunk
+    *lines, buf = buf.split(b"\n")
+    changed = False
+    for raw in lines:
+        event, _, data = raw.decode("utf-8", "replace").partition(">>")
+        if event == "windowtitlev2":                  # ADDRESS,TITLE (address without 0x)
+            addr, _, title = data.partition(",")
+            addr = "0x" + addr
+            if addr in titles:
+                titles[addr] = title
+                changed = True
+        elif event == "openwindow":                   # ADDRESS,WORKSPACE,CLASS,TITLE
+            addr, _, rest = data.partition(",")
+            _, _, rest = rest.partition(",")
+            cls, _, title = rest.partition(",")
+            if cls.lower() == CLASS:
+                titles["0x" + addr] = title
+                changed = True
+        elif event == "closewindow":
+            if titles.pop("0x" + data, None) is not None:
+                changed = True
+    if changed:
+        emit(titles)

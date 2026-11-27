@@ -30,7 +30,7 @@ tooltip label {
 
 /* Pills */
 #custom-launcher, #workspaces,
-#indicators, #custom-state, #clock, #custom-power,
+#indicators, #custom-state, #custom-focus, #clock, #custom-power,
 #network, #bluetooth, #pulseaudio, #backlight, #battery {
   background-color: @pill;
   color: @text;
@@ -96,6 +96,10 @@ tooltip label {
 }
 
 #custom-state { color: @accent; padding: 0 12px; }
+/* TickTick focus timer: only while one runs */
+#custom-focus.focus  { color: @accent; }
+#custom-focus.relax  { color: @light; }
+#custom-focus.paused { color: @muted; }
 
 #clock.date { font-weight: normal; color: @light; }
 

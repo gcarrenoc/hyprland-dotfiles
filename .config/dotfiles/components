@@ -57,7 +57,7 @@ notes = Needs Anaconda in ~/anaconda3 (jupyterlab.service) and Google Chrome for
 [ticktick]
 about = TickTick launcher (zoom 1.4, sandbox on); the app itself is installed by hand
 files = .local/share/applications/ticktick.desktop .local/share/icons/hicolor/256x256/apps/ticktick.png
-notes = Unpack TickTick's AppImage (ticktick.com/download) into ~/.local/opt/ticktick
+notes = Unpack TickTick's AppImage (ticktick.com/download) into ~/.local/opt/ticktick · Timer on the bar: TickTick → Settings → Focus → "Focus Time in Tab Title" on
 
 [login-screen]
 about = SDDM login screen that matches the lock screen (wallpaper and colours)
