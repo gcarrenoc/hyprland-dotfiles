@@ -137,7 +137,7 @@ Icons: [Font Awesome 7](https://fontawesome.com) (Arch package `otf-font-awesome
 | Wi-Fi | **Wi-Fi panel:** on / off, networks (click to join; type the password if it is new), details, disconnect, forget, cable, VPN, network settings. Click again, click outside or Esc closes. Middle-click opens `nmtui` |
 | Bluetooth | **Bluetooth panel:** on / off, your devices (click to connect; `…` to disconnect or forget; battery when known), nearby devices (click to pair, codes are shown there), blueman. Muted = off |
 | Speaker | **Sound panel:** output and microphone (volume, mute, device), now playing, volume of each app. Click again, click outside or Esc closes · `m` mutes. Right-click mutes · scroll changes volume · middle-click opens the full mixer |
-| Sun | **Brightness panel:** screen brightness and **night light** (on / off, warmth). Night light **turns on at sunset and off at sunrise automatically** (Valparaíso times, recalculated daily); what you choose by hand stays until the next one. Scroll changes the brightness |
+| Sun | **Brightness panel:** screen brightness and **night light** (on / off, warmth). Night light **turns on at sunset and off at sunrise automatically** (Valparaíso, or `latitude longitude` in `~/.config/hypr/location`; recalculated daily); what you choose by hand stays until the next one. Scroll changes the brightness |
 | Battery | Always shows the percentage (the icon fills as it charges; bolt while charging, plug when plugged in but not charging). Click: **Battery panel** — time left, **power mode** (power saver · balanced · performance), **Caffeinate** (keep awake: until turned off, 30 min … 5 h), power in use, health and cycles, charge limit. Click again, click outside or Esc closes |
 | Date | Today's date · hover for a calendar |
 | Time | The time · click: **Notification Center** — **do not disturb** on top, then your notifications as cards, one per notification or one stack per app (click a stack to expand it; ✕ dismisses; `Super + Shift + N` clears all). While do not disturb is on, notifications skip the pop-up and go silently to the Center, and they stay there when you turn it off; volume / brightness pop-ups and critical alerts (low battery) still show |
@@ -205,6 +205,8 @@ Your config is versioned in Git (`~/.dotfiles`, files stay in place) and pushed 
 | `dotfiles restore <file>` | Undo changes to a file |
 | `dotfiles add <file>` | Start tracking a new file |
 
+**Sharing it:** someone else installs it with `~/.config/dotfiles/install` from a normal clone; they choose parts (core desktop, terminal, PDF, my apps…) and never get my personal files. The parts and their files are listed in `~/.config/dotfiles/components`: **when you add a new app or config, add it there too** so others can get it. Everything about my laptop or me (screen, keyboard, my own shortcuts) goes in `~/.config/hypr/local.lua`, not `hyprland.lua`.
+
 ## Files
 
 `~/.config/hypr/local.lua`: this laptop and my own shortcuts (screen, keyboard layout, Chrome profiles, 1Password, emoji picker). `hyprland.lua` loads it; the installer for other people (`~/.config/dotfiles/install`) never copies it.
@@ -214,7 +216,7 @@ Your config is versioned in Git (`~/.dotfiles`, files stay in place) and pushed 
 | Hyprland (keys, look, rules) | `~/.config/hypr/hyprland.lua` — saved changes apply instantly; no-gap workspace logic in `~/.config/hypr/workspaces.lua` |
 | Wallpaper & colours | `wallpaper <image>`; generated colour files: `waybar/colors.css`, `hypr/colors.lua`, `rofi/colors.rasi`, `swaync/colors.css`, `hypr/hyprlock-colors.conf`, `hypr/hyprtoolkit.conf` (password dialog), `zathura/colors` (PDF viewer), `alacritty/wallpaper-colors.toml`, `tmux/wallpaper.conf` |
 | Lock screen / idle timings | `~/.config/hypr/hyprlock.conf`, `~/.config/hypr/hypridle.conf` |
-| Screen scale | Laptop at **1.25** (fractional, 1536×960 logical): `hl.monitor` line in `hyprland.lua` and `LAPTOP` line in `scripts/display`. XWayland apps aren't upscaled (`force_zero_scaling`): rofi scales itself with `dpi: 120` in `rofi/config.rasi` (= 96 × scale; its sizes are in mm). Electron apps run on Wayland (`ELECTRON_OZONE_PLATFORM_HINT` in `uwsm/env-hyprland`). To change the scale, change those three numbers. |
+| Screen scale | Laptop at **1.25** (fractional, 1536×960 logical): `LAPTOP` in `~/.config/hypr/local.lua` (`scripts/display` uses it too). XWayland apps aren't upscaled (that blurs them): rofi menus get the screen's dpi from `scripts/menu` |
 | Boot menu | **rEFInd** (graphical: Arch · Windows 11 · reboot / shut down / firmware), [Brad's rEFInd theme](https://github.com/toptensoftware/brads-refind-theme) (copy in `~/.config/refind/themes/`). Menu: `~/.config/refind/refind.conf`; after editing either run `refind-theme` (installs to the EFI partition, asks for the password). Arch submenu (F2): LTS kernel, boot messages. Fallback: F12 → *Linux Boot Manager* (systemd-boot). |
 | Helper scripts | `~/.config/hypr/scripts/` (spotlight, launcher (app library), windows, keybinds, display, power-watch, nightlight + suntimes, osd, screenshot, clipboard, powermenu) |
 | Bar | `~/.config/waybar/config.jsonc`, `~/.config/waybar/style.css` |
