@@ -85,6 +85,6 @@ My own work here is under the [MIT licence](LICENSE). It doesn't cover the third
 - Look based on [1amSimp1e/dots](https://github.com/1amSimp1e/dots) (GPL-3.0). The [Waybar](../.config/waybar) and [Rofi](../.config/rofi) files started from it and from [adi1090x/rofi](https://github.com/adi1090x/rofi) (GPL-3.0), so they are not under MIT.
 - Font: Paper Mono by the [Paper Mono project](https://github.com/paper-design/paper-mono), with [Nerd Fonts](https://www.nerdfonts.com) icons added: SIL Open Font License 1.1, see [`OFL.txt`](../.local/share/fonts/PaperMono-Nerd/OFL.txt).
 - Icons: [Font Awesome Free](https://fontawesome.com) (Arch package `otf-font-awesome`, not included here).
-- My wallpaper: photo by Arnaud Mariat on [Unsplash](https://unsplash.com/photos/45Z6hW1dQMI). The repo only holds a link to my local file, not the photo.
+- My wallpaper: photo by Buddy AN on [Unsplash](https://unsplash.com/photos/MYXu9Zj1FXc). The repo only holds a link to my local file, not the photo.
 - [Brad's rEFInd theme](https://github.com/toptensoftware/brads-refind-theme) by Topten Software: Apache 2.0, see its [`readme.md`](../.config/refind/themes/brads-refind-theme/readme.md).
 - Third-party apps belong to their authors.

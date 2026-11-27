@@ -3,11 +3,16 @@
 
   theme            sync with the wallpaper setting; regenerate if it changed
   theme --force    regenerate even if the wallpaper is the same
+  theme --show     show the colours in use (terminal swatches), change nothing
   (set a new wallpaper with:  wallpaper <image>)
 
 1. Uses the wallpaper in gsettings (org.gnome.desktop.background picture-uri,
    also read by portals) and points ~/.config/hypr/wallpapers/current.jpg at it.
-2. Main hue = the most vivid colour of the image; its complement is the accent.
+2. Reads the photo in OKLab (a perceptual colour space) and groups it into 24 colours (k-means).
+   Tint = the photo's average colour direction; a nearly grey photo gives a nearly grey desktop.
+   Accent = the most striking colour it really has (vivid, enough of it, standing out from the tint,
+   like Material You's scoring); none → the tint's opposite. Colours are built in OKLCH, so every
+   hue looks equally light, and text is pushed until it meets WCAG contrast (7:1 text, 4.5:1 hints).
 3. Writes colour files for: terminal (alacritty/wallpaper-colors.toml,
    tmux/wallpaper.conf), bar (waybar/colors.css), window borders
    (hypr/colors.lua), launcher & menus (rofi/colors.rasi), notifications
@@ -15,7 +20,7 @@
    password dialog (hypr/hyprtoolkit.conf), PDF viewer (zathura/colors).
 4. Reloads whatever is running. Dark bar, light menus (tinted), as designed.
 """
-import colorsys, hashlib, os, re, subprocess, sys
+import colorsys, hashlib, math, os, re, subprocess, sys
 from pathlib import Path
 from urllib.parse import unquote, urlparse
 
@@ -59,38 +64,151 @@ src = LINK.resolve()
 if not src.is_file():
     sys.exit("theme: no wallpaper found")
 
-key = hashlib.sha1(f"{src}:{src.stat().st_mtime_ns}:v2".encode()).hexdigest()
-if "--force" not in sys.argv and ALACRITTY.exists() and TMUX.exists() \
+key = hashlib.sha1(f"{src}:{src.stat().st_mtime_ns}:v4".encode()).hexdigest()
+if "--force" not in sys.argv and "--show" not in sys.argv and ALACRITTY.exists() and TMUX.exists() \
         and all(p.exists() for p in OUT.values()) and CACHE.exists() and CACHE.read_text() == key:
     sys.exit(0)
 
-# ---------- 2. palette ----------
-hist = run("magick", str(src), "-resize", "200x200>", "-colors", "16", "-format", "%c", "histogram:info:-")
-colours = []
-for line in hist.splitlines():
-    m = re.search(r"^\s*(\d+):.*#([0-9A-Fa-f]{6})", line)
-    if m:
-        r, g, b = (int(m.group(2)[i:i + 2], 16) / 255 for i in (0, 2, 4))
-        h, l, s = colorsys.rgb_to_hls(r, g, b)
-        colours.append((int(m.group(1)), h, l, s))
+# ---------- 2. palette (perceptual: OKLab / OKLCH) ----------
+# Measured like Material You does: the photo is clustered into 24 colours (k-means), each scored by how
+# colourful it is and how much of the photo has its hue. Everything is measured and built in OKLab, where
+# equal lightness looks equally light in every hue and "colourful" means what the eye sees.
+import numpy as np
+from PIL import Image
 
-# main hue = the most vivid colour that is neither too dark nor too light
-scored = [(n * s * s, h, s) for n, h, l, s in colours if 0.22 <= l <= 0.85]
-if scored and max(scored)[0] > 0:
-    _, H, S = max(scored)
-else:                                            # grey wallpaper → neutral steel
-    H, S = 210 / 360, 0.25
-S = min(max(S, 0.15), 0.85)
+
+def _lin(c):
+    return np.where(c <= 0.04045, c / 12.92, ((c + 0.055) / 1.055) ** 2.4)
+
+
+def _gamma(c):
+    return np.where(c <= 0.0031308, 12.92 * c, 1.055 * np.clip(c, 0, None) ** (1 / 2.4) - 0.055)
+
+
+def to_oklab(rgb):                               # rgb 0..1, shape (..., 3)
+    r, g, b = (_lin(rgb[..., i]) for i in range(3))
+    l = np.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b)
+    m = np.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b)
+    s_ = np.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b)
+    return np.stack([0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * s_,
+                     1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s_,
+                     0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s_], -1)
+
+
+def to_rgb(lab):
+    L, a, b = lab
+    l = (L + 0.3963377774 * a + 0.2158037573 * b) ** 3
+    m = (L - 0.1055613458 * a - 0.0638541728 * b) ** 3
+    s_ = (L - 0.0894841775 * a - 1.2914855480 * b) ** 3
+    return np.array([4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s_,
+                     -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s_,
+                     -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s_])
+
+
+def oklch_hex(L, C, h):
+    """OKLCH → #rrggbb; too much chroma for the screen is reduced, never the hue or lightness."""
+    for _ in range(40):
+        rgb = to_rgb((L, C * math.cos(2 * math.pi * h), C * math.sin(2 * math.pi * h)))
+        if rgb.min() >= -1e-4 and rgb.max() <= 1 + 1e-4:
+            break
+        C *= 0.92
+    rgb = np.clip(_gamma(np.clip(rgb, 0, 1)), 0, 1)
+    return "#{:02x}{:02x}{:02x}".format(*(int(round(v * 255)) for v in rgb))
+
+
+def lch_of(hexc):
+    L, a, b = to_oklab(np.array([int(hexc[i:i + 2], 16) / 255 for i in (1, 3, 5)]))
+    return L, math.hypot(a, b), (math.atan2(b, a) / (2 * math.pi)) % 1
+
+
+img = Image.open(src).convert("RGB")
+img.thumbnail((256, 256))
+lab = to_oklab(np.asarray(img, dtype=np.float64) / 255).reshape(-1, 3)
+chroma = np.hypot(lab[:, 1], lab[:, 2])
+
+# k-means in OKLab (k-means++ start), the clustering Material's quantizer refines with
+rng = np.random.default_rng(7)
+pts = lab[rng.choice(len(lab), min(len(lab), 40000), replace=False)]
+K = 24
+cent = [pts[rng.integers(len(pts))]]
+for _ in range(K - 1):
+    d = np.min(((pts[:, None, :] - np.array(cent)[None]) ** 2).sum(-1), 1)
+    cent.append(pts[rng.choice(len(pts), p=d / d.sum())] if d.sum() > 0 else pts[rng.integers(len(pts))])
+cent = np.array(cent)
+for _ in range(15):
+    lbl = ((pts[:, None, :] - cent[None]) ** 2).sum(-1).argmin(1)
+    for k in range(K):
+        if (lbl == k).any():
+            cent[k] = pts[lbl == k].mean(0)
+share = np.bincount(lbl, minlength=K) / len(pts)
+clusters = [(float(share[k]), *cent[k]) for k in range(K) if share[k] > 0]      # (share, L, a, b)
+
+# main tint: the average colour direction of the visible (not near-black / near-white) part
+mid = (lab[:, 0] > 0.18) & (lab[:, 0] < 0.97)
+mid = mid if mid.any() else np.ones(len(lab), bool)
+va, vb = lab[mid, 1].mean(), lab[mid, 2].mean()
+H = (math.atan2(vb, va) / (2 * math.pi)) % 1 if math.hypot(va, vb) > 1e-4 else 250 / 360
+colourful = float(np.mean(chroma[mid]))            # mean OKLCH chroma: ~0.01 grey photo, ~0.1+ vivid
+S = min(max(colourful / 0.11 * 0.75, 0.04), 0.85)  # how colourful the desktop gets (0 … 0.85)
+NEUTRAL = colourful < 0.03                         # mostly grey / beige / white: keep the desktop calm
+
+
+def hue_gap(a, b):
+    d = abs(a - b) % 1
+    return min(d, 1 - d)
+
+
+# accent: Material-style score — colourful clusters, by chroma and by how much of the photo shares their
+# hue (±15°), plus standing out from the tint (an accent the same hue as the bar wouldn't be one). Too little colour anywhere → the complement.
+def hue_of(a, b):
+    return (math.atan2(b, a) / (2 * math.pi)) % 1
+
+
+cand = []
+for sh, L, a, b in clusters:
+    C = math.hypot(a, b)
+    if C < 0.035 or not 0.2 <= L <= 0.92 or sh < 0.0008:
+        continue
+    h = hue_of(a, b)
+    family = sum(s2 for s2, L2, a2, b2 in clusters if math.hypot(a2, b2) >= 0.02 and hue_gap(hue_of(a2, b2), h) < 15 / 360)
+    stands_out = min(hue_gap(h, H) / (40 / 360), 1) if not NEUTRAL else 1     # ≥ 40° from the tint = fully distinct
+    score = 0.6 * min(C / 0.2, 1) + 0.3 * min(math.log1p(family * 1000) / math.log1p(300), 1) + 0.4 * stands_out
+    cand.append((score, h, C, L))
+if cand:
+    _, HA, CA, LA = max(cand)
+    ACCENT_FROM = "image"
+else:
+    HA, CA, LA, ACCENT_FROM = (H + 0.5) % 1, 0.14, 0.7, "complement"
+AC = min(max(CA * 1.35, 0.07), 0.17)               # accent chroma on screen: true to the photo, but visible
+
+
+def sat(v):                                        # colourful parts of the desktop, softened for grey photos
+    return min(v, max(S * 1.2, 0.05)) if NEUTRAL else v
 
 
 def hls(h, l, s):
+    """Colours in the old HLS terms (the designed lightness / saturation), drawn in OKLCH: the lightness and
+    chroma are those of the design's reference blue, the hue is the photo's — so every hue looks as light."""
+    r, g, b = colorsys.hls_to_rgb(230 / 360, max(0, min(1, l)), max(0, min(1, s)))
+    L, C, _ = lch_of("#{:02x}{:02x}{:02x}".format(round(r * 255), round(g * 255), round(b * 255)))
+    return oklch_hex(L, C, h % 1)
+
+
+def raw_hls(h, l, s):                              # fixed colours (alerts, terminal red/green/yellow…)
     r, g, b = colorsys.hls_to_rgb(h % 1, max(0, min(1, l)), max(0, min(1, s)))
     return "#{:02x}{:02x}{:02x}".format(round(r * 255), round(g * 255), round(b * 255))
 
 
+def accent_at(L):                                  # the accent at a given perceived lightness
+    return oklch_hex(L, AC, HA)
+
+
+# the main tint as an HLS hue, for nudging the terminal's red / green / yellow (designed in HLS degrees)
+H_HLS = colorsys.rgb_to_hls(*(int(oklch_hex(0.7, 0.1, H)[i:i + 2], 16) / 255 for i in (1, 3, 5)))[0]
+
 def lean(deg, amount=0.06):
     """Move a semantic hue a little towards the wallpaper hue."""
-    d = ((H * 360 - deg + 180) % 360) - 180
+    d = ((H_HLS * 360 - deg + 180) % 360) - 180
     return (deg + d * amount) / 360
 
 
@@ -103,10 +221,10 @@ bblack   = hls(H, 0.42, S * 0.45)
 white    = hls(H, 0.80, S * 0.25)
 bwhite   = hls(H, 0.95, S * 0.30)
 sem = {"red": 355, "green": 140, "yellow": 45, "magenta": 290}
-normal = {k: hls(lean(v), 0.66, 0.70) for k, v in sem.items()}
-bright = {k: hls(lean(v), 0.76, 0.80) for k, v in sem.items()}
-normal["blue"], bright["blue"] = hls(H, 0.66, max(S, 0.6)), hls(H, 0.77, max(S, 0.7))
-normal["cyan"], bright["cyan"] = hls(H - 25 / 360, 0.68, max(S, 0.55)), hls(H - 25 / 360, 0.78, max(S, 0.65))
+normal = {k: raw_hls(lean(v), 0.66, 0.70) for k, v in sem.items()}
+bright = {k: raw_hls(lean(v), 0.76, 0.80) for k, v in sem.items()}
+normal["blue"], bright["blue"] = hls(H, 0.66, sat(max(S, 0.6))), hls(H, 0.77, sat(max(S, 0.7)))
+normal["cyan"], bright["cyan"] = hls(H - 25 / 360, 0.68, sat(max(S, 0.55))), hls(H - 25 / 360, 0.78, sat(max(S, 0.65)))
 order = ["black", "red", "green", "yellow", "blue", "magenta", "cyan", "white"]
 normal["black"], normal["white"], bright["black"], bright["white"] = black, white, bblack, bwhite
 
@@ -149,7 +267,7 @@ set -g menu-border-style "fg={muted}"
 set -g menu-selected-style "bg={accent},fg={bg}"
 """)
 # ---------- 4. desktop theme ----------
-Hc = (H + 0.5) % 1                                   # complementary hue: borders, "on" states
+Hc = HA                                              # accent hue: borders, "on" states
 
 
 def rgba(c, a):
@@ -158,17 +276,58 @@ def rgba(c, a):
 
 D = {   # dark: the bar
     "base": hls(H, 0.06, S * 0.8), "pill": hls(H, 0.13, S * 0.75), "slate": hls(H, 0.32, S * 0.8),
-    "muted": hls(H, 0.58, S * 0.5), "steel": hls(H, 0.72, max(S, 0.55)), "light": hls(H, 0.84, max(S, 0.6)),
-    "text": hls(H, 0.92, 0.45), "star": "#ffffff", "alert": hls(355 / 360, 0.72, 0.85),
-    "accent": hls(Hc, 0.68, 0.85),
+    "muted": hls(H, 0.58, S * 0.5), "steel": hls(H, 0.72, sat(max(S, 0.55))), "light": hls(H, 0.84, sat(max(S, 0.6))),
+    "text": hls(H, 0.92, sat(0.45)), "star": "#ffffff", "alert": raw_hls(355 / 360, 0.72, 0.85),
+    "accent": accent_at(0.76),
 }
 L = {   # light: launcher, menus, notifications, lock-screen box
-    "bg": hls(H, 0.96, 0.30), "alt": hls(H, 0.89, 0.28), "fg": hls(H, 0.13, 0.35),
-    "muted": hls(H, 0.52, 0.18), "sel": hls(H, 0.40, min(max(S, 0.3), 0.55)),
-    "border": hls(H, 0.82, 0.25), "alert": hls(355 / 360, 0.38, 0.62),   # ≥ 4.5:1 on the frosted panels, also over dark windows
-    "hint": hls(H, 0.26, 0.22),   # secondary text on frosted glass (≈ 4.4:1 over dark windows; "muted" is too light there)
+    "bg": hls(H, 0.96, sat(0.30)), "alt": hls(H, 0.89, sat(0.28)), "fg": hls(H, 0.13, sat(0.35)),
+    "muted": hls(H, 0.52, sat(0.18)), "sel": hls(H, 0.40, sat(min(max(S, 0.3), 0.55))),
+    "border": hls(H, 0.82, sat(0.25)), "alert": raw_hls(355 / 360, 0.38, 0.62),   # ≥ 4.5:1 on the frosted panels, also over dark windows
+    "hint": hls(H, 0.26, sat(0.22)),   # secondary text on frosted glass (≈ 4.4:1 over dark windows; "muted" is too light there)
 }
-B1, B2, BIN = hls(Hc, 0.68, 0.90), hls(Hc - 7 / 360, 0.54, 0.85), hls(H, 0.15, S * 0.8)
+
+
+# ---------- readable whatever the image: push text away from its background until it's clear enough ----------
+def luminance(c):
+    f = lambda v: v / 12.92 if v <= 0.03928 else ((v + 0.055) / 1.055) ** 2.4
+    r, g, b = (f(int(c[i:i + 2], 16) / 255) for i in (1, 3, 5))
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+
+def contrast(a, b):
+    la, lb = sorted((luminance(a), luminance(b)), reverse=True)
+    return (la + 0.05) / (lb + 0.05)
+
+
+def readable(fg, bg, minimum):
+    """Same hue and colourfulness, only the perceived lightness moves (OKLCH), until the WCAG ratio is met."""
+    L_, C_, h_ = lch_of(fg)
+    step = 0.01 if luminance(fg) >= luminance(bg) else -0.01
+    out = fg
+    while contrast(out, bg) < minimum and 0 <= L_ <= 1:
+        L_ += step
+        out = oklch_hex(min(max(L_, 0), 1), C_, h_)
+    return out
+
+
+for name, need in (("text", 7), ("light", 7), ("steel", 4.5), ("muted", 4.5), ("accent", 4.5), ("alert", 4.5)):
+    D[name] = readable(D[name], D["pill"], need)          # on the bar's pills
+for name, need in (("fg", 7), ("hint", 4.5), ("sel", 4.5), ("alert", 4.5)):
+    L[name] = readable(L[name], L["alt"], need)            # on the light menus, panels and notifications
+
+if "--show" in sys.argv:                                 # swatches in the terminal, nothing written
+    def swatch(name, c):
+        r, g, b = (int(c[i:i + 2], 16) for i in (1, 3, 5))
+        return f"\033[48;2;{r};{g};{b}m      \033[0m {name:<8}{c}"
+    print(f"{src.name}\n  main tint {round(H * 360)}°, colourfulness {S:.2f}{' (neutral image)' if NEUTRAL else ''}"
+          f" · accent {round(HA * 360)}° from the {ACCENT_FROM}")
+    print("  bar:   " + "   ".join(swatch(k, D[k]) for k in ("pill", "text", "light", "steel", "muted", "accent")))
+    print("  menus: " + "   ".join(swatch(k, L[k]) for k in ("bg", "alt", "fg", "hint", "sel", "border")))
+    print("  borders: " + swatch("active", accent_at(0.76)) + "   terminal: " + swatch("bg", bg) + " " + swatch("fg", fg))
+    sys.exit(0)
+
+B1, B2, BIN = accent_at(0.76), oklch_hex(0.62, AC, HA - 7 / 360), hls(H, 0.15, S * 0.8)
 css_note = note.replace("# ", "/* ", 1).rstrip("\n") + " */\n"
 
 OUT["waybar"].write_text(css_note + "".join(
@@ -208,7 +367,7 @@ OUT["lock"].write_text(note + "".join(f"${k} = rgba({v[1:]}{a})\n" for k, v, a i
     ("lock_box", L["bg"], "e6"), ("lock_box_text", L["fg"], "ff"),
     ("lock_ring1", "#ffffff", "ee"), ("lock_ring2", L["border"], "ee"),
     ("lock_ok1", L["sel"], "ee"), ("lock_ok2", D["steel"], "ee"),
-    ("lock_fail1", L["alert"], "ee"), ("lock_fail2", hls(355 / 360, 0.38, 0.5), "ee")]))
+    ("lock_fail1", L["alert"], "ee"), ("lock_fail2", raw_hls(355 / 360, 0.38, 0.5), "ee")]))
 
 def argb(c, a="ff"):
     return f"0x{a}{c[1:]}"
