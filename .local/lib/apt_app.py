@@ -42,8 +42,11 @@ def sha256(path):
     return h.hexdigest()
 
 
-def newer(a, b):            # pacman's version comparison: is a newer than b?
-    return subprocess.run(["vercmp", a, b], capture_output=True, text=True).stdout.strip() == "1"
+def newer(a, b):            # is version a newer than b? pacman's vercmp, else number by number
+    if shutil.which("vercmp"):
+        return subprocess.run(["vercmp", a, b], capture_output=True, text=True).stdout.strip() == "1"
+    key = lambda v: [int(n) for n in re.findall(r"\d+", v)]
+    return key(a) > key(b)
 
 
 class AptApp:

@@ -15,6 +15,7 @@
 # ~/.local/state/dotfiles-backup/<date>/ before it's replaced. The owner's paths (/home/gcarreno)
 # become yours. Packages: pacman, with your confirmation. Parts: ~/.config/dotfiles/components.
 # Run it again later to update; your own ~/.config/hypr/local.lua is never touched.
+# Made for Arch Linux: elsewhere it copies the files and lists the packages for you to install.
 set -euo pipefail
 
 SRC=$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../.." && pwd)
@@ -47,6 +48,16 @@ if [[ $SRC == "$HOME" ]]; then
   exit 1
 fi
 git -C "$SRC" rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "install: $SRC is not a git checkout" >&2; exit 1; }
+
+# ---- Hyprland 0.57 or newer: the config is written in Lua
+hv=$(Hyprland --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?' | head -1 || true)
+if [[ -z $hv ]]; then
+  say "Note: Hyprland isn't installed yet. This desktop needs Hyprland 0.57 or newer (Lua config)."
+elif [[ $(printf '%s\n0.57\n' "$hv" | sort -V | head -1) != 0.57 ]]; then
+  say "Warning: you have Hyprland $hv. This desktop needs 0.57 or newer (its config is written in Lua);"
+  note "with an older one Hyprland won't read it. Update Hyprland first."
+  ask "  Continue anyway?" || exit 1
+fi
 
 # ---- read the parts
 declare -A ABOUT REQUIRED FILES SKIP PACKAGES SERVICES TIMERS ROOT NOTES
@@ -134,7 +145,10 @@ fi
 # ---- packages
 want=()
 for c in "${CHOSEN[@]}"; do for p in ${PACKAGES[$c]:-}; do want+=("$p"); done; done
-if (( ${#want[@]} )); then
+if (( ${#want[@]} )) && ! command -v pacman >/dev/null; then
+  say "Not Arch Linux: install these yourself (Arch names; your distribution may call some differently):"
+  printf '%s\n' "${want[@]}" | sort -u | paste -sd' ' | fold -s -w 100 | sed 's/^/  /'
+elif (( ${#want[@]} )); then
   mapfile -t missing < <(printf '%s\n' "${want[@]}" | sort -u | xargs pacman -T 2>/dev/null || true)
   if (( ${#missing[@]} )); then
     say "Packages missing (${#missing[@]}): ${missing[*]}"

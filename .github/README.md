@@ -10,7 +10,9 @@ copied.
 
 ## Install
 
-Needs Arch Linux with Hyprland ≥ 0.57 and uwsm.
+Made for **Arch Linux** with **Hyprland ≥ 0.57** (the config is written in Lua) and uwsm. On another
+distribution the installer still copies the files, then lists the packages (Arch names) for you to install;
+it needs a distribution with Hyprland 0.57 or newer (Debian and Ubuntu ship older ones).
 
 ```bash
 git clone https://github.com/gcarrenoc/hyprland-dotfiles.git ~/hyprland-dotfiles
