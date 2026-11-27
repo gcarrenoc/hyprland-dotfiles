@@ -6,6 +6,8 @@ Fast like Spotlight: stays loaded, hidden (started at login) and the bar only sh
            (→ D-Bus; also starts this program if it isn't running)
 Click the icon again, click outside or press Esc to close. The panels: scripts/panels/*.py
 Colours come from ~/.config/rofi/colors.rasi (generated from the wallpaper by scripts/theme).
+Also the drag edges (panels/drag_edges.py): actions drag-start / drag-end, sent by Hyprland on every
+left-button press / release, show invisible strips at the screen edges for dragging files to another workspace.
 """
 import importlib, subprocess, sys, traceback
 from pathlib import Path
@@ -38,6 +40,16 @@ class App(Gtk.Application):
             self.load(name)
             action = Gio.SimpleAction.new(name, None)
             action.connect("activate", lambda _a, _p, n=name: self.toggle(n))
+            self.add_action(action)
+        self.edges = None
+        try:
+            from drag_edges import DragEdges
+            self.edges = DragEdges(self)
+        except Exception:
+            traceback.print_exc()
+        for name, method in (("drag-start", "show"), ("drag-end", "hide")):
+            action = Gio.SimpleAction.new(name, None)
+            action.connect("activate", lambda _a, _p, m=method: self.edges and getattr(self.edges, m)())
             self.add_action(action)
 
     def load(self, name):

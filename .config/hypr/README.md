@@ -59,6 +59,8 @@ Hyprland 0.57. This is the only desktop now (GNOME was removed); the login scree
 | `Super + Ctrl + Q` | Remove the current workspace (its windows move to the previous one; the rest shift down) |
 | `Super + scroll` | Next / previous workspace (same rule) |
 | 4-finger swipe ← → | Next / previous workspace (same rule) |
+| Drag a file, text, image or link to the left / right screen edge, hold ½ s | Shows the previous / next workspace, so you can drop it in an app there (like macOS). Keep holding to go on. Only existing workspaces; edges shared with another screen aren't used |
+| Drag a file, text, image or link over a workspace button on the bar, hold ½ s | The button lights up, then that workspace comes up: drop it in an app there |
 
 ### Screenshots & tools
 

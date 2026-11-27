@@ -230,6 +230,32 @@ hl.bind(M .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
 -- No gaps: workspace N only exists if 1…N-1 do (see workspaces.lua)
 WS = dofile(HOME .. "/.config/hypr/workspaces.lua")   -- global, so Waybar can call WS.step() via hyprctl
 
+-- Drag a file (text, image…) to the left / right screen edge and hold: the previous / next workspace
+-- comes up, like macOS. While the left button is down, invisible edge strips listen for drag-and-drop
+-- only (scripts/panels/drag_edges.py in bar-panels). The click itself always goes through untouched.
+-- Also over the bar: hover a workspace button with it and that workspace comes up.
+-- A click that starts on the bar itself shows nothing, so the bar's own clicks are never in the way.
+local dragging = false
+local function drag_edges(action)
+    hl.exec_cmd("gdbus call --session --dest local.BarPanels --object-path /local/BarPanels "
+        .. "--method org.freedesktop.Application.ActivateAction " .. action .. " '[]' '{}'")
+end
+local function on_bar()
+    local p, m = hl.get_cursor_pos(), hl.get_monitor_at_cursor()
+    local top = m and type(m.reserved) == "table" and m.reserved.top or 0
+    return p and m and p.y - m.position.y < top
+end
+hl.bind("mouse:272", function()
+    if on_bar() then return end
+    dragging = true
+    drag_edges("drag-start")
+end, { ignore_mods = true, non_consuming = true, transparent = true })
+hl.bind("mouse:272", function()
+    if not dragging then return end
+    dragging = false
+    drag_edges("drag-end")
+end, { release = true, ignore_mods = true, non_consuming = true, transparent = true })
+
 for i = 1, 10 do
     local key = i % 10
     hl.bind(M .. " + " .. key,         function() WS.go(i) end)

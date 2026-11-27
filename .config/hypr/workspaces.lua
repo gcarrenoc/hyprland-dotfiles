@@ -163,6 +163,12 @@ function W.go(n)                                -- Super+N; past the end: one ne
     if n <= count then focus(n) else W.new() end
 end
 
+-- show the workspace d steps away on this screen, only if it exists (dragging a file to a screen edge)
+function W.flip(d)
+    local target = neighbour(d)
+    if target then focus(target) end
+end
+
 function W.step(d)
     local target = neighbour(d)
     if target then focus(target)
