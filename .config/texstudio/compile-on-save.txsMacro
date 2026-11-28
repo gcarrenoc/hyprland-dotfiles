@@ -1,0 +1,17 @@
+{
+    "formatVersion": 1,
+    "name": "Compile on save",
+    "tag": [
+        "%SCRIPT",
+        "// Runs after every save (Ctrl+S, File > Save, Save All): compile with the default compiler.",
+        "// The built-in PDF viewer refreshes by itself. Remove the macro to stop it.",
+        "app.getManagedAction(\"main/tools/compile\").trigger();"
+    ],
+    "description": [
+        "Ctrl+S saves and then compiles the PDF (trigger: ?save-file)"
+    ],
+    "abbrev": "",
+    "trigger": "?save-file",
+    "menu": "",
+    "shortcut": ""
+}
